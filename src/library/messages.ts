@@ -51,6 +51,7 @@ export type RuntimeMessage
     | { type: 'wake-motrix' }
     | { type: 'content-protocol-click'; url: string; pageUrl: string; filename?: string }
     | { type: 'capture-url'; url: string; pageUrl: string; source: ContextMenuTargetSource; filename?: string }
+    | { type: 'capture-site-status'; url: string; pageUrl: string }
     | { type: 'resolve-context-menu-target' }
     | { type: 'picker:get'; id: string }
     | { type: 'picker:submit'; id: string; filename: string }

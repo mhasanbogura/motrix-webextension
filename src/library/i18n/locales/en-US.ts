@@ -88,7 +88,7 @@ export const enUS = {
     block: 'Block',
     noRules: 'No site rules yet. Add one to allow or block capture by source site.',
     extensionFilters: 'Extension filters',
-    extensionFilterHint: 'Control captured file types by extension.',
+    extensionFilterHint: 'Control captured file types by extension; URL patterns such as http://localhost:2580/* also block a site.',
     allowedExtensions: 'Allowed extensions',
     blockedExtensions: 'Blocked extensions',
     theme: 'Theme',

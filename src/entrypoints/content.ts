@@ -30,6 +30,7 @@ let activeMedia: HTMLImageElement | HTMLMediaElement | undefined;
 let mediaButton: HTMLButtonElement | undefined;
 let mediaButtonFadeTimer: number | undefined;
 let lastPointerPoint: { x: number; y: number } | undefined;
+let pageBlocked = true;
 
 export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'],
@@ -44,6 +45,8 @@ export default defineContentScript({
     document.addEventListener('loadedmetadata', handleMediaSourceReady, true);
     document.addEventListener('loadeddata', handleMediaSourceReady, true);
     document.addEventListener('canplay', handleMediaSourceReady, true);
+    browser.storage.onChanged.addListener(handleStorageChanged);
+    void refreshCaptureStatus();
     window.addEventListener('scroll', repositionMediaButton, { passive: true });
     window.addEventListener('resize', repositionMediaButton, { passive: true });
 
@@ -56,6 +59,29 @@ export default defineContentScript({
     });
   },
 });
+
+function handleStorageChanged(changes: Record<string, Browser.storage.StorageChange>, areaName: string): void {
+  if (areaName !== 'local' || !changes.motrixExtension) return;
+  void refreshCaptureStatus();
+}
+
+async function refreshCaptureStatus(): Promise<void> {
+  pageBlocked = true;
+  removeMediaButton();
+  try {
+    const response = await browser.runtime.sendMessage({
+      type: 'capture-site-status',
+      url: location.href,
+      pageUrl: location.href,
+    } satisfies RuntimeMessage) as RuntimeResponse;
+    const result = response.ok && typeof response.result === 'object' && response.result !== null
+      ? response.result as { blocked?: unknown }
+      : undefined;
+    pageBlocked = result?.blocked === true;
+  } catch {
+    pageBlocked = true;
+  }
+}
 
 function handleContextMenu(event: MouseEvent): void {
   lastContextMenuTarget = {
@@ -78,13 +104,14 @@ function handleProtocolClick(event: MouseEvent): void {
     pageUrl: location.href,
     filename: getFilenameHint(target),
   }).then((response: RuntimeResponse) => {
-    if (!response.ok && response.code === 'disabled') location.href = href;
+    if (!response.ok && (response.code === 'disabled' || response.code === 'site_rule_blocked')) location.href = href;
   }).catch(() => {
     location.href = href;
   });
 }
 
 function handleMediaPointerOver(event: PointerEvent): void {
+  if (pageBlocked) return;
   lastPointerPoint = { x: event.clientX, y: event.clientY };
   const media = getMediaFromPointer(event);
   if (!media) return;
@@ -102,6 +129,7 @@ function handleMediaPointerOut(event: PointerEvent): void {
 }
 
 function handlePointerMove(event: PointerEvent): void {
+  if (pageBlocked) return;
   lastPointerPoint = { x: event.clientX, y: event.clientY };
   if (!activeMedia) {
     const media = getMediaFromPointer(event);
@@ -118,6 +146,7 @@ function handlePointerMove(event: PointerEvent): void {
 }
 
 function handleMediaSourceReady(event: Event): void {
+  if (pageBlocked) return;
   const media = event.target instanceof HTMLMediaElement ? event.target : undefined;
   if (!media || !isSupportedUrl(getMediaUrl(media))) return;
   const pointer = lastPointerPoint;
@@ -126,7 +155,7 @@ function handleMediaSourceReady(event: Event): void {
 }
 
 function activateMedia(media: HTMLImageElement | HTMLMediaElement): void {
-  if (!isSupportedUrl(getMediaUrl(media))) return;
+  if (pageBlocked || !isSupportedUrl(getMediaUrl(media))) return;
   activeMedia = media;
   ensureMediaButton();
   repositionMediaButton();

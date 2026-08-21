@@ -2,8 +2,8 @@ import type { AddDownloadInput } from '@/library/rpc';
 import type { RuntimeResponse } from '@/library/messages';
 
 import { loadSnapshot } from '@/library/storage';
-import { isProtocolEnabled } from '@/library/download/filter';
 import { filenameFromUrl } from '@/library/download/filename-metadata';
+import { isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
 
 import { getCookieHeader } from '../cookies';
 import { duplicateGuard } from '../downloads/state';
@@ -19,6 +19,9 @@ export async function routeUrl(
   const snapshot = await loadSnapshot();
   if (!isProtocolEnabled(url, snapshot.settings)) {
     return { ok: false, code: 'disabled', message: 'This protocol is disabled' };
+  }
+  if (isUrlBlocked(url, pageUrl, snapshot.settings, snapshot.siteRules)) {
+    return { ok: false, code: 'site_rule_blocked', message: 'Downloads are blocked for this site' };
   }
   if (!duplicateGuard.reserve([url, pageUrl])) {
     return { ok: true, result: 'duplicate-blocked' };

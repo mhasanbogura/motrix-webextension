@@ -1,6 +1,7 @@
 import type { RuntimeMessage, RuntimeResponse } from '@/library/messages';
 
 import { Aria2RpcClient } from '@/library/rpc';
+import { isUrlBlocked } from '@/library/download/filter';
 import { wakeMotrix } from '@/library/protocol/launcher';
 import { routeUrl } from '@/features/background/protocol/route-url';
 import { syncContextMenuVisibility } from '@/features/background/context-menu';
@@ -70,6 +71,15 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
         return await routeUrl(message.url, message.pageUrl, 'content_protocol', message.filename);
       case 'capture-url':
         return await routeUrl(message.url, message.pageUrl, `content_${message.source}`, message.filename);
+      case 'capture-site-status': {
+        const snapshot = await loadSnapshot();
+        return {
+          ok: true,
+          result: {
+            blocked: isUrlBlocked(message.url, message.pageUrl, snapshot.settings, snapshot.siteRules),
+          },
+        };
+      }
       case 'picker:get':
       case 'picker:submit':
       case 'picker:cancel':

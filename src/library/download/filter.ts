@@ -42,6 +42,9 @@ export function shouldInterceptDownload(
     return { intercept: false, reason: 'small_file' };
   }
 
+  const blockedSite = matchBlockedSite(url, candidate.tabUrl, siteRules, settings.blockedExtensions);
+  if (blockedSite) return { intercept: false, reason: 'site_rule_blocked' };
+
   const extension = getExtension(candidate.filename || url);
   const allowedExtensions = normalizeExtensions(settings.allowedExtensions);
   const blockedExtensions = normalizeExtensions(settings.blockedExtensions);
@@ -55,8 +58,16 @@ export function shouldInterceptDownload(
   const matchedRule = siteRules.find(
     (rule) => rule.enabled && (globMatch(rule.pattern, url) || globMatch(rule.pattern, candidate.tabUrl || '')),
   );
-  if (matchedRule?.action === 'block') return { intercept: false, reason: 'site_rule_blocked' };
   return { intercept: true, reason: matchedRule?.action === 'allow' ? 'site_rule_allowed' : 'matched' };
+}
+
+export function isUrlBlocked(
+  url: string,
+  pageUrl: string | undefined,
+  settings: DownloadSettings,
+  siteRules: SiteRule[],
+): boolean {
+  return Boolean(matchBlockedSite(url, pageUrl, siteRules, settings.blockedExtensions));
 }
 
 export function isProtocolEnabled(url: string, settings: DownloadSettings): boolean {
@@ -86,6 +97,27 @@ function normalizeExtensions(extensions: string[]): string[] {
   return extensions
     .map((extension) => extension.trim().replace(/^\./, '').toLowerCase())
     .filter(Boolean);
+}
+
+function matchBlockedSite(
+  url: string,
+  pageUrl: string | undefined,
+  siteRules: SiteRule[],
+  blockedExtensions: string[],
+): boolean {
+  const matchedRule = siteRules.find(
+    (rule) => rule.enabled && (rule.action === 'block')
+      && (globMatch(rule.pattern, url) || globMatch(rule.pattern, pageUrl || '')),
+  );
+  if (matchedRule) return true;
+  return blockedExtensions
+    .map((pattern) => pattern.trim())
+    .filter(isUrlPattern)
+    .some((pattern) => globMatch(pattern, url) || globMatch(pattern, pageUrl || ''));
+}
+
+function isUrlPattern(value: string): boolean {
+  return /^(?:https?|file|ftp):\/\//i.test(value) || value.includes('*') || value.includes('://');
 }
 
 function globMatch(pattern: string, value: string): boolean {
