@@ -36,8 +36,8 @@ Browser extension for Motrix — download interception, aria2 JSON-RPC delegatio
 ### From Source
 
 ```bash
-git clone https://github.com/mhasanbogura/motrix_webextension.git
-cd motrix_webextension
+git clone https://github.com/mhasanbogura/motrix-webextension.git
+cd motrix-webextension
 pnpm install
 pnpm build
 ```
@@ -57,7 +57,7 @@ pnpm zip
 
 ### From GitHub Releases
 
-Pre-built ZIP packages are published on the [Releases](https://github.com/mhasanbogura/motrix_webextension/releases) page.
+Pre-built ZIP packages are published on the [Releases](https://github.com/mhasanbogura/motrix-webextension/releases) page.
 
 1. Download the latest `Motrix WebExtension.zip` asset.
 2. Unzip the archive.
@@ -69,7 +69,7 @@ Release tags use the manifest date version format, for example `v2026.07.08.1234
 
 ### For users
 
-Download the latest ZIP from [GitHub Releases](https://github.com/mhasanbogura/motrix_webextension/releases) and load the unpacked extension as described above.
+Download the latest ZIP from [GitHub Releases](https://github.com/mhasanbogura/motrix-webextension/releases) and load the unpacked extension as described above.
 
 ### For maintainers
 

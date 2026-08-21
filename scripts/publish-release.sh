@@ -2,7 +2,7 @@
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
-REPO='mhasanbogura/motrix_webextension'
+REPO='mhasanbogura/motrix-webextension'
 NOTES='/home/ubuntu/motrix-extension-strM-release-notes.md'
 
 if gh release view vname --repo "$REPO" >/dev/null 2>&1; then
