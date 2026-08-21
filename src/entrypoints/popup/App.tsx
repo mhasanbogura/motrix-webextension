@@ -176,11 +176,11 @@ export default function App() {
   }, [recordPopupDiagnostic, runAction, t]);
 
   return (
-    <div className='popup-shell w-[380px] overflow-hidden bg-(--m3-surface) text-foreground select-none'>
+    <div className='popup-shell w-[380px] overflow-hidden rounded-2xl bg-(--m3-surface) text-foreground shadow-xl select-none'>
       <PopupHeader
         snapshot={snapshot}
         status={status}
-        version={runtime?.connection.version}
+        version={runtime?.connection.version || '1.6.1'}
         onToggleCapture={(enabled) => void updateInterception(enabled)}
         onRefresh={() => void refreshRuntime(false)}
         onOpenOptions={openOptions}

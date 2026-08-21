@@ -218,9 +218,7 @@ textarea {
   height: 3px;
   overflow: hidden;
   border-radius: 999px;
-  background:
-    linear-gradient(90deg, transparent, color-mix(in srgb, hsl(var(--primary)) 18%, transparent), transparent),
-    color-mix(in srgb, hsl(var(--primary)) 14%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(148, 154, 166, 0.28), transparent), rgba(148, 154, 166, 0.2);
 }
 
 .rpc-handshake-track::after {
@@ -229,7 +227,7 @@ textarea {
   width: 28px;
   border-radius: inherit;
   content: '';
-  background: hsl(var(--primary));
+  background: #9aa0aa;
   animation: rpc-handshake-scan 1.15s var(--m3-ease-emphasized-decel) infinite;
 }
 

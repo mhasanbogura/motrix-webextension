@@ -62,19 +62,19 @@ function RpcStatusCard({
   const isWarning = tone === 'warning';
 
   return (
-    <section className='pointer-events-none mx-3 mb-3 overflow-hidden rounded-xl border bg-(--m3-surface-container) shadow-(--m3-shadow-card)'>
+    <section className='pointer-events-none mx-3 mb-3 overflow-hidden rounded-2xl border bg-(--m3-surface-container) shadow-(--m3-shadow-card)'>
       <div className='flex'>
-        <div className={cn('w-1 shrink-0', isWarning ? 'bg-(--m3-warning)' : 'bg-primary')} />
+        <div className={cn('w-1 shrink-0', isWarning ? 'bg-(--m3-warning)' : 'bg-muted-foreground/55')} />
         <div className='grid min-w-0 flex-1 grid-cols-[2rem_1fr] items-center gap-3 p-3.5'>
           <div
             className={cn(
               'relative flex size-8 shrink-0 items-center justify-center rounded-full',
               isWarning
                 ? 'bg-[color-mix(in_srgb,var(--m3-warning)_15%,transparent)] text-(--m3-warning)'
-                : 'bg-[color-mix(in_srgb,hsl(var(--primary))_14%,transparent)] text-primary',
+                : 'bg-muted/70 text-muted-foreground',
             )}
           >
-            {spinning ? <span className='absolute inset-0 rounded-full border border-primary/25' /> : null}
+            {spinning ? <span className='absolute inset-0 rounded-full border border-border' /> : null}
             <Icon className={cn('size-4', spinning && 'animate-spin')} />
           </div>
           <div className='min-w-0 self-center py-0.5'>
@@ -86,7 +86,7 @@ function RpcStatusCard({
               ? (
                   <div className='mt-2 flex items-center gap-2'>
                     <span className='rpc-handshake-track' aria-hidden='true' />
-                    <span className='metric-font text-[10px] font-semibold tracking-[0.04em] text-primary uppercase'>
+                    <span className='metric-font text-[10px] font-semibold tracking-[0.04em] text-muted-foreground uppercase'>
                       {status}
                     </span>
                   </div>
@@ -118,10 +118,10 @@ function ConnectionCheckItem({
       <span
         className={cn(
           'relative flex size-2.5 shrink-0 rounded-full',
-          active ? 'bg-primary' : 'bg-border',
+          active ? 'bg-muted-foreground' : 'bg-border',
         )}
       >
-        {active ? <span className='absolute inset-0 animate-ping rounded-full bg-primary/45' /> : null}
+        {active ? <span className='absolute inset-0 animate-ping rounded-full bg-muted-foreground/45' /> : null}
       </span>
       <span className={cn('min-w-0', active && 'font-medium text-foreground')}>{label}</span>
     </div>

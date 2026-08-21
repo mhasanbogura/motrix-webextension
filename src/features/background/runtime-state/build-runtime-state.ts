@@ -29,7 +29,7 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
   if (!snapshot.connection.verifiedAt) {
     await updateConnection({ verifiedAt: Date.now() });
   }
-  const [stat, active, waiting, stopped] = await Promise.all([
+  const [statResult, activeResult, waitingResult, stoppedResult] = await Promise.allSettled([
     client.getGlobalStat(),
     client.tellActive(),
     client.tellWaiting(0, 20),
@@ -37,7 +37,11 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
   ]);
   return {
     ...base,
-    stat,
-    tasks: { active, waiting, stopped },
+    stat: statResult.status === 'fulfilled' ? statResult.value : undefined,
+    tasks: {
+      active: activeResult.status === 'fulfilled' ? activeResult.value : [],
+      waiting: waitingResult.status === 'fulfilled' ? waitingResult.value : [],
+      stopped: stoppedResult.status === 'fulfilled' ? stoppedResult.value : [],
+    },
   };
 }
