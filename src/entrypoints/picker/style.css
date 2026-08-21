@@ -55,7 +55,11 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6955ce, #4d3caa);
+  box-shadow: 0 8px 18px rgba(75, 57, 168, 0.22);
 }
 
 .picker-logo {
@@ -74,7 +78,7 @@ body {
 
 .picker-eyebrow {
   margin-bottom: 2px;
-  color: var(--picker-primary);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.11em;
@@ -82,13 +86,14 @@ body {
 
 h1 {
   margin: 0 0 3px;
+  color: #fff;
   font-size: 20px;
   letter-spacing: -0.02em;
 }
 
 .picker-header p {
   margin: 0;
-  color: var(--picker-muted);
+  color: rgba(255, 255, 255, 0.88);
   font-size: 12px;
   line-height: 1.35;
 }
@@ -102,7 +107,11 @@ h1 {
 }
 
 .picker-card-title {
-  margin-bottom: 12px;
+  margin: -16px -16px 12px;
+  padding: 9px 12px;
+  border-radius: 15px 15px 0 0;
+  color: #fff;
+  background: var(--picker-primary-dark);
   font-size: 14px;
   font-weight: 750;
 }
