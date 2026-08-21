@@ -1,0 +1,202 @@
+:root {
+  color-scheme: light dark;
+  --picker-bg: #f7f7fb;
+  --picker-card: #ffffff;
+  --picker-border: rgba(54, 49, 94, 0.13);
+  --picker-text: #27243b;
+  --picker-muted: #77738f;
+  --picker-primary: #7561d9;
+  --picker-primary-dark: #5d4ac0;
+  --picker-soft: #f0edff;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  background: var(--picker-bg);
+  color: var(--picker-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  min-width: 520px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--picker-bg);
+}
+#root {
+  min-height: 100vh;
+}
+.picker-shell {
+  width: min(100%, 680px);
+  margin: 0 auto;
+  padding: 34px 34px 28px;
+}
+.picker-loading {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  color: var(--picker-muted);
+  font-size: 14px;
+}
+.picker-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 26px;
+}
+.picker-logo {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(145deg, #a895ff, #6955ce);
+  box-shadow: 0 12px 26px rgba(103, 82, 205, 0.27);
+  font-size: 25px;
+  font-weight: 800;
+}
+.picker-eyebrow {
+  margin-bottom: 3px;
+  color: var(--picker-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+h1 {
+  margin: 0 0 4px;
+  font-size: 25px;
+  letter-spacing: -0.02em;
+}
+.picker-header p {
+  margin: 0;
+  color: var(--picker-muted);
+  font-size: 13px;
+}
+.picker-card {
+  padding: 22px;
+  border: 1px solid var(--picker-border);
+  border-radius: 22px;
+  background: var(--picker-card);
+  box-shadow: 0 13px 35px rgba(57, 48, 111, 0.09);
+}
+.picker-card-title {
+  margin-bottom: 18px;
+  font-size: 15px;
+  font-weight: 750;
+}
+.picker-source {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 19px;
+  padding: 12px 13px;
+  border-radius: 14px;
+  background: var(--picker-soft);
+}
+.picker-label {
+  display: block;
+  margin: 0 0 7px;
+  color: var(--picker-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.picker-url {
+  overflow: hidden;
+  color: var(--picker-text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+input {
+  width: 100%;
+  margin: 0 0 17px;
+  padding: 12px 13px;
+  border: 1px solid var(--picker-border);
+  border-radius: 12px;
+  outline: none;
+  color: var(--picker-text);
+  background: var(--picker-bg);
+  font: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+input:focus {
+  border-color: var(--picker-primary);
+  box-shadow: 0 0 0 3px rgba(117, 97, 217, 0.17);
+}
+.picker-hint {
+  margin-top: -5px;
+  color: var(--picker-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+code {
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: var(--picker-soft);
+  color: var(--picker-primary-dark);
+}
+.picker-error {
+  margin-top: 14px;
+  padding: 11px 13px;
+  border: 1px solid rgba(194, 55, 87, 0.26);
+  border-radius: 12px;
+  color: #a02549;
+  background: #fff0f4;
+  font-size: 13px;
+}
+.picker-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+.button {
+  min-width: 105px;
+  padding: 11px 15px;
+  border: 0;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.button-secondary {
+  color: var(--picker-text);
+  background: rgba(116, 108, 154, 0.12);
+}
+.button-primary {
+  color: #fff;
+  background: var(--picker-primary);
+  box-shadow: 0 9px 18px rgba(117, 97, 217, 0.22);
+}
+.button-primary:hover:not(:disabled) {
+  background: var(--picker-primary-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --picker-bg: #18172a;
+    --picker-card: #24223a;
+    --picker-border: rgba(226, 220, 255, 0.14);
+    --picker-text: #f1efff;
+    --picker-muted: #aaa5c2;
+    --picker-soft: #302b53;
+  }
+  .picker-error {
+    color: #ffcad8;
+    background: #3b2031;
+  }
+}

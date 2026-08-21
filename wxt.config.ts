@@ -1,0 +1,79 @@
+import { defineConfig } from 'wxt';
+import tailwindcss from '@tailwindcss/vite';
+
+const CHROME_VERSION_PART_MAX = 65535;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function padDatePart(value: number): string {
+  return value.toString().padStart(2, '0');
+}
+
+function getDayBuildNumber(date: Date): number {
+  const elapsedMs = date.getUTCHours() * 3600000
+    + date.getUTCMinutes() * 60000
+    + date.getUTCSeconds() * 1000
+    + date.getUTCMilliseconds();
+
+  return Math.floor(elapsedMs * CHROME_VERSION_PART_MAX / (MS_PER_DAY - 1));
+}
+
+function getDateVersions(date = new Date()) {
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate();
+  const buildNumber = getDayBuildNumber(date);
+  const displayVersion = [
+    year,
+    padDatePart(month),
+    padDatePart(day),
+    buildNumber,
+  ].join('.');
+
+  return {
+    displayVersion,
+    manifestVersion: `${year}.${month}.${day}.${buildNumber}`,
+  };
+}
+
+const dateVersions = getDateVersions();
+
+// See https://wxt.dev/api/config.html
+export default defineConfig({
+  srcDir: 'src',
+  publicDir: 'src/public',
+  modules: ['@wxt-dev/module-react', '@wxt-dev/i18n/module'],
+  vite: () => ({
+    plugins: [tailwindcss()],
+  }),
+  zip: {
+    artifactTemplate: '{{name}}-{{version}}-{{browser}}-mv3.zip',
+  },
+  manifest: {
+    name: 'Motrix WebExtension',
+    description: 'Motrix WebExtension with an IDM-style picker and Save link as .strm support',
+    version: dateVersions.manifestVersion,
+    version_name: dateVersions.displayVersion,
+    minimum_chrome_version: '116',
+    default_locale: 'en_US',
+    action: {
+      default_title: 'Motrix',
+      default_popup: 'popup.html',
+    },
+    options_ui: {
+      page: 'options.html',
+      open_in_tab: true,
+    },
+    permissions: [
+      'downloads',
+      'windows',
+      'storage',
+      'contextMenus',
+      'cookies',
+      'webRequest',
+    ],
+    host_permissions: [
+      'http://*/*',
+      'https://*/*',
+    ],
+  },
+});
