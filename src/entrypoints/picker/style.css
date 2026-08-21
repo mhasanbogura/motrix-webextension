@@ -23,156 +23,193 @@
 * {
   box-sizing: border-box;
 }
+
 body {
-  min-width: 520px;
+  min-width: 0;
   min-height: 100vh;
   margin: 0;
   background: var(--picker-bg);
 }
+
 #root {
   min-height: 100vh;
 }
+
 .picker-shell {
-  width: min(100%, 680px);
+  width: min(100%, 560px);
   margin: 0 auto;
-  padding: 34px 34px 28px;
+  padding: 18px 20px 16px;
 }
+
 .picker-loading {
   display: grid;
   min-height: 100vh;
   place-items: center;
+  padding: 20px;
   color: var(--picker-muted);
-  font-size: 14px;
+  font-size: 13px;
+  text-align: center;
 }
+
 .picker-header {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 26px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
+
 .picker-logo {
   display: grid;
-  width: 52px;
-  height: 52px;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
   place-items: center;
-  border-radius: 16px;
+  border-radius: 13px;
   color: #fff;
   background: linear-gradient(145deg, #a895ff, #6955ce);
-  box-shadow: 0 12px 26px rgba(103, 82, 205, 0.27);
-  font-size: 25px;
+  box-shadow: 0 9px 20px rgba(103, 82, 205, 0.24);
+  font-size: 21px;
   font-weight: 800;
 }
+
 .picker-eyebrow {
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   color: var(--picker-primary);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.11em;
 }
+
 h1 {
-  margin: 0 0 4px;
-  font-size: 25px;
+  margin: 0 0 3px;
+  font-size: 20px;
   letter-spacing: -0.02em;
 }
+
 .picker-header p {
   margin: 0;
   color: var(--picker-muted);
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.35;
 }
+
 .picker-card {
-  padding: 22px;
+  padding: 16px;
   border: 1px solid var(--picker-border);
-  border-radius: 22px;
+  border-radius: 16px;
   background: var(--picker-card);
-  box-shadow: 0 13px 35px rgba(57, 48, 111, 0.09);
+  box-shadow: 0 10px 25px rgba(57, 48, 111, 0.08);
 }
+
 .picker-card-title {
-  margin-bottom: 18px;
-  font-size: 15px;
+  margin-bottom: 12px;
+  font-size: 14px;
   font-weight: 750;
 }
+
 .picker-source {
   display: grid;
-  gap: 7px;
-  margin-bottom: 19px;
-  padding: 12px 13px;
-  border-radius: 14px;
+  gap: 5px;
+  margin-bottom: 14px;
+  padding: 10px 11px;
+  border-radius: 12px;
   background: var(--picker-soft);
 }
+
 .picker-label {
   display: block;
-  margin: 0 0 7px;
+  margin: 0 0 5px;
   color: var(--picker-muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
+
 .picker-url {
-  overflow: hidden;
   color: var(--picker-text);
+  overflow-wrap: anywhere;
   font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  white-space: normal;
 }
+
 input {
   width: 100%;
-  margin: 0 0 17px;
-  padding: 12px 13px;
+  margin: 0;
+  padding: 10px 11px;
   border: 1px solid var(--picker-border);
-  border-radius: 12px;
+  border-radius: 10px;
   outline: none;
   color: var(--picker-text);
   background: var(--picker-bg);
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
 }
+
 input:focus {
   border-color: var(--picker-primary);
   box-shadow: 0 0 0 3px rgba(117, 97, 217, 0.17);
 }
 
 .picker-error {
-  margin-top: 14px;
-  padding: 11px 13px;
+  margin-top: 12px;
+  padding: 9px 11px;
   border: 1px solid rgba(194, 55, 87, 0.26);
-  border-radius: 12px;
+  border-radius: 10px;
   color: #a02549;
   background: #fff0f4;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.4;
 }
+
 .picker-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 22px;
+  gap: 8px;
+  margin-top: 14px;
 }
+
 .button {
-  min-width: 105px;
-  padding: 11px 15px;
+  min-width: 92px;
+  padding: 9px 12px;
   border: 0;
-  border-radius: 11px;
+  border-radius: 10px;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 750;
   cursor: pointer;
 }
+
 .button:disabled {
   cursor: default;
   opacity: 0.5;
 }
+
 .button-secondary {
   color: var(--picker-text);
   background: rgba(116, 108, 154, 0.12);
 }
+
 .button-primary {
   color: #fff;
   background: var(--picker-primary);
-  box-shadow: 0 9px 18px rgba(117, 97, 217, 0.22);
+  box-shadow: 0 7px 14px rgba(117, 97, 217, 0.2);
 }
+
 .button-primary:hover:not(:disabled) {
   background: var(--picker-primary-dark);
+}
+
+@media (max-width: 480px) {
+  .picker-shell {
+    padding: 14px;
+  }
+
+  .picker-header p {
+    max-width: 36ch;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -184,6 +221,7 @@ input:focus {
     --picker-muted: #aaa5c2;
     --picker-soft: #302b53;
   }
+
   .picker-error {
     color: #ffcad8;
     background: #3b2031;
