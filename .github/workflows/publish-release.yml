@@ -96,10 +96,7 @@ jobs:
           tag_name: ${{ steps.artifact.outputs.tag }}
           name: Motrix WebExtension ${{ steps.artifact.outputs.version_name }}
           body_path: release-notes.md
-          files: |
-            packages/Motrix WebExtension.zip
-            packages/Motrix WebExtension - Chrome.zip
-            packages/Motrix WebExtension - Firefox.zip
+          files: packages/Motrix WebExtension.zip
           draft: ${{ inputs.draft }}
           prerelease: ${{ inputs.prerelease }}
           generate_release_notes: ${{ inputs.release_notes == '' }}

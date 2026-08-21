@@ -212,11 +212,10 @@ The combined release uses this exact structure:
 
 ```text
 Motrix WebExtension/
-└── Motrix WebExtension/
-    ├── Chrome/
-    │   └── Chrome MV3 extension files
-    └── Firefox/
-        └── Firefox extension files
+├── Chrome/
+│   └── Chrome MV3 extension files
+└── Firefox/
+    └── Firefox extension files
 ```
 
 The Chrome package can be loaded from `chrome://extensions` with Developer mode enabled. The Firefox package can be loaded temporarily from `about:debugging`. Motrix should be running with its aria2 JSON-RPC endpoint enabled, normally at `127.0.0.1:16800/jsonrpc`.
