@@ -36,8 +36,8 @@ Browser extension for Motrix — download interception, aria2 JSON-RPC delegatio
 ### From Source
 
 ```bash
-git clone https://github.com/reagin/motrix-extension.git
-cd motrix-extension
+git clone https://github.com/mhasanbogura/motrix_webextension.git
+cd motrix_webextension
 pnpm install
 pnpm build
 ```
@@ -57,9 +57,9 @@ pnpm zip
 
 ### From GitHub Releases
 
-Pre-built ZIP packages are published on the [Releases](https://github.com/reagin/motrix-extension/releases) page.
+Pre-built ZIP packages are published on the [Releases](https://github.com/mhasanbogura/motrix_webextension/releases) page.
 
-1. Download the latest `motrix-extension-*-chrome-mv3.zip` asset.
+1. Download the latest `Motrix WebExtension.zip` asset.
 2. Unzip the archive.
 3. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the extracted folder.
 
@@ -69,7 +69,7 @@ Release tags use the manifest date version format, for example `v2026.07.08.1234
 
 ### For users
 
-Download the latest ZIP from [GitHub Releases](https://github.com/reagin/motrix-extension/releases) and load the unpacked extension as described above.
+Download the latest ZIP from [GitHub Releases](https://github.com/mhasanbogura/motrix_webextension/releases) and load the unpacked extension as described above.
 
 ### For maintainers
 
@@ -79,7 +79,7 @@ Download the latest ZIP from [GitHub Releases](https://github.com/reagin/motrix-
 4. Optionally enable **draft** or **prerelease**, and choose whether to run ESLint before packaging.
 5. After the workflow completes, verify the new release tag (for example `v2026.07.07.12345`) and attached ZIP on the Releases page.
 
-The workflow packages the Chrome MV3 build with `pnpm zip`, reads `version_name` from the built manifest, and uploads `motrix-extension-*-chrome-mv3.zip` to GitHub Releases. Manifest versions are computed in UTC so local builds and CI releases follow the same rules.
+The workflow packages the Chrome MV3 build with `pnpm zip`, reads `version_name` from the built manifest, and uploads `Motrix WebExtension.zip` to GitHub Releases. Manifest versions are computed in UTC so local builds and CI releases follow the same rules.
 
 Ensure the repository allows workflow write access under **Settings** → **Actions** → **General** → **Workflow permissions** → **Read and write permissions**.
 
@@ -128,7 +128,7 @@ pnpm zip
 ### Project Structure
 
 ```text
-motrix-extension/
+motrix_webextension/
 ├── src/
 │   ├── components/
 │   │   ├── motrix/             # Motrix task/status presentation components
