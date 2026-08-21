@@ -132,18 +132,7 @@ input:focus {
   border-color: var(--picker-primary);
   box-shadow: 0 0 0 3px rgba(117, 97, 217, 0.17);
 }
-.picker-hint {
-  margin-top: -5px;
-  color: var(--picker-muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-code {
-  padding: 2px 4px;
-  border-radius: 4px;
-  background: var(--picker-soft);
-  color: var(--picker-primary-dark);
-}
+
 .picker-error {
   margin-top: 14px;
   padding: 11px 13px;
