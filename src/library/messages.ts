@@ -1,5 +1,13 @@
 import type { Aria2GlobalStat, Aria2Task, Aria2TaskStatus } from '@/library/rpc';
-import type { ConnectionConfig, DiagnosticEvent, DownloadSettings, SiteRule, StorageSnapshot, UiPrefs } from '@/library/storage';
+import type {
+  ConnectionConfig,
+  DiagnosticEvent,
+  DownloadCaptureType,
+  DownloadSettings,
+  SiteRule,
+  StorageSnapshot,
+  UiPrefs,
+} from '@/library/storage';
 
 export interface PopupState {
   runtime: RuntimeState;
@@ -32,6 +40,7 @@ export interface ContextMenuTarget {
   pageUrl: string;
   filename?: string;
   source: ContextMenuTargetSource;
+  captureType?: DownloadCaptureType;
 }
 
 export type RuntimeMessage
@@ -50,7 +59,7 @@ export type RuntimeMessage
     | { type: 'clear-tasks'; lane: RuntimeTaskLane; gids: string[] }
     | { type: 'wake-motrix' }
     | { type: 'content-protocol-click'; url: string; pageUrl: string; filename?: string }
-    | { type: 'capture-url'; url: string; pageUrl: string; source: ContextMenuTargetSource; filename?: string }
+    | { type: 'capture-url'; url: string; pageUrl: string; source: ContextMenuTargetSource; filename?: string; captureType?: DownloadCaptureType }
     | { type: 'capture-site-status'; url: string; pageUrl: string }
     | { type: 'resolve-context-menu-target' }
     | { type: 'picker:get'; id: string }

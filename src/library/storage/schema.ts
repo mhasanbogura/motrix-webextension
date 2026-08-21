@@ -15,6 +15,20 @@ export const ConnectionConfigSchema = z.object({
   verifiedAt: z.coerce.number().int().min(0).default(0),
 });
 
+export const DownloadCaptureTypeSchema = z.enum(['audio', 'video', 'image', 'document', 'archive', 'other']);
+export type DownloadCaptureType = z.infer<typeof DownloadCaptureTypeSchema>;
+
+export const DownloadCaptureTypesSchema = z.object({
+  audio: z.boolean().default(true),
+  video: z.boolean().default(true),
+  image: z.boolean().default(true),
+  document: z.boolean().default(true),
+  archive: z.boolean().default(true),
+  other: z.boolean().default(true),
+});
+
+export const DEFAULT_DOWNLOAD_CAPTURE_TYPES = DownloadCaptureTypesSchema.parse({});
+
 export const DownloadSettingsSchema = z.object({
   enabled: z.boolean().default(true),
   interceptHttp: z.boolean().default(true),
@@ -27,6 +41,7 @@ export const DownloadSettingsSchema = z.object({
   promptBeforeDownload: z.boolean().default(true),
   hideChromeDownload: z.boolean().default(true),
   minFileSizeBytes: z.coerce.number().int().min(0).default(0),
+  captureTypes: DownloadCaptureTypesSchema.default(DEFAULT_DOWNLOAD_CAPTURE_TYPES),
   blockedExtensions: z.array(z.string()).default([]),
   allowedExtensions: z.array(z.string()).default([]),
   defaultDir: z.string().default(''),

@@ -1,4 +1,4 @@
-import type { DownloadSettings, SiteRule } from '@/library/storage';
+import type { DownloadCaptureType, DownloadSettings, SiteRule } from '@/library/storage';
 
 export interface DownloadCandidate {
   url: string;
@@ -15,6 +15,38 @@ export interface FilterResult {
   reason: string;
   intercept: boolean;
 }
+
+const AUDIO_EXTENSIONS = new Set(['aac', 'aiff', 'flac', 'm4a', 'mka', 'mp3', 'oga', 'ogg', 'opus', 'wav', 'weba', 'wma']);
+const VIDEO_EXTENSIONS = new Set(['avi', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'ogv', 'ts', 'webm', 'wmv']);
+const IMAGE_EXTENSIONS = new Set(['avif', 'bmp', 'gif', 'ico', 'jpeg', 'jpg', 'png', 'svg', 'tif', 'tiff', 'webp']);
+const DOCUMENT_EXTENSIONS = new Set(['csv', 'doc', 'docx', 'epub', 'html', 'md', 'pdf', 'ppt', 'pptx', 'rtf', 'txt', 'xls', 'xlsx', 'xml']);
+const ARCHIVE_EXTENSIONS = new Set(['7z', 'bz', 'bz2', 'cab', 'gz', 'iso', 'rar', 'tar', 'xz', 'zip', 'zst']);
+const DOCUMENT_MIME_TYPES = new Set([
+  'application/epub+zip',
+  'application/msword',
+  'application/pdf',
+  'application/rtf',
+  'application/vnd.ms-excel',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/csv',
+  'text/html',
+  'text/markdown',
+  'text/plain',
+  'text/xml',
+]);
+const ARCHIVE_MIME_TYPES = new Set([
+  'application/gzip',
+  'application/java-archive',
+  'application/vnd.rar',
+  'application/x-7z-compressed',
+  'application/x-bzip2',
+  'application/x-rar-compressed',
+  'application/x-tar',
+  'application/x-xz',
+  'application/zip',
+]);
 
 export function shouldInterceptDownload(
   candidate: DownloadCandidate,
@@ -44,6 +76,8 @@ export function shouldInterceptDownload(
 
   const blockedSite = matchBlockedSite(url, candidate.tabUrl, siteRules, settings.blockedExtensions);
   if (blockedSite) return { intercept: false, reason: 'site_rule_blocked' };
+  const captureType = getDownloadCaptureType(candidate);
+  if (!settings.captureTypes[captureType]) return { intercept: false, reason: `${captureType}_disabled` };
 
   const extension = getExtension(candidate.filename || url);
   const allowedExtensions = normalizeExtensions(settings.allowedExtensions);
@@ -59,6 +93,26 @@ export function shouldInterceptDownload(
     (rule) => rule.enabled && (globMatch(rule.pattern, url) || globMatch(rule.pattern, candidate.tabUrl || '')),
   );
   return { intercept: true, reason: matchedRule?.action === 'allow' ? 'site_rule_allowed' : 'matched' };
+}
+
+export function isCaptureTypeEnabled(
+  candidate: Pick<DownloadCandidate, 'url' | 'filename' | 'mime'>,
+  settings: DownloadSettings,
+): boolean {
+  return settings.captureTypes[getDownloadCaptureType(candidate)];
+}
+
+export function getDownloadCaptureType(
+  candidate: Pick<DownloadCandidate, 'url' | 'filename' | 'mime'>,
+): DownloadCaptureType {
+  const extension = getExtension(candidate.filename || candidate.url);
+  const mime = candidate.mime?.split(';')[0]?.trim().toLowerCase() || '';
+  if (mime.startsWith('audio/') || AUDIO_EXTENSIONS.has(extension)) return 'audio';
+  if (mime.startsWith('video/') || VIDEO_EXTENSIONS.has(extension)) return 'video';
+  if (mime.startsWith('image/') || IMAGE_EXTENSIONS.has(extension)) return 'image';
+  if (ARCHIVE_MIME_TYPES.has(mime) || ARCHIVE_EXTENSIONS.has(extension)) return 'archive';
+  if (DOCUMENT_MIME_TYPES.has(mime) || DOCUMENT_EXTENSIONS.has(extension)) return 'document';
+  return 'other';
 }
 
 export function isUrlBlocked(

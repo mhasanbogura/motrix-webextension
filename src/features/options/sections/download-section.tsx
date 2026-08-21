@@ -76,6 +76,52 @@ export function DownloadSection({ compact, persistSettings, snapshot, t, updateS
           />
         </div>
       </div>
+      <div className='rounded-2xl border bg-(--m3-surface) p-(--options-field-pad)'>
+        <div className='mb-2 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase'>{t('options.captureTypes')}</div>
+        <div className='mb-3 text-xs text-muted-foreground'>{t('options.captureTypesHint')}</div>
+        <div className={cn('grid gap-2', compact ? 'grid-cols-3 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1' : 'grid-cols-2 max-[760px]:grid-cols-1')}>
+          <SettingSwitch
+            compact={compact}
+            label={t('options.captureAudio')}
+            checked={snapshot.settings.captureTypes.audio}
+            onCheckedChange={(audio) => updateSettings({ captureTypes: { ...snapshot.settings.captureTypes, audio } })}
+          />
+          <SettingSwitch
+            compact={compact}
+            label={t('options.captureVideo')}
+            checked={snapshot.settings.captureTypes.video}
+            onCheckedChange={(video) => updateSettings({ captureTypes: { ...snapshot.settings.captureTypes, video } })}
+          />
+          <SettingSwitch
+            compact={compact}
+            label={t('options.captureImage')}
+            checked={snapshot.settings.captureTypes.image}
+            onCheckedChange={(image) => updateSettings({ captureTypes: { ...snapshot.settings.captureTypes, image } })}
+          />
+          <SettingSwitch
+            compact={compact}
+            label={t('options.captureDocument')}
+            checked={snapshot.settings.captureTypes.document}
+            onCheckedChange={(document) => updateSettings({
+              captureTypes: { ...snapshot.settings.captureTypes, document },
+            })}
+          />
+          <SettingSwitch
+            compact={compact}
+            label={t('options.captureArchive')}
+            checked={snapshot.settings.captureTypes.archive}
+            onCheckedChange={(archive) => updateSettings({
+              captureTypes: { ...snapshot.settings.captureTypes, archive },
+            })}
+          />
+          <SettingSwitch
+            compact={compact}
+            label={t('options.captureOther')}
+            checked={snapshot.settings.captureTypes.other}
+            onCheckedChange={(other) => updateSettings({ captureTypes: { ...snapshot.settings.captureTypes, other } })}
+          />
+        </div>
+      </div>
       <Separator />
       <div className={cn('grid gap-(--options-gap)', compact ? 'grid-cols-3 max-[920px]:grid-cols-1' : 'grid-cols-1')}>
         <SettingSwitch

@@ -1,3 +1,4 @@
+import type { DownloadCaptureType } from '@/library/storage';
 import type { ContextMenuTarget, ContextMenuTargetSource, RuntimeMessage, RuntimeResponse } from '@/library/messages';
 
 const PROTOCOL_PATTERN = /^(?:magnet|ed2k|thunder):/i;
@@ -31,6 +32,14 @@ let mediaButton: HTMLButtonElement | undefined;
 let mediaButtonFadeTimer: number | undefined;
 let lastPointerPoint: { x: number; y: number } | undefined;
 let pageBlocked = true;
+let captureTypes: Record<DownloadCaptureType, boolean> = {
+  audio: false,
+  video: false,
+  image: false,
+  document: false,
+  archive: false,
+  other: false,
+};
 
 export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'],
@@ -75,9 +84,17 @@ async function refreshCaptureStatus(): Promise<void> {
       pageUrl: location.href,
     } satisfies RuntimeMessage) as RuntimeResponse;
     const result = response.ok && typeof response.result === 'object' && response.result !== null
-      ? response.result as { blocked?: unknown }
+      ? response.result as { blocked?: unknown; captureTypes?: Partial<Record<DownloadCaptureType, unknown>> }
       : undefined;
     pageBlocked = result?.blocked === true;
+    captureTypes = {
+      audio: result?.captureTypes?.audio === true,
+      video: result?.captureTypes?.video === true,
+      image: result?.captureTypes?.image === true,
+      document: result?.captureTypes?.document === true,
+      archive: result?.captureTypes?.archive === true,
+      other: result?.captureTypes?.other === true,
+    };
   } catch {
     pageBlocked = true;
   }
@@ -155,7 +172,7 @@ function handleMediaSourceReady(event: Event): void {
 }
 
 function activateMedia(media: HTMLImageElement | HTMLMediaElement): void {
-  if (pageBlocked || !isSupportedUrl(getMediaUrl(media))) return;
+  if (pageBlocked || !captureTypes[getMediaCaptureType(media)] || !isSupportedUrl(getMediaUrl(media))) return;
   activeMedia = media;
   ensureMediaButton();
   repositionMediaButton();
@@ -201,6 +218,7 @@ function ensureMediaButton(): void {
       pageUrl: location.href,
       source: getMediaSource(target),
       filename: getFilenameHint(target),
+      captureType: getMediaCaptureType(target),
     }).then((response: RuntimeResponse) => {
       if (!response.ok) {
         mediaButton!.disabled = false;
@@ -259,7 +277,9 @@ function resolveContextMenuTarget(event: MouseEvent): ContextMenuTarget {
 
   const media = getClosestMediaElement(element) ?? getMediaAtPoint(event.clientX, event.clientY);
   const mediaUrl = getMediaUrl(media);
-  if (mediaUrl && isSupportedUrl(mediaUrl)) return buildTarget(mediaUrl, getMediaSource(media), getFilenameHint(media));
+  if (mediaUrl && isSupportedUrl(mediaUrl)) {
+    return buildTarget(mediaUrl, getMediaSource(media), getFilenameHint(media), getMediaCaptureType(media));
+  }
 
   const selectionUrl = findSupportedTextUrl(globalThis.getSelection()?.toString());
   if (selectionUrl) return buildTarget(selectionUrl, 'selection');
@@ -352,8 +372,20 @@ function getMediaSource(media: HTMLImageElement | HTMLMediaElement | undefined):
   return media instanceof HTMLImageElement ? 'media' : 'media';
 }
 
-function buildTarget(url: string, source: ContextMenuTargetSource, filename?: string): ContextMenuTarget {
-  return { url, pageUrl: location.href, source, filename };
+function getMediaCaptureType(media: HTMLImageElement | HTMLMediaElement | undefined): DownloadCaptureType {
+  if (media instanceof HTMLVideoElement) return 'video';
+  if (media instanceof HTMLAudioElement) return 'audio';
+  if (media instanceof HTMLImageElement) return 'image';
+  return 'other';
+}
+
+function buildTarget(
+  url: string,
+  source: ContextMenuTargetSource,
+  filename?: string,
+  captureType?: DownloadCaptureType,
+): ContextMenuTarget {
+  return { url, pageUrl: location.href, source, filename, captureType };
 }
 
 function findSupportedTextUrl(text: string | undefined): string | undefined {

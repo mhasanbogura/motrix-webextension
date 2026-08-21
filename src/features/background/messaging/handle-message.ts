@@ -70,13 +70,14 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
       case 'content-protocol-click':
         return await routeUrl(message.url, message.pageUrl, 'content_protocol', message.filename);
       case 'capture-url':
-        return await routeUrl(message.url, message.pageUrl, `content_${message.source}`, message.filename);
+        return await routeUrl(message.url, message.pageUrl, `content_${message.source}`, message.filename, message.captureType);
       case 'capture-site-status': {
         const snapshot = await loadSnapshot();
         return {
           ok: true,
           result: {
             blocked: isUrlBlocked(message.url, message.pageUrl, snapshot.settings, snapshot.siteRules),
+            captureTypes: snapshot.settings.captureTypes,
           },
         };
       }

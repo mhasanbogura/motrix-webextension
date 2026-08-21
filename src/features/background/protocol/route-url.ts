@@ -1,9 +1,10 @@
 import type { AddDownloadInput } from '@/library/rpc';
 import type { RuntimeResponse } from '@/library/messages';
+import type { DownloadCaptureType } from '@/library/storage';
 
 import { loadSnapshot } from '@/library/storage';
 import { filenameFromUrl } from '@/library/download/filename-metadata';
-import { isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
+import { isCaptureTypeEnabled, isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
 
 import { getCookieHeader } from '../cookies';
 import { duplicateGuard } from '../downloads/state';
@@ -15,6 +16,7 @@ export async function routeUrl(
   pageUrl: string,
   source: string,
   filename?: string,
+  captureType?: DownloadCaptureType,
 ): Promise<RuntimeResponse> {
   const snapshot = await loadSnapshot();
   if (!isProtocolEnabled(url, snapshot.settings)) {
@@ -22,6 +24,12 @@ export async function routeUrl(
   }
   if (isUrlBlocked(url, pageUrl, snapshot.settings, snapshot.siteRules)) {
     return { ok: false, code: 'site_rule_blocked', message: 'Downloads are blocked for this site' };
+  }
+  if (captureType && !snapshot.settings.captureTypes[captureType]) {
+    return { ok: false, code: 'capture_type_disabled', message: `${captureType} capture is disabled` };
+  }
+  if (!captureType && !isCaptureTypeEnabled({ url, filename }, snapshot.settings)) {
+    return { ok: false, code: 'capture_type_disabled', message: 'This download type is disabled' };
   }
   if (!duplicateGuard.reserve([url, pageUrl])) {
     return { ok: true, result: 'duplicate-blocked' };
