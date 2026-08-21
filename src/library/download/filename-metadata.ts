@@ -50,11 +50,23 @@ export function sanitizeFilename(value: string): string {
 export function filenameFromUrl(url: string): string | undefined {
   try {
     const parsed = new URL(url);
+    const queryFilename = ['filename', 'file_name', 'name', 'download', 'download_name', 'title']
+      .map((key) => parsed.searchParams.get(key))
+      .map((value) => value ? sanitizeFilename(safeDecodeURIComponent(value)) : undefined)
+      .find((value): value is string => Boolean(value) && !isWeakFilename(value));
+    if (queryFilename) return queryFilename;
     const raw = parsed.pathname.split('/').filter(Boolean).pop();
-    return raw ? sanitizeFilename(safeDecodeURIComponent(raw)) : undefined;
+    const pathnameFilename = raw ? sanitizeFilename(safeDecodeURIComponent(raw)) : undefined;
+    return pathnameFilename && !isWeakFilename(pathnameFilename) ? pathnameFilename : undefined;
   } catch {
     return undefined;
   }
+}
+
+export function isWeakFilename(value: string | undefined): boolean {
+  if (!value) return true;
+  const stem = value.replace(/\.[a-z0-9]{1,8}$/i, '').toLowerCase();
+  return new Set(['download', 'file', 'media', 'video', 'audio', 'blob', 'document', 'untitled']).has(stem);
 }
 
 function safeDecodeURIComponent(value: string): string {

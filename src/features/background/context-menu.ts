@@ -59,7 +59,7 @@ export function handleContextMenuClick(info: Browser.contextMenus.OnClickData, t
 async function routeContextMenuClick(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): Promise<void> {
   const target = await resolveContextMenuTarget(info, tab);
   if (!target.url) return;
-  await routeUrl(target.url, target.pageUrl, `context_menu_${target.source}`);
+  await routeUrl(target.url, target.pageUrl, `context_menu_${target.source}`, target.filename);
 }
 
 async function resolveContextMenuTarget(
@@ -125,8 +125,13 @@ function isRuntimeResponse(value: unknown): value is RuntimeResponse {
   return typeof value === 'object' && value !== null && 'ok' in value;
 }
 
-function buildTarget(url: string, pageUrl: string, source: ContextMenuTargetSource): ContextMenuTarget {
-  return { url, pageUrl, source };
+function buildTarget(
+  url: string,
+  pageUrl: string,
+  source: ContextMenuTargetSource,
+  filename?: string,
+): ContextMenuTarget {
+  return { url, pageUrl, source, filename };
 }
 
 function findSupportedTextUrl(text: string | undefined): string | undefined {

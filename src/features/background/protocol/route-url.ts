@@ -10,7 +10,12 @@ import { duplicateGuard } from '../downloads/state';
 import { openDownloadPicker } from '../downloads/picker';
 import { routeDownloadInput } from '../downloads/route-download-input';
 
-export async function routeUrl(url: string, pageUrl: string, source: string): Promise<RuntimeResponse> {
+export async function routeUrl(
+  url: string,
+  pageUrl: string,
+  source: string,
+  filename?: string,
+): Promise<RuntimeResponse> {
   const snapshot = await loadSnapshot();
   if (!isProtocolEnabled(url, snapshot.settings)) {
     return { ok: false, code: 'disabled', message: 'This protocol is disabled' };
@@ -23,7 +28,7 @@ export async function routeUrl(url: string, pageUrl: string, source: string): Pr
     url,
     referer: pageUrl,
     cookie,
-    filename: filenameFromUrl(url),
+    filename: filename || filenameFromUrl(url),
     dir: snapshot.settings.defaultDir || undefined,
   };
   if (snapshot.settings.promptBeforeDownload) {

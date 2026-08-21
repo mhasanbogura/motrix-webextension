@@ -30,6 +30,7 @@ export type ContextMenuTargetSource = 'link' | 'media' | 'selection' | 'page';
 export interface ContextMenuTarget {
   url?: string;
   pageUrl: string;
+  filename?: string;
   source: ContextMenuTargetSource;
 }
 
@@ -48,8 +49,8 @@ export type RuntimeMessage
     | { type: 'resume-all' }
     | { type: 'clear-tasks'; lane: RuntimeTaskLane; gids: string[] }
     | { type: 'wake-motrix' }
-    | { type: 'content-protocol-click'; url: string; pageUrl: string }
-    | { type: 'capture-url'; url: string; pageUrl: string; source: ContextMenuTargetSource }
+    | { type: 'content-protocol-click'; url: string; pageUrl: string; filename?: string }
+    | { type: 'capture-url'; url: string; pageUrl: string; source: ContextMenuTargetSource; filename?: string }
     | { type: 'resolve-context-menu-target' }
     | { type: 'picker:get'; id: string }
     | { type: 'picker:submit'; id: string; filename: string }

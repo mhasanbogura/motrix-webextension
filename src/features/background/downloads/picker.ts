@@ -3,7 +3,7 @@ import type { StorageSnapshot } from '@/library/storage';
 import type { RuntimeResponse } from '@/library/messages';
 
 import { loadSnapshot } from '@/library/storage';
-import { sanitizeFilename } from '@/library/download/filename-metadata';
+import { filenameFromUrl, isWeakFilename, sanitizeFilename } from '@/library/download/filename-metadata';
 
 import { routeDownloadInput } from './route-download-input';
 
@@ -25,9 +25,16 @@ function safeOutputName(value: string | undefined, fallback = 'download'): strin
   return cleaned || fallback;
 }
 
+function resolvePickerFilename(input: AddDownloadInput): string {
+  const urlFilename = filenameFromUrl(input.finalUrl || input.url);
+  const inputFilename = input.filename && !isWeakFilename(input.filename) ? input.filename : undefined;
+  return safeOutputName(inputFilename || urlFilename || input.filename, 'download');
+}
+
 export async function openDownloadPicker(input: AddDownloadInput, source: string): Promise<string> {
   const id = crypto.randomUUID();
-  const pending: PendingPicker = { id, input, source, createdAt: Date.now() };
+  const pendingInput: AddDownloadInput = { ...input, filename: resolvePickerFilename(input) };
+  const pending: PendingPicker = { id, input: pendingInput, source, createdAt: Date.now() };
   await browser.storage.local.set({ [storageKey(id)]: pending });
   const pickerUrl = browser.runtime.getURL(`/picker.html?id=${encodeURIComponent(id)}`);
   try {
@@ -62,7 +69,7 @@ export async function submitPendingPicker(
   const snapshot = await loadSnapshot();
   const input: AddDownloadInput = {
     ...pending.input,
-    filename: safeOutputName(filename, pending.input.filename || 'download'),
+    filename: safeOutputName(filename, resolvePickerFilename(pending.input)),
     dir: snapshot.settings.defaultDir || undefined,
   };
   await routeDownloadInput(input, snapshot, `${pending.source}_picker`);
@@ -91,7 +98,7 @@ export async function handlePickerMessage(message: {
 }
 
 export function pickerInputDefaults(pending: PendingPicker): { filename: string } {
-  return { filename: safeOutputName(pending.input.filename, 'download') };
+  return { filename: resolvePickerFilename(pending.input) };
 }
 
 export type PickerSnapshot = StorageSnapshot;

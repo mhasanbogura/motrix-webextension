@@ -76,6 +76,7 @@ function handleProtocolClick(event: MouseEvent): void {
     type: 'content-protocol-click',
     url: href,
     pageUrl: location.href,
+    filename: getFilenameHint(target),
   }).then((response: RuntimeResponse) => {
     if (!response.ok && response.code === 'disabled') location.href = href;
   }).catch(() => {
@@ -170,6 +171,7 @@ function ensureMediaButton(): void {
       url,
       pageUrl: location.href,
       source: getMediaSource(target),
+      filename: getFilenameHint(target),
     }).then((response: RuntimeResponse) => {
       if (!response.ok) {
         mediaButton!.disabled = false;
@@ -224,11 +226,11 @@ function removeMediaButton(): void {
 function resolveContextMenuTarget(event: MouseEvent): ContextMenuTarget {
   const element = getElementAtPoint(event);
   const linkUrl = getClosestLinkUrl(element);
-  if (linkUrl) return buildTarget(linkUrl, 'link');
+  if (linkUrl) return buildTarget(linkUrl, 'link', getFilenameHint(element));
 
   const media = getClosestMediaElement(element) ?? getMediaAtPoint(event.clientX, event.clientY);
   const mediaUrl = getMediaUrl(media);
-  if (mediaUrl && isSupportedUrl(mediaUrl)) return buildTarget(mediaUrl, getMediaSource(media));
+  if (mediaUrl && isSupportedUrl(mediaUrl)) return buildTarget(mediaUrl, getMediaSource(media), getFilenameHint(media));
 
   const selectionUrl = findSupportedTextUrl(globalThis.getSelection()?.toString());
   if (selectionUrl) return buildTarget(selectionUrl, 'selection');
@@ -254,6 +256,25 @@ function getClosestLinkUrl(element: Element | undefined): string | undefined {
   const link = element?.closest('a[href]');
   if (!(link instanceof HTMLAnchorElement)) return undefined;
   return normalizeSupportedUrl(link.href);
+}
+
+function getFilenameHint(element: Element | undefined): string | undefined {
+  const link = element?.closest('a[href]');
+  const metadataElement = element?.closest('[data-filename], [data-file-name], [data-name], [data-title]');
+  const candidates = [
+    link?.getAttribute('download'),
+    element?.getAttribute('data-filename'),
+    element?.getAttribute('data-file-name'),
+    element?.getAttribute('data-name'),
+    element?.getAttribute('data-title'),
+    metadataElement?.getAttribute('data-filename'),
+    metadataElement?.getAttribute('data-file-name'),
+    metadataElement?.getAttribute('data-name'),
+    metadataElement?.getAttribute('data-title'),
+    element?.getAttribute('title'),
+    element?.getAttribute('aria-label'),
+  ];
+  return candidates.map((value) => value?.trim()).find((value): value is string => Boolean(value));
 }
 
 function getClosestMediaElement(element: Element | undefined): HTMLImageElement | HTMLMediaElement | undefined {
@@ -302,8 +323,8 @@ function getMediaSource(media: HTMLImageElement | HTMLMediaElement | undefined):
   return media instanceof HTMLImageElement ? 'media' : 'media';
 }
 
-function buildTarget(url: string, source: ContextMenuTargetSource): ContextMenuTarget {
-  return { url, pageUrl: location.href, source };
+function buildTarget(url: string, source: ContextMenuTargetSource, filename?: string): ContextMenuTarget {
+  return { url, pageUrl: location.href, source, filename };
 }
 
 function findSupportedTextUrl(text: string | undefined): string | undefined {

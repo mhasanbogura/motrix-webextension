@@ -67,9 +67,9 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
         await wakeMotrix();
         return { ok: true };
       case 'content-protocol-click':
-        return await routeUrl(message.url, message.pageUrl, 'content_protocol');
+        return await routeUrl(message.url, message.pageUrl, 'content_protocol', message.filename);
       case 'capture-url':
-        return await routeUrl(message.url, message.pageUrl, `content_${message.source}`);
+        return await routeUrl(message.url, message.pageUrl, `content_${message.source}`, message.filename);
       case 'picker:get':
       case 'picker:submit':
       case 'picker:cancel':
