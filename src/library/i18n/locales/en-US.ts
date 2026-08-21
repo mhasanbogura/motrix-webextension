@@ -91,7 +91,6 @@ export const enUS = {
     extensionFilterHint: 'Control captured file types by extension.',
     allowedExtensions: 'Allowed extensions',
     blockedExtensions: 'Blocked extensions',
-    language: 'Language',
     theme: 'Theme',
     themeSystem: 'System',
     themeSystemHint: 'Follow browser and OS preference.',

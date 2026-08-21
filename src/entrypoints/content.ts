@@ -2,6 +2,7 @@ import type { ContextMenuTarget, ContextMenuTargetSource, RuntimeMessage, Runtim
 
 const PROTOCOL_PATTERN = /^(?:magnet|ed2k|thunder):/i;
 const CONTEXT_MENU_TARGET_TTL_MS = 60000;
+const MEDIA_BUTTON_ID = 'motrix-idm-media-capture';
 const SUPPORTED_PROTOCOLS = new Set(['http:', 'https:', 'magnet:', 'ed2k:', 'thunder:']);
 const TEXT_URL_PATTERN = /(https?:\/\/[^\s<>"'`]+|magnet:\?[^\s<>"'`]+|ed2k:\/\/[^\s<>"'`]+|thunder:\/\/[A-Z0-9+/=]+)/i;
 
@@ -11,48 +12,20 @@ interface RecordedContextMenuTarget {
 }
 
 let lastContextMenuTarget: RecordedContextMenuTarget | undefined;
+let activeMedia: HTMLImageElement | HTMLMediaElement | undefined;
+let mediaButton: HTMLButtonElement | undefined;
 
 export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'],
+  allFrames: true,
   runAt: 'document_start',
   main() {
-    document.addEventListener(
-      'contextmenu',
-      (event) => {
-        lastContextMenuTarget = {
-          time: Date.now(),
-          target: resolveContextMenuTarget(event),
-        };
-      },
-      true,
-    );
-
-    document.addEventListener(
-      'click',
-      (event) => {
-        const target = event.target instanceof Element ? event.target.closest('a[href]') : null;
-        if (!(target instanceof HTMLAnchorElement)) return;
-        const href = target.href;
-        if (!PROTOCOL_PATTERN.test(href)) return;
-        event.preventDefault();
-        event.stopPropagation();
-        void browser.runtime
-          .sendMessage({
-            type: 'content-protocol-click',
-            url: href,
-            pageUrl: location.href,
-          })
-          .then((response: RuntimeResponse) => {
-            if (!response.ok && response.code === 'disabled') {
-              location.href = href;
-            }
-          })
-          .catch(() => {
-            location.href = href;
-          });
-      },
-      true,
-    );
+    document.addEventListener('contextmenu', handleContextMenu, true);
+    document.addEventListener('click', handleProtocolClick, true);
+    document.addEventListener('pointerover', handleMediaPointerOver, true);
+    document.addEventListener('pointerout', handleMediaPointerOut, true);
+    window.addEventListener('scroll', repositionMediaButton, { passive: true });
+    window.addEventListener('resize', repositionMediaButton, { passive: true });
 
     browser.runtime.onMessage.addListener((message: RuntimeMessage) => {
       if (message.type !== 'resolve-context-menu-target') return undefined;
@@ -64,12 +37,112 @@ export default defineContentScript({
   },
 });
 
-function getLatestContextMenuTarget(): ContextMenuTarget {
-  const recorded = lastContextMenuTarget;
-  const isFresh = recorded
-    && recorded.target.pageUrl === location.href
-    && Date.now() - recorded.time <= CONTEXT_MENU_TARGET_TTL_MS;
-  return isFresh ? recorded.target : buildTarget(location.href, 'page');
+function handleContextMenu(event: MouseEvent): void {
+  lastContextMenuTarget = {
+    time: Date.now(),
+    target: resolveContextMenuTarget(event),
+  };
+}
+
+function handleProtocolClick(event: MouseEvent): void {
+  const target = event.target instanceof Element ? event.target.closest('a[href]') : null;
+  if (!(target instanceof HTMLAnchorElement)) return;
+  const href = normalizeSupportedUrl(target.href);
+  if (!href || !PROTOCOL_PATTERN.test(href)) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  void browser.runtime.sendMessage({
+    type: 'content-protocol-click',
+    url: href,
+    pageUrl: location.href,
+  }).then((response: RuntimeResponse) => {
+    if (!response.ok && response.code === 'disabled') location.href = href;
+  }).catch(() => {
+    location.href = href;
+  });
+}
+
+function handleMediaPointerOver(event: PointerEvent): void {
+  const media = getClosestMediaElement(event.target instanceof Element ? event.target : undefined);
+  if (!media) return;
+  const url = getMediaUrl(media);
+  if (!isSupportedUrl(url)) return;
+  activeMedia = media;
+  ensureMediaButton();
+  repositionMediaButton();
+}
+
+function handleMediaPointerOut(event: PointerEvent): void {
+  if (!activeMedia) return;
+  const next = event.relatedTarget instanceof Node ? event.relatedTarget : undefined;
+  if (next && activeMedia.contains(next)) return;
+  if (next && mediaButton?.contains(next)) return;
+  const nextMedia = next instanceof Element ? getClosestMediaElement(next) : undefined;
+  if (nextMedia === activeMedia) return;
+  removeMediaButton();
+}
+
+function ensureMediaButton(): void {
+  if (mediaButton) return;
+  mediaButton = document.createElement('button');
+  mediaButton.id = MEDIA_BUTTON_ID;
+  mediaButton.type = 'button';
+  mediaButton.textContent = 'Download with Motrix';
+  mediaButton.setAttribute('aria-label', 'Download media with Motrix');
+  Object.assign(mediaButton.style, {
+    position: 'fixed',
+    zIndex: '2147483647',
+    display: 'block',
+    border: '0',
+    borderRadius: '8px',
+    padding: '9px 12px',
+    background: '#7561d9',
+    color: '#fff',
+    boxShadow: '0 6px 18px rgba(37, 28, 97, .32)',
+    font: '700 12px system-ui, sans-serif',
+    cursor: 'pointer',
+  });
+  mediaButton.addEventListener('pointerdown', (event) => event.stopPropagation());
+  mediaButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const target = activeMedia;
+    const url = target ? getMediaUrl(target) : undefined;
+    if (!url || !isSupportedUrl(url)) return;
+    mediaButton!.disabled = true;
+    mediaButton!.textContent = 'Opening picker…';
+    void browser.runtime.sendMessage({
+      type: 'capture-url',
+      url,
+      pageUrl: location.href,
+      source: getMediaSource(target),
+    }).then((response: RuntimeResponse) => {
+      if (!response.ok) {
+        mediaButton!.disabled = false;
+        mediaButton!.textContent = response.message || 'Retry with Motrix';
+        return;
+      }
+      removeMediaButton();
+    }).catch(() => removeMediaButton());
+  });
+  document.documentElement.appendChild(mediaButton);
+}
+
+function repositionMediaButton(): void {
+  if (!mediaButton || !activeMedia) return;
+  const rect = activeMedia.getBoundingClientRect();
+  const width = mediaButton.offsetWidth || 180;
+  const left = Math.max(8, Math.min(window.innerWidth - width - 8, rect.right - width - 8));
+  const top = Math.max(8, Math.min(window.innerHeight - 46, rect.top + 8));
+  mediaButton.style.left = `${left}px`;
+  mediaButton.style.top = `${top}px`;
+}
+
+function removeMediaButton(): void {
+  mediaButton?.remove();
+  mediaButton = undefined;
+  activeMedia = undefined;
 }
 
 function resolveContextMenuTarget(event: MouseEvent): ContextMenuTarget {
@@ -77,13 +150,22 @@ function resolveContextMenuTarget(event: MouseEvent): ContextMenuTarget {
   const linkUrl = getClosestLinkUrl(element);
   if (linkUrl) return buildTarget(linkUrl, 'link');
 
-  const mediaUrl = getClosestMediaUrl(element);
-  if (mediaUrl) return buildTarget(mediaUrl, 'media');
+  const media = getClosestMediaElement(element);
+  const mediaUrl = getMediaUrl(media);
+  if (mediaUrl && isSupportedUrl(mediaUrl)) return buildTarget(mediaUrl, getMediaSource(media));
 
   const selectionUrl = findSupportedTextUrl(globalThis.getSelection()?.toString());
   if (selectionUrl) return buildTarget(selectionUrl, 'selection');
 
   return buildTarget(location.href, 'page');
+}
+
+function getLatestContextMenuTarget(): ContextMenuTarget {
+  const recorded = lastContextMenuTarget;
+  const isFresh = recorded
+    && recorded.target.pageUrl === location.href
+    && Date.now() - recorded.time <= CONTEXT_MENU_TARGET_TTL_MS;
+  return isFresh ? recorded.target : buildTarget(location.href, 'page');
 }
 
 function getElementAtPoint(event: MouseEvent): Element | undefined {
@@ -94,18 +176,30 @@ function getElementAtPoint(event: MouseEvent): Element | undefined {
 
 function getClosestLinkUrl(element: Element | undefined): string | undefined {
   const link = element?.closest('a[href]');
-  return link instanceof HTMLAnchorElement ? normalizeSupportedUrl(link.href) : undefined;
+  if (!(link instanceof HTMLAnchorElement)) return undefined;
+  return normalizeSupportedUrl(link.href);
 }
 
-function getClosestMediaUrl(element: Element | undefined): string | undefined {
+function getClosestMediaElement(element: Element | undefined): HTMLImageElement | HTMLMediaElement | undefined {
   const image = element?.closest('img');
-  if (image instanceof HTMLImageElement) return normalizeSupportedUrl(image.currentSrc || image.src);
-
+  if (image instanceof HTMLImageElement) return image;
   const media = element?.closest('video,audio');
-  if (media instanceof HTMLMediaElement) return normalizeSupportedUrl(media.currentSrc || media.src);
+  if (media instanceof HTMLMediaElement) return media;
+  return undefined;
+}
 
-  const source = element?.closest('source');
-  return source instanceof HTMLSourceElement ? normalizeSupportedUrl(source.src) : undefined;
+function getMediaUrl(media: HTMLImageElement | HTMLMediaElement | undefined): string | undefined {
+  if (!media) return undefined;
+  const candidates = media instanceof HTMLImageElement
+    ? [media.currentSrc, media.src, media.dataset.src, media.dataset.original]
+    : [media.currentSrc, media.src, media.querySelector('source')?.src, media.dataset.src, media.dataset.url];
+  return candidates
+    .map((candidate) => normalizeSupportedUrl(candidate))
+    .find((candidate): candidate is string => Boolean(candidate));
+}
+
+function getMediaSource(media: HTMLImageElement | HTMLMediaElement | undefined): ContextMenuTargetSource {
+  return media instanceof HTMLImageElement ? 'media' : 'media';
 }
 
 function buildTarget(url: string, source: ContextMenuTargetSource): ContextMenuTarget {
@@ -119,11 +213,20 @@ function findSupportedTextUrl(text: string | undefined): string | undefined {
 
 function normalizeSupportedUrl(value: string | undefined): string | undefined {
   if (!value) return undefined;
-  const trimmed = value.trim().replace(/^[<('"“‘]+/, '').replace(/[>)'",.，。；;!！?？]+$/, '');
-  return isSupportedUrl(trimmed) ? trimmed : undefined;
+  const trimmed = value.trim().replace(/^[<('“‘]+/, '').replace(/[>)',.，。；;!！?？]+$/, '');
+  if (!trimmed) return undefined;
+  try {
+    const absolute = /^[a-z][a-z0-9+.-]*:/i.test(trimmed)
+      ? trimmed
+      : new URL(trimmed, location.href).href;
+    return isSupportedUrl(absolute) ? absolute : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
-function isSupportedUrl(value: string): boolean {
+function isSupportedUrl(value: string | undefined): value is string {
+  if (!value) return false;
   return SUPPORTED_PROTOCOLS.has(getProtocol(value));
 }
 

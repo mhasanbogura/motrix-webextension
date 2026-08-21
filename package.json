@@ -1,6 +1,6 @@
 {
-  "name": "motrix-extension-idm-strm",
-  "description": "Motrix browser extension with an IDM-style picker and Save link as .strm support.",
+  "name": "motrix-webextension-idm",
+  "description": "Motrix WebExtension with a full IDM-style picker and media/link capture.",
   "private": true,
   "version": "1.0.0",
   "license": "MIT",

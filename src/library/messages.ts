@@ -42,13 +42,14 @@ export type RuntimeMessage
     | { type: 'update-connection'; patch: Partial<ConnectionConfig> }
     | { type: 'update-ui'; patch: Partial<UiPrefs> }
     | { type: 'save-site-rules'; siteRules: SiteRule[] }
-    | { type: 'add-url'; url: string }
+    | { type: 'add-url'; url: string; pageUrl?: string }
     | { type: 'task-action'; action: 'pause' | 'resume' | 'remove'; gid: string; status?: Aria2TaskStatus }
     | { type: 'pause-all'; gids?: string[] }
     | { type: 'resume-all' }
     | { type: 'clear-tasks'; lane: RuntimeTaskLane; gids: string[] }
     | { type: 'wake-motrix' }
     | { type: 'content-protocol-click'; url: string; pageUrl: string }
+    | { type: 'capture-url'; url: string; pageUrl: string; source: ContextMenuTargetSource }
     | { type: 'resolve-context-menu-target' }
     | { type: 'picker:get'; id: string }
     | { type: 'picker:submit'; id: string; filename: string; dir: string }

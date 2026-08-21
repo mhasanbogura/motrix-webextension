@@ -1,4 +1,4 @@
-import { Download, Languages, Paintbrush, Plug, Shield, Wrench } from 'lucide-react';
+import { Download, Paintbrush, Plug, Shield, Wrench } from 'lucide-react';
 
 import type { IconComponent, SectionId } from './types';
 
@@ -7,7 +7,6 @@ export const optionsSections: Array<{ id: SectionId; icon: IconComponent; key: s
   { id: 'download', icon: Download, key: 'options.download' },
   { id: 'rules', icon: Shield, key: 'options.rules' },
   { id: 'appearance', icon: Paintbrush, key: 'options.appearance' },
-  { id: 'language', icon: Languages, key: 'options.language' },
   { id: 'maintenance', icon: Wrench, key: 'options.maintenance' },
 ];
 

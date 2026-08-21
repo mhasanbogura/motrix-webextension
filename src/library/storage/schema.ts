@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Locale } from '@/library/i18n/dictionaries';
 
 export const ThemeSchema = z.enum(['system', 'light', 'dark']);
-export const LocaleSchema = z.preprocess((value) => (value === 'en' ? 'en-US' : value), z.enum(['en-US', 'zh-CN']));
+export const LocaleSchema = z.preprocess(() => 'en-US', z.literal('en-US'));
 export const DensitySchema = z.enum(['comfortable', 'compact']);
 
 export const ConnectionConfigSchema = z.object({
@@ -40,7 +40,7 @@ export const SiteRuleSchema = z.object({
 });
 
 export const UiPrefsSchema = z.object({
-  locale: LocaleSchema.default('zh-CN'),
+  locale: LocaleSchema.default('en-US'),
   theme: ThemeSchema.default('system'),
   density: DensitySchema.default('comfortable'),
   motion: z.boolean().default(true),

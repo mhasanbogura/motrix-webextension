@@ -50,7 +50,7 @@ export default defineConfig({
   },
   manifest: {
     name: 'Motrix WebExtension',
-    description: 'Motrix WebExtension with an IDM-style picker and Save link as .strm support',
+    description: 'Motrix WebExtension with a full IDM-style picker and media/link capture',
     version: dateVersions.manifestVersion,
     version_name: dateVersions.displayVersion,
     minimum_chrome_version: '116',

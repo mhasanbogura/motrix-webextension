@@ -5,7 +5,6 @@ import type { SectionId } from '@/features/options/types';
 import { RulesSection } from '@/features/options/sections/rules-section';
 import { OptionsLayout } from '@/features/options/components/options-layout';
 import { DownloadSection } from '@/features/options/sections/download-section';
-import { LanguageSection } from '@/features/options/sections/language-section';
 import { useOptionsSettings } from '@/features/options/hooks/use-options-settings';
 import { AppearanceSection } from '@/features/options/sections/appearance-section';
 import { ConnectionSection } from '@/features/options/sections/connection-section';
@@ -74,10 +73,6 @@ export default function App() {
 
       {active === 'appearance'
         ? <AppearanceSection compact={compact} persistUi={persistUi} snapshot={snapshot} t={t} />
-        : null}
-
-      {active === 'language'
-        ? <LanguageSection compact={compact} persistUi={persistUi} snapshot={snapshot} t={t} />
         : null}
 
       {active === 'maintenance'

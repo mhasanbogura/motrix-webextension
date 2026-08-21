@@ -74,27 +74,6 @@ export async function cancelPendingPicker(id: string): Promise<void> {
   await deletePendingPicker(id);
 }
 
-export async function saveLinkAsStrm(url: string, suggestedName?: string): Promise<void> {
-  if (!url) throw new Error('No link URL was provided');
-  const base = safeOutputName(suggestedName || deriveName(url), 'stream');
-  const filename = base.toLowerCase().endsWith('.strm') ? base : `${base}.strm`;
-  const data = `${url}\n`;
-  const dataUrl = `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`;
-  await browser.downloads.download({ url: dataUrl, filename, saveAs: true, conflictAction: 'uniquify' });
-}
-
-function deriveName(url: string): string {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace(/^www\./i, '') || 'stream';
-    const lastPath = parsed.pathname.split('/').filter(Boolean).pop();
-    const stem = lastPath?.replace(/\.[^.]+$/, '');
-    return sanitizeFilename(stem || host) || 'stream';
-  } catch {
-    return 'stream';
-  }
-}
-
 export async function handlePickerMessage(message: {
   type: 'picker:get' | 'picker:submit' | 'picker:cancel';
   id: string;

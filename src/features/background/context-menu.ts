@@ -4,10 +4,8 @@ import type { ContextMenuTarget, ContextMenuTargetSource, RuntimeMessage, Runtim
 import { loadSnapshot } from '@/library/storage';
 
 import { routeUrl } from './protocol/route-url';
-import { saveLinkAsStrm } from './downloads/picker';
 
 const CONTEXT_MENU_ID = 'download-with-motrix';
-const STRM_MENU_ID = 'save-link-as-strm';
 const CONTEXT_MENU_CONTEXTS: [Browser.contextMenus.ContextType, ...Browser.contextMenus.ContextType[]] = [
   contextType('link'),
   contextType('image'),
@@ -28,16 +26,11 @@ export async function syncContextMenuVisibility(snapshot?: StorageSnapshot): Pro
   const visible = snapshot?.ui.showContextMenu ?? (await loadSnapshot()).ui.showContextMenu;
   if (!visible) {
     await browser.contextMenus.remove(CONTEXT_MENU_ID).catch(() => undefined);
-    await browser.contextMenus.remove(STRM_MENU_ID).catch(() => undefined);
     return;
   }
 
   await ensureContextMenu(CONTEXT_MENU_ID, {
     title: 'Download with Motrix',
-    contexts: CONTEXT_MENU_CONTEXTS,
-  });
-  await ensureContextMenu(STRM_MENU_ID, {
-    title: 'Save link as .strm',
     contexts: CONTEXT_MENU_CONTEXTS,
   });
 }
@@ -59,17 +52,13 @@ function contextType(value: string): Browser.contextMenus.ContextType {
 }
 
 export function handleContextMenuClick(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): void {
-  if (info.menuItemId !== CONTEXT_MENU_ID && info.menuItemId !== STRM_MENU_ID) return;
+  if (info.menuItemId !== CONTEXT_MENU_ID) return;
   void routeContextMenuClick(info, tab);
 }
 
 async function routeContextMenuClick(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): Promise<void> {
   const target = await resolveContextMenuTarget(info, tab);
   if (!target.url) return;
-  if (info.menuItemId === STRM_MENU_ID) {
-    await saveLinkAsStrm(target.url);
-    return;
-  }
   await routeUrl(target.url, target.pageUrl, `context_menu_${target.source}`);
 }
 

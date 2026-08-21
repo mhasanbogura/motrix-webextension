@@ -29,7 +29,7 @@ Browser extension for Motrix — download interception, aria2 JSON-RPC delegatio
 - **Task actions** — Pause, resume, remove, pause all, and resume all through aria2 RPC.
 - **Auto wake and fallback** — Attempts to wake Motrix with `motrix://` and falls back to `motrix://new-task` when RPC submission fails.
 - **Settings management** — Stores connection, download, site rule, UI, and diagnostic settings locally.
-- **i18n** — Includes English and Simplified Chinese.
+- **English-only interface** — The popup, Options page, picker, and diagnostics use fixed English copy.
 
 ## Installation
 
@@ -200,11 +200,11 @@ This repository's README and privacy policy are written for the current Motrix E
 See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 
-## Motrix WebExtension IDM + STRM edition
+## Motrix WebExtension IDM edition
 
-This separate repository keeps the reference Motrix dashboard/options design while adding an IDM-style review picker. Captured downloads and manual Motrix links can be reviewed before the filename and aria2 destination directory are sent to Motrix. The picker is enabled by default and can be controlled from **Options → Download**.
+This separate repository keeps the reference Motrix dashboard/options design while adding a full IDM-style review picker. Captured browser downloads, context-menu links, protocol URLs, images, audio, and video can be reviewed before their filename, referrer, cookies, headers, and aria2 destination directory are sent to Motrix. The picker is enabled by default and can be controlled from **Options → Download**.
 
-The context menu also includes **Save link as .strm**. It creates a plain-text `.strm` file containing the selected HTTP, HTTPS, magnet, ed2k, or thunder URL and opens the browser save flow with a safe suggested filename.
+The only right-click command is **Download with Motrix**. Media capture also provides a small **Download with Motrix** action when hovering supported remote images, audio, and video elements. Capture runs in nested frames where possible and falls back to the browser download interception path for protected or blob-backed media.
 
 ### Requested downloadable layout
 

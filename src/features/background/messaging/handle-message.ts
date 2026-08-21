@@ -46,7 +46,7 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
       case 'save-site-rules':
         return { ok: true, snapshot: await saveSiteRules(message.siteRules) };
       case 'add-url':
-        return await routeUrl(message.url, '', 'manual_popup');
+        return await routeUrl(message.url, message.pageUrl || '', 'manual_popup');
       case 'task-action':
         await performTaskAction(message.action, message.gid, message.status);
         return { ok: true };
@@ -68,6 +68,8 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
         return { ok: true };
       case 'content-protocol-click':
         return await routeUrl(message.url, message.pageUrl, 'content_protocol');
+      case 'capture-url':
+        return await routeUrl(message.url, message.pageUrl, `content_${message.source}`);
       case 'picker:get':
       case 'picker:submit':
       case 'picker:cancel':
