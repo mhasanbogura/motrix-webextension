@@ -7,7 +7,9 @@
   --picker-muted: #77738f;
   --picker-primary: #7561d9;
   --picker-primary-dark: #5d4ac0;
-  --picker-soft: #f0edff;
+  --picker-soft: #eef0f3;
+  --picker-panel: #68717e;
+  --picker-panel-dark: #4b5563;
   font-family:
     Inter,
     ui-sans-serif,
@@ -58,8 +60,8 @@ body {
   margin-bottom: 14px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #6955ce, #4d3caa);
-  box-shadow: 0 8px 18px rgba(75, 57, 168, 0.22);
+  background: linear-gradient(135deg, var(--picker-panel), var(--picker-panel-dark));
+  box-shadow: 0 8px 18px rgba(71, 85, 105, 0.24);
 }
 
 .picker-logo {
@@ -111,7 +113,7 @@ h1 {
   padding: 9px 12px;
   border-radius: 15px 15px 0 0;
   color: #fff;
-  background: var(--picker-primary-dark);
+  background: var(--picker-panel-dark);
   font-size: 14px;
   font-weight: 750;
 }
@@ -228,7 +230,9 @@ input:focus {
     --picker-border: rgba(226, 220, 255, 0.14);
     --picker-text: #f1efff;
     --picker-muted: #aaa5c2;
-    --picker-soft: #302b53;
+    --picker-soft: #30353d;
+    --picker-panel: #717b89;
+    --picker-panel-dark: #566170;
   }
 
   .picker-error {
