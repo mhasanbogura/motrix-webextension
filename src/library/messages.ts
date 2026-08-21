@@ -52,7 +52,7 @@ export type RuntimeMessage
     | { type: 'capture-url'; url: string; pageUrl: string; source: ContextMenuTargetSource }
     | { type: 'resolve-context-menu-target' }
     | { type: 'picker:get'; id: string }
-    | { type: 'picker:submit'; id: string; filename: string; dir: string }
+    | { type: 'picker:submit'; id: string; filename: string }
     | { type: 'picker:cancel'; id: string }
     | { type: 'append-diagnostic'; event: Omit<DiagnosticEvent, 'id' | 'timestamp'> }
     | { type: 'clear-diagnostics' }

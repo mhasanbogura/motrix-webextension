@@ -9,7 +9,6 @@ export default function App() {
   const id = useMemo(() => new URLSearchParams(globalThis.location.search).get('id') || '', []);
   const [pending, setPending] = useState<PendingPicker>();
   const [filename, setFilename] = useState('download');
-  const [dir, setDir] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -26,7 +25,6 @@ export default function App() {
       const value = response.result as PendingPicker;
       setPending(value);
       setFilename(value.input.filename || 'download');
-      setDir(value.input.dir || '');
       setLoading(false);
     }).catch((reason: unknown) => {
       if (!active) return;
@@ -51,7 +49,6 @@ export default function App() {
         type: 'picker:submit',
         id,
         filename: cleanFilename,
-        dir: dir.trim(),
       });
       if (!response.ok) {
         setError(response.message);
@@ -102,20 +99,6 @@ export default function App() {
           autoFocus
           spellCheck={false}
         />
-        <label className='picker-label' htmlFor='directory'>Save directory</label>
-        <input
-          id='directory'
-          value={dir}
-          onChange={(event) => setDir(event.target.value)}
-          placeholder="Use Motrix's default directory"
-          spellCheck={false}
-        />
-        <div className='picker-hint'>
-          The directory is passed to Motrix as the aria2
-          <code>dir</code>
-          {' '}
-          option.
-        </div>
       </section>
 
       {error && <div className='picker-error' role='alert'>{error}</div>}

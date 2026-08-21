@@ -56,7 +56,6 @@ export async function deletePendingPicker(id: string): Promise<void> {
 export async function submitPendingPicker(
   id: string,
   filename: string,
-  dir: string,
 ): Promise<void> {
   const pending = await getPendingPicker(id);
   if (!pending) throw new Error('The download picker request has expired');
@@ -64,7 +63,7 @@ export async function submitPendingPicker(
   const input: AddDownloadInput = {
     ...pending.input,
     filename: safeOutputName(filename, pending.input.filename || 'download'),
-    dir: dir.trim() || pending.input.dir,
+    dir: snapshot.settings.defaultDir || undefined,
   };
   await routeDownloadInput(input, snapshot, `${pending.source}_picker`);
   await deletePendingPicker(id);
@@ -78,7 +77,6 @@ export async function handlePickerMessage(message: {
   type: 'picker:get' | 'picker:submit' | 'picker:cancel';
   id: string;
   filename?: string;
-  dir?: string;
 }): Promise<RuntimeResponse> {
   if (message.type === 'picker:get') {
     const pending = await getPendingPicker(message.id);
@@ -88,15 +86,12 @@ export async function handlePickerMessage(message: {
     await cancelPendingPicker(message.id);
     return { ok: true };
   }
-  await submitPendingPicker(message.id, message.filename || '', message.dir || '');
+  await submitPendingPicker(message.id, message.filename || '');
   return { ok: true };
 }
 
-export function pickerInputDefaults(pending: PendingPicker): { filename: string; dir: string } {
-  return {
-    filename: safeOutputName(pending.input.filename, 'download'),
-    dir: pending.input.dir || '',
-  };
+export function pickerInputDefaults(pending: PendingPicker): { filename: string } {
+  return { filename: safeOutputName(pending.input.filename, 'download') };
 }
 
 export type PickerSnapshot = StorageSnapshot;
