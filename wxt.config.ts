@@ -1,41 +1,7 @@
 import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
 
-const CHROME_VERSION_PART_MAX = 65535;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function padDatePart(value: number): string {
-  return value.toString().padStart(2, '0');
-}
-
-function getDayBuildNumber(date: Date): number {
-  const elapsedMs = date.getUTCHours() * 3600000
-    + date.getUTCMinutes() * 60000
-    + date.getUTCSeconds() * 1000
-    + date.getUTCMilliseconds();
-
-  return Math.floor(elapsedMs * CHROME_VERSION_PART_MAX / (MS_PER_DAY - 1));
-}
-
-function getDateVersions(date = new Date()) {
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth() + 1;
-  const day = date.getUTCDate();
-  const buildNumber = getDayBuildNumber(date);
-  const displayVersion = [
-    year,
-    padDatePart(month),
-    padDatePart(day),
-    buildNumber,
-  ].join('.');
-
-  return {
-    displayVersion,
-    manifestVersion: `${year}.${month}.${day}.${buildNumber}`,
-  };
-}
-
-const dateVersions = getDateVersions();
+const RELEASE_VERSION = '1.6.0';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -51,8 +17,8 @@ export default defineConfig({
   manifest: {
     name: 'Motrix WebExtension',
     description: 'Motrix WebExtension with a full IDM-style picker and media/link capture',
-    version: dateVersions.manifestVersion,
-    version_name: dateVersions.displayVersion,
+    version: RELEASE_VERSION,
+    version_name: RELEASE_VERSION,
     minimum_chrome_version: '116',
     default_locale: 'en_US',
     action: {
@@ -74,6 +40,9 @@ export default defineConfig({
     host_permissions: [
       'http://*/*',
       'https://*/*',
+      'http://127.0.0.1:16800/*',
+      'http://localhost:16800/*',
+      'http://[::1]:16800/*',
     ],
   },
 });

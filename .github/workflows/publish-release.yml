@@ -60,8 +60,8 @@ jobs:
         id: artifact
         run: |
           set -euo pipefail
-          VERSION_NAME=$(jq -r .version_name .output/chrome-mv3/manifest.json)
-          MANIFEST_VERSION=$(jq -r .version .output/chrome-mv3/manifest.json)
+          VERSION_NAME=$(jq -r .version .output/chrome-mv3/manifest.json)
+          MANIFEST_VERSION="$VERSION_NAME"
           TAG="v${VERSION_NAME}"
           echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
           echo "manifest_version=${MANIFEST_VERSION}" >> "$GITHUB_OUTPUT"

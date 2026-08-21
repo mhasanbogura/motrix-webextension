@@ -179,32 +179,21 @@ export class Aria2RpcClient {
   }
 
   async call(method: string, ...params: unknown[]): Promise<unknown> {
-    const controller = new AbortController();
-    const timeout = globalThis.setTimeout(() => controller.abort(), this.config.timeoutMs);
     const rpcParams = this.config.secret ? [`token:${this.config.secret}`, ...params] : params;
+    const request = {
+      jsonrpc: '2.0',
+      id: crypto.randomUUID(),
+      method,
+      params: rpcParams,
+    };
     try {
-      const response = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: crypto.randomUUID(),
-          method,
-          params: rpcParams,
-        }),
-        signal: controller.signal,
-      });
-      if (!response.ok) {
-        throw new RpcConnectionError(`HTTP ${response.status}`);
+      // Firefox MV2 background pages have a privileged XMLHttpRequest path that
+      // avoids the JSON preflight rejected by local aria2 servers. Chrome MV3
+      // service workers do not expose XHR, so they continue using fetch.
+      if (typeof XMLHttpRequest !== 'undefined') {
+        return await callWithXmlHttpRequest(this.endpoint, request, this.config.timeoutMs);
       }
-      const payload = RpcSuccessSchema.parse(await response.json());
-      if (payload.error) {
-        if (payload.error.code === 1 || /unauthorized|token|secret/i.test(payload.error.message)) {
-          throw new RpcAuthError(payload.error);
-        }
-        throw new RpcError(payload.error.message, `aria2_${payload.error.code}`, payload.error);
-      }
-      return payload.result;
+      return await callWithFetch(this.endpoint, request, this.config.timeoutMs);
     } catch (error) {
       if (error instanceof RpcError) throw error;
       if (error instanceof DOMException && error.name === 'AbortError') {
@@ -214,10 +203,68 @@ export class Aria2RpcClient {
         throw new RpcInvalidResponseError(error);
       }
       throw new RpcConnectionError(error);
-    } finally {
-      globalThis.clearTimeout(timeout);
     }
   }
+}
+
+async function callWithFetch(endpoint: string, request: Record<string, unknown>, timeoutMs: number): Promise<unknown> {
+  const controller = new AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new RpcConnectionError(`HTTP ${response.status}`);
+    return parseRpcResult(await response.json());
+  } finally {
+    globalThis.clearTimeout(timeout);
+  }
+}
+
+function callWithXmlHttpRequest(
+  endpoint: string,
+  request: Record<string, unknown>,
+  timeoutMs: number,
+): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint, true);
+    xhr.timeout = timeoutMs;
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = () => {
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(new RpcConnectionError(`HTTP ${xhr.status}`));
+        return;
+      }
+      try {
+        resolve(parseRpcResult(JSON.parse(xhr.responseText) as unknown));
+      } catch (error) {
+        reject(error);
+      }
+    };
+    xhr.onerror = () => reject(new RpcConnectionError());
+    xhr.ontimeout = () => reject(new RpcTimeoutError(timeoutMs));
+    xhr.onabort = () => reject(new RpcTimeoutError(timeoutMs));
+    try {
+      xhr.send(JSON.stringify(request));
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function parseRpcResult(value: unknown): unknown {
+  const payload = RpcSuccessSchema.parse(value);
+  if (payload.error) {
+    if (payload.error.code === 1 || /unauthorized|token|secret/i.test(payload.error.message)) {
+      throw new RpcAuthError(payload.error);
+    }
+    throw new RpcError(payload.error.message, `aria2_${payload.error.code}`, payload.error);
+  }
+  return payload.result;
 }
 
 export function buildAddUriOptions(input: AddDownloadInput): AddUriOptions {
