@@ -17,6 +17,7 @@ import { PopupHeader } from './components/PopupHeader';
 import { MetricsPanel } from './components/MetricsPanel';
 import { PopupActions } from './components/PopupActions';
 import { usePopupRuntime } from './hooks/use-popup-runtime';
+import { PasteLinkPanel } from './components/PasteLinkPanel';
 import { ConnectingPanel, OfflinePanel } from './components/ConnectionPanel';
 
 const REFRESH_MS = 5000;
@@ -186,6 +187,7 @@ export default function App() {
         onOpenOptions={openOptions}
         t={t}
       />
+      <PasteLinkPanel t={t} />
 
       {popupView === 'connecting'
         ? (
