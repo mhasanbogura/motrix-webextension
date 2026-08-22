@@ -50,8 +50,12 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
         "--no-warnings",
         "--skip-download",
         "--no-playlist",
+        "--js-runtimes",
+        "deno",
+        "--extractor-args",
+        "youtube:player_client=android_vr",
         "--format",
-        "best[protocol^=http][ext=mp4]/best[protocol^=http]/best",
+        "best[protocol^=http][ext=mp4]/best[protocol^=http]",
         page_url,
     ]
     cookie = payload.get("cookie")
@@ -159,7 +163,15 @@ def rename_local_file(payload: dict[str, object]) -> dict[str, object]:
 
 def clean_error(value: str) -> str:
     lines = [line.strip() for line in value.splitlines() if line.strip()]
-    return lines[-1][:500] if lines else "The social-media resolver could not resolve this page."
+    detail = lines[-1] if lines else "The social-media resolver could not resolve this page."
+    lowered = detail.lower()
+    if "no supported javascript runtime" in lowered or "javascript runtime" in lowered:
+        return "YouTube now requires the resolver's JavaScript runtime. Run the latest one-time Motrix Social Resolver installer."
+    if "sign in to confirm" in lowered or "not a bot" in lowered:
+        return "YouTube blocked this request. Keep YouTube signed in in the browser, then run the latest resolver installer and try again."
+    if "requested format is not available" in lowered or "no direct" in lowered:
+        return "YouTube did not expose a direct downloadable HTTP video format for this request. The video may require a PO Token or account access."
+    return detail[:500]
 
 
 def read_message() -> dict[str, object] | None:

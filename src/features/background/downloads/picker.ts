@@ -3,6 +3,7 @@ import type { StorageSnapshot } from '@/library/storage';
 import type { RuntimeResponse } from '@/library/messages';
 
 import { loadSnapshot } from '@/library/storage';
+import { isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver';
 import { filenameFromUrl, isWeakFilename, sanitizeFilename } from '@/library/download/filename-metadata';
 
 import { routeDownloadInput } from './route-download-input';
@@ -67,8 +68,18 @@ export async function submitPendingPicker(
   const pending = await getPendingPicker(id);
   if (!pending) throw new Error('The download picker request has expired');
   const snapshot = await loadSnapshot();
+  const pageUrl = pending.input.finalUrl;
+  const resolvedInput = pageUrl && isSocialMediaUrl(pageUrl)
+    ? await resolveSocialMedia({
+        url: pageUrl,
+        cookie: pending.input.cookie,
+        userAgent: pending.input.userAgent,
+      })
+    : undefined;
   const input: AddDownloadInput = {
     ...pending.input,
+    ...resolvedInput,
+    finalUrl: pageUrl,
     filename: safeOutputName(filename, resolvePickerFilename(pending.input)),
     dir: snapshot.settings.defaultDir || undefined,
   };

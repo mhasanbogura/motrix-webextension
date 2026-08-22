@@ -22,7 +22,7 @@ if ($PythonLauncher) {
   & $Python -m venv $VenvPath
 }
 $VenvPython = Join-Path $InstallDir '.venv\Scripts\python.exe'
-& $VenvPython -m pip install --upgrade pip yt-dlp
+& $VenvPython -m pip install --upgrade pip 'yt-dlp[default,deno]'
 
 $Launcher = Join-Path $InstallDir 'run-native.bat'
 "@echo off`r`n`"$VenvPython`" `"$(Join-Path $InstallDir 'social_resolver.py')`"" | Set-Content -Path $Launcher -Encoding ascii
@@ -67,5 +67,5 @@ $FirefoxKey = "HKCU:\Software\Mozilla\NativeMessagingHosts\$HostName"
 New-Item -Path $FirefoxKey -Force | Out-Null
 Set-ItemProperty -Path $FirefoxKey -Name '(default)' -Value $FirefoxManifest
 
-Write-Output 'Motrix Social Resolver installed for on-demand native messaging.'
+Write-Output 'Motrix Social Resolver installed for on-demand native messaging with yt-dlp EJS and Deno support.'
 Write-Output 'Restart Chrome or Firefox once. No resolver command is needed for each download.'

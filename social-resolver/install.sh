@@ -12,7 +12,7 @@ mkdir -p "$INSTALL_DIR"
 cp "$SCRIPT_DIR/social_resolver.py" "$INSTALL_DIR/social_resolver.py"
 
 "$PYTHON_BIN" -m venv "$INSTALL_DIR/.venv"
-"$INSTALL_DIR/.venv/bin/python" -m pip install --upgrade pip yt-dlp
+"$INSTALL_DIR/.venv/bin/python" -m pip install --upgrade pip 'yt-dlp[default,deno]'
 
 cat > "$INSTALL_DIR/run-native.sh" <<EOF
 #!/usr/bin/env bash
@@ -64,6 +64,6 @@ case "$(uname -s)" in
     ;;
 esac
 
-printf '%s\n' 'Motrix Social Resolver installed for on-demand native messaging.'
+printf '%s\n' 'Motrix Social Resolver installed for on-demand native messaging with yt-dlp EJS and Deno support.'
 printf '%s\n' "Installed helper: $INSTALL_DIR"
 printf '%s\n' 'Restart the browser once after installation. No resolver command is needed for each download.'

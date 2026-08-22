@@ -48,6 +48,7 @@ export async function routeUrl(
       ...input,
       referer: pageUrl,
       cookie,
+      finalUrl: url,
       filename: isSocialMediaUrl(url) ? input.filename : (filename || input.filename),
       dir: snapshot.settings.defaultDir || undefined,
     };
