@@ -36,7 +36,7 @@ export async function routeUrl(
   let input: AddDownloadInput;
   if (isSocialMediaUrl(url)) {
     try {
-      input = await resolveSocialMedia({ url, cookie }, snapshot.settings.socialResolverUrl);
+      input = await resolveSocialMedia({ url, cookie });
     } catch (error) {
       return {
         ok: false,

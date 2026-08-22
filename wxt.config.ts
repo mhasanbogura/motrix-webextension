@@ -1,7 +1,7 @@
 import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
 
-const RELEASE_VERSION = '1.6.8';
+const RELEASE_VERSION = '1.6.9';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -19,6 +19,13 @@ export default defineConfig({
     description: 'Motrix WebExtension with a full IDM-style picker and media/link capture',
     version: RELEASE_VERSION,
     version_name: RELEASE_VERSION,
+    key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjjRLRrhJc4IJdmC2tczUCsWejGiNDyDz6qt27gga4RKtijGiTG3WjKSNjonumhECeiLmHSzAAHrDfXVvEYup9Z1GvF83gSNcxFTsRW6BOxhEguXpIlmlMrFR7cMcQYTiCZ6AnJkWHxGqB4WArGiPhdiZS1q0CIJqMJ3lvpfGFp0DYHNuxbxgOWFV3HOft+uXnnfdc/iIXT15dZdVTm3RJa+KY43FW2ci6NsTKVGd7zU1Bb1Bn3XMGkqWQCqD3e0LJh4XA55CUsugJtig52ny/0H5im+dxtu0hpV4DnsgjfREH0X55efJ7RJ1ebfNMMJWUJCjOjDHGYcXPOMCUB1hYwIDAQAB',
+    browser_specific_settings: {
+      gecko: {
+        id: 'motrix-webextension@mhasanbogura',
+        strict_min_version: '109.0',
+      },
+    },
     minimum_chrome_version: '116',
     default_locale: 'en_US',
     action: {
@@ -36,6 +43,7 @@ export default defineConfig({
       'contextMenus',
       'cookies',
       'webRequest',
+      'nativeMessaging',
     ],
     host_permissions: [
       'http://*/*',
@@ -43,9 +51,6 @@ export default defineConfig({
       'http://127.0.0.1:16800/*',
       'http://localhost:16800/*',
       'http://[::1]:16800/*',
-      'http://127.0.0.1:8199/*',
-      'http://localhost:8199/*',
-      'http://[::1]:8199/*',
     ],
   },
 });

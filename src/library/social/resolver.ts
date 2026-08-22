@@ -17,7 +17,11 @@ export interface SocialResolverResponse {
   headers?: Record<string, string>;
 }
 
-const DEFAULT_RESOLVER_URL = 'http://127.0.0.1:8199';
+interface NativeMessagingRuntime {
+  sendNativeMessage: (hostName: string, message: SocialResolverRequest) => Promise<unknown>;
+}
+
+const NATIVE_HOST_NAME = 'com.motrix.social_resolver';
 const SOCIAL_HOSTS = new Set(['facebook.com', 'fb.watch', 'dailymotion.com', 'dai.ly', 'youtube.com', 'youtu.be']);
 
 export function isSocialMediaUrl(value: string): boolean {
@@ -29,14 +33,18 @@ export function isSocialMediaUrl(value: string): boolean {
   }
 }
 
-export async function resolveSocialMedia(
-  request: SocialResolverRequest,
-  resolverUrl?: string,
-): Promise<AddDownloadInput> {
-  const endpoint = `${(resolverUrl || DEFAULT_RESOLVER_URL).replace(/\/+$/, '')}/v1/resolve`;
-  const result = typeof XMLHttpRequest !== 'undefined'
-    ? await resolveWithXmlHttpRequest(endpoint, request)
-    : await resolveWithFetch(endpoint, request);
+export async function resolveSocialMedia(request: SocialResolverRequest): Promise<AddDownloadInput> {
+  const runtime = browser.runtime as unknown as NativeMessagingRuntime;
+  let result: SocialResolverResponse;
+  try {
+    result = parseResolverResponse(await runtime.sendNativeMessage(NATIVE_HOST_NAME, request));
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? `Install the Motrix Social Resolver helper first: ${error.message}`
+        : 'Install the Motrix Social Resolver helper first.',
+    );
+  }
   if (!result.ok || !result.url) {
     throw new Error(result.error || 'The social-media resolver did not return a downloadable format');
   }
@@ -52,57 +60,20 @@ export async function resolveSocialMedia(
   };
 }
 
-async function resolveWithFetch(endpoint: string, request: SocialResolverRequest): Promise<SocialResolverResponse> {
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
-  });
-  if (!response.ok) throw new Error(`Social resolver HTTP ${response.status}`);
-  return parseResolverResponse(await response.json());
-}
-
-function resolveWithXmlHttpRequest(endpoint: string, request: SocialResolverRequest): Promise<SocialResolverResponse> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', endpoint, true);
-    xhr.timeout = 30000;
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.onload = () => {
-      if (xhr.status < 200 || xhr.status >= 300) {
-        reject(new Error(`Social resolver HTTP ${xhr.status}`));
-        return;
-      }
-      try {
-        resolve(parseResolverResponse(JSON.parse(xhr.responseText) as unknown));
-      } catch (error) {
-        reject(error);
-      }
-    };
-    xhr.onerror = () => reject(new Error('Could not connect to the local social-media resolver'));
-    xhr.ontimeout = () => reject(new Error('The social-media resolver timed out'));
-    try {
-      xhr.send(JSON.stringify(request));
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
 function parseResolverResponse(value: unknown): SocialResolverResponse {
   if (!value || typeof value !== 'object') throw new Error('Invalid social resolver response');
   const result = value as Record<string, unknown>;
   return {
-    ok: result.ok === true,
-    title: typeof result.title === 'string' ? result.title : undefined,
-    url: typeof result.url === 'string' ? result.url : undefined,
-    filename: typeof result.filename === 'string' ? result.filename : undefined,
+    error: typeof result.error === 'string' ? result.error : undefined,
     ext: typeof result.ext === 'string' ? result.ext : undefined,
-    mime: typeof result.mime === 'string' ? result.mime : undefined,
+    filename: typeof result.filename === 'string' ? result.filename : undefined,
     headers: result.headers && typeof result.headers === 'object'
       ? Object.fromEntries(Object.entries(result.headers).filter((entry): entry is [string, string] => typeof entry[1] === 'string'))
       : undefined,
-    error: typeof result.error === 'string' ? result.error : undefined,
+    mime: typeof result.mime === 'string' ? result.mime : undefined,
+    ok: result.ok === true,
+    title: typeof result.title === 'string' ? result.title : undefined,
+    url: typeof result.url === 'string' ? result.url : undefined,
   };
 }
 

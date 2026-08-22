@@ -42,7 +42,6 @@ export const DownloadSettingsSchema = z.object({
   hideChromeDownload: z.boolean().default(true),
   minFileSizeBytes: z.coerce.number().int().min(0).default(0),
   captureTypes: DownloadCaptureTypesSchema.default(DEFAULT_DOWNLOAD_CAPTURE_TYPES),
-  socialResolverUrl: z.string().url().default('http://127.0.0.1:8199'),
   blockedExtensions: z.array(z.string()).default([]),
   allowedExtensions: z.array(z.string()).default([]),
   defaultDir: z.string().default(''),

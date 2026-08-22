@@ -121,12 +121,6 @@ export function DownloadSection({ compact, persistSettings, snapshot, t, updateS
             onCheckedChange={(other) => updateSettings({ captureTypes: { ...snapshot.settings.captureTypes, other } })}
           />
         </div>
-        <Field label={t('options.socialResolver')} hint={t('options.socialResolverHint')} compact={compact}>
-          <Input
-            value={snapshot.settings.socialResolverUrl}
-            onChange={(event) => updateSettings({ socialResolverUrl: event.target.value })}
-          />
-        </Field>
       </div>
       <Separator />
       <div className={cn('grid gap-(--options-gap)', compact ? 'grid-cols-3 max-[920px]:grid-cols-1' : 'grid-cols-1')}>
