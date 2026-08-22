@@ -7,6 +7,9 @@ const MEDIA_BUTTON_ID = 'motrix-idm-media-capture';
 const SUPPORTED_PROTOCOLS = new Set(['http:', 'https:', 'magnet:', 'ed2k:', 'thunder:']);
 const TEXT_URL_PATTERN = /(https?:\/\/[^\s<>"'`]+|magnet:\?[^\s<>"'`]+|ed2k:\/\/[^\s<>"'`]+|thunder:\/\/[A-Z0-9+/=]+)/i;
 const MEDIA_BUTTON_IDLE_MS = 5000;
+const MEDIA_RESOURCE_EXTENSIONS = /\.(?:m3u8|mpd|mp4|m4v|webm|m4s|ts)(?:$|[?#])/i;
+const MEDIA_RESOURCE_HOSTS = /googlevideo\.com|fbcdn\.net|dailymotion\.com|dmcdn\.net|akamaized\.net|cloudfront\.net/i;
+const MEDIA_RESOURCE_HINTS = /videoplayback|manifest|master|playlist|\.m3u8|\.mpd|mime=video|mime=audio/i;
 const MEDIA_URL_ATTRIBUTES = [
   'src',
   'data-src',
@@ -165,14 +168,14 @@ function handlePointerMove(event: PointerEvent): void {
 function handleMediaSourceReady(event: Event): void {
   if (pageBlocked) return;
   const media = event.target instanceof HTMLMediaElement ? event.target : undefined;
-  if (!media || !isSupportedUrl(getMediaUrl(media))) return;
+  if (!media || !isSupportedUrl(getMediaDownloadUrl(media))) return;
   const pointer = lastPointerPoint;
   const rect = media.getBoundingClientRect();
   if (activeMedia === media || (pointer && isPointInRect(pointer.x, pointer.y, rect))) activateMedia(media);
 }
 
 function activateMedia(media: HTMLImageElement | HTMLMediaElement): void {
-  if (pageBlocked || !captureTypes[getMediaCaptureType(media)] || !isSupportedUrl(getMediaUrl(media))) return;
+  if (pageBlocked || !captureTypes[getMediaCaptureType(media)] || !isSupportedUrl(getMediaDownloadUrl(media))) return;
   activeMedia = media;
   ensureMediaButton();
   repositionMediaButton();
@@ -208,7 +211,7 @@ function ensureMediaButton(): void {
     event.preventDefault();
     event.stopPropagation();
     const target = activeMedia;
-    const url = target ? getMediaUrl(target) : undefined;
+    const url = target ? getMediaDownloadUrl(target) : undefined;
     if (!url || !isSupportedUrl(url)) return;
     mediaButton!.disabled = true;
     mediaButton!.textContent = 'Opening picker…';
@@ -276,7 +279,7 @@ function resolveContextMenuTarget(event: MouseEvent): ContextMenuTarget {
   if (linkUrl) return buildTarget(linkUrl, 'link', getFilenameHint(element));
 
   const media = getClosestMediaElement(element) ?? getMediaAtPoint(event.clientX, event.clientY);
-  const mediaUrl = getMediaUrl(media);
+  const mediaUrl = getMediaDownloadUrl(media);
   if (mediaUrl && isSupportedUrl(mediaUrl)) {
     return buildTarget(mediaUrl, getMediaSource(media), getFilenameHint(media), getMediaCaptureType(media));
   }
@@ -340,9 +343,70 @@ function getMediaFromPointer(event: PointerEvent): HTMLImageElement | HTMLMediaE
 }
 
 function getMediaAtPoint(x: number, y: number): HTMLImageElement | HTMLMediaElement | undefined {
-  return document.elementsFromPoint(x, y)
+  const fromLayers = document.elementsFromPoint(x, y)
     .map((element) => getClosestMediaElement(element))
     .find((media): media is HTMLImageElement | HTMLMediaElement => Boolean(media));
+  if (fromLayers) return fromLayers;
+  return Array.from(document.querySelectorAll('video, audio, img'))
+    .map((element) => getClosestMediaElement(element))
+    .find((media): media is HTMLImageElement | HTMLMediaElement => {
+      if (!media) return false;
+      return isPointInRect(x, y, media.getBoundingClientRect());
+    });
+}
+
+function getMediaDownloadUrl(media: HTMLImageElement | HTMLMediaElement | undefined): string | undefined {
+  if (!media) return undefined;
+  return getMediaUrl(media) || (media instanceof HTMLMediaElement ? getRecentMediaResourceUrl() : undefined);
+}
+
+function getRecentMediaResourceUrl(): string | undefined {
+  const now = performance.now();
+  const resourceCandidates = performance.getEntriesByType('resource')
+    .map((entry) => entry as PerformanceResourceTiming)
+    .filter((entry) => now - entry.startTime < 30000)
+    .map((entry) => normalizeSupportedUrl(entry.name))
+    .filter((url): url is string => Boolean(url))
+    .filter(isLikelyMediaResource);
+  const embeddedCandidates = getEmbeddedMediaResourceUrls();
+  const candidates = [...resourceCandidates, ...embeddedCandidates];
+  return candidates.sort((left, right) => mediaResourceScore(right) - mediaResourceScore(left))[0];
+}
+
+function getEmbeddedMediaResourceUrls(): string[] {
+  const urls = new Set<string>();
+  for (const script of Array.from(document.scripts)) {
+    const text = script.textContent;
+    if (!text || text.length > 2_000_000) continue;
+    const matches = text.match(/https?:\\?\/\\?\/[^"'\\s]+/g) || [];
+    for (const match of matches) {
+      const url = normalizeSupportedUrl(decodeEmbeddedUrl(match));
+      if (url && isLikelyMediaResource(url)) urls.add(url);
+    }
+  }
+  return [...urls];
+}
+
+function decodeEmbeddedUrl(value: string): string {
+  return value
+    .replaceAll('\\\\/', '/')
+    .replaceAll('\\u0026', '&')
+    .replaceAll('\\u003d', '=')
+    .replaceAll('\\u00253A', ':');
+}
+
+function isLikelyMediaResource(url: string): boolean {
+  return isSupportedUrl(url) && (
+    MEDIA_RESOURCE_EXTENSIONS.test(url)
+    || (MEDIA_RESOURCE_HOSTS.test(url) && MEDIA_RESOURCE_HINTS.test(url))
+  );
+}
+
+function mediaResourceScore(url: string): number {
+  if (/\.(?:m3u8|mpd)(?:$|[?#])/i.test(url) || MEDIA_RESOURCE_HINTS.test(url)) return 100;
+  if (/\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(url)) return 90;
+  if (/\.(?:m4s|ts)(?:$|[?#])/i.test(url)) return 30;
+  return 60;
 }
 
 function getMediaUrl(media: HTMLImageElement | HTMLMediaElement | undefined): string | undefined {
