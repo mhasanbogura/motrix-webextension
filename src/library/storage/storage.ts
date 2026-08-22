@@ -11,6 +11,7 @@ import {
 
 const STORAGE_KEY = 'motrixExtension';
 const MAX_DIAGNOSTICS = 200;
+const MAX_TASK_NAME_OVERRIDES = 500;
 const AUTH_CONNECTION_FIELDS = ['host', 'port', 'path', 'secret'] as const;
 
 export async function loadSnapshot(): Promise<StorageSnapshot> {
@@ -69,6 +70,16 @@ export async function updateUi(patch: Partial<UiPrefs>): Promise<StorageSnapshot
 
 export async function saveSiteRules(siteRules: SiteRule[]): Promise<StorageSnapshot> {
   return updateSnapshot((current) => ({ ...current, siteRules }));
+}
+
+export async function saveTaskNameOverride(gid: string, filename: string): Promise<StorageSnapshot> {
+  return updateSnapshot((current) => {
+    const entries = Object.entries(current.taskNameOverrides).filter(([key]) => key !== gid);
+    return {
+      ...current,
+      taskNameOverrides: Object.fromEntries([...entries, [gid, filename]].slice(-MAX_TASK_NAME_OVERRIDES)),
+    };
+  });
 }
 
 export async function appendDiagnostic(event: Omit<DiagnosticEvent, 'id' | 'timestamp'>): Promise<void> {

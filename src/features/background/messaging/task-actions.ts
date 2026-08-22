@@ -2,8 +2,8 @@ import type { RuntimeTaskLane } from '@/library/messages';
 import type { Aria2Task, Aria2TaskStatus } from '@/library/rpc';
 
 import { Aria2RpcClient } from '@/library/rpc';
-import { loadSnapshot } from '@/library/storage';
 import { renameLocalFile } from '@/library/social/resolver';
+import { loadSnapshot, saveTaskNameOverride } from '@/library/storage';
 import { sanitizeFilename } from '@/library/download/filename-metadata';
 
 export async function performTaskAction(
@@ -29,9 +29,11 @@ export async function renameTask(gid: string, filename: string, status?: Aria2Ta
     const filePath = task.files?.find((file) => file.selected === 'true')?.path || task.files?.[0]?.path;
     if (!filePath) throw new Error('The completed download has no local file path');
     await renameLocalFile(filePath, cleanFilename);
+    await saveTaskNameOverride(gid, cleanFilename);
     return;
   }
   await client.changeOption(gid, { out: cleanFilename });
+  await saveTaskNameOverride(gid, cleanFilename);
 }
 
 async function findTask(client: Aria2RpcClient, gid: string, status: Aria2TaskStatus): Promise<Aria2Task> {

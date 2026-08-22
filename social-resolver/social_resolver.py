@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import struct
 import subprocess
 import sys
@@ -91,7 +92,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
 
     ext = str(info.get("ext") or "mp4")
     title = str(info.get("title") or "social-media")
-    filename = str(info.get("_filename") or f"{title}.{ext}")
+    filename = build_social_filename(str(info.get("_filename") or ""), title, ext)
     headers = info.get("http_headers")
     safe_headers: dict[str, str] = {}
     if isinstance(headers, dict):
@@ -109,6 +110,51 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
         "mime": info.get("mime_type") if isinstance(info.get("mime_type"), str) else None,
         "headers": safe_headers,
     }
+
+
+def build_social_filename(filename: str, title: str, ext: str) -> str:
+    preferred = title if title and not is_generic_filename(title) else filename or title or "social-media"
+    normalized_ext = (ext or extract_extension(filename) or "mp4").lstrip(".").lower()
+    base = re.sub(r"\.[a-z0-9]{2,5}$", "", preferred, flags=re.IGNORECASE)
+    base = re.sub(r"\s*\[[^\]]{4,}\]\s*$", "", base)
+    base = re.sub(r"[\\/:*?\"<>|]", "_", base)
+    base = re.sub(r"[\x00-\x1f]", "", base)
+    base = re.sub(r"\s+", " ", base).strip()
+    return f"{base or 'social-media'}.{normalized_ext}"
+
+
+def is_generic_filename(value: str) -> bool:
+    return bool(re.fullmatch(r"(?:download|file|media|video|audio|videoplayback|manifest|master|playlist)(?:\.[a-z0-9]{2,5})?", value.strip(), re.IGNORECASE))
+
+
+def extract_extension(value: str) -> str | None:
+    match = re.search(r"\.([a-z0-9]{2,5})$", value, re.IGNORECASE)
+    return match.group(1) if match else None
+
+
+def rename_local_file(payload: dict[str, object]) -> dict[str, object]:
+    path = payload.get("path")
+    filename = payload.get("filename")
+    if not isinstance(path, str) or not isinstance(filename, str):
+        return {"ok": False, "error": "A local file path and filename are required."}
+    if not filename.strip() or any(separator in filename for separator in ("/", "\\\\")):
+        return {"ok": False, "error": "The new filename must be a non-empty file name without folders."}
+    clean_filename = re.sub(r"[\\/:*?\"<>|]", "_", filename)
+    clean_filename = re.sub(r"\s+", " ", clean_filename).strip()
+    if not clean_filename or clean_filename in {".", ".."}:
+        return {"ok": False, "error": "The new filename is not valid."}
+    source = os.path.abspath(path)
+    if not os.path.isfile(source):
+        return {"ok": False, "error": "The downloaded file is not available for renaming."}
+    target = os.path.join(os.path.dirname(source), clean_filename)
+    if source != target and os.path.exists(target):
+        return {"ok": False, "error": "A file with that name already exists."}
+    if source != target:
+        os.replace(source, target)
+        sidecar = f"{source}.aria2"
+        if os.path.exists(sidecar):
+            os.replace(sidecar, f"{target}.aria2")
+    return {"ok": True, "filename": clean_filename}
 
 
 def clean_error(value: str) -> str:
@@ -146,7 +192,11 @@ def write_message(value: dict[str, object]) -> None:
 def run_native() -> None:
     try:
         payload = read_message()
-        if payload is not None:
+        if payload is None:
+            return
+        if payload.get("action") == "rename":
+            write_message(rename_local_file(payload))
+        else:
             write_message(resolve_page(payload))
     except Exception as error:  # Keep stdout protocol valid with a structured error.
         write_message({"ok": False, "error": str(error)[:500]})

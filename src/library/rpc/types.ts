@@ -29,6 +29,7 @@ export interface Aria2Task {
   totalLength: string;
   uploadSpeed: string;
   connections?: string;
+  displayName?: string;
   downloadSpeed: string;
   errorMessage?: string;
   uploadLength?: string;

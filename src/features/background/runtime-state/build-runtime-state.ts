@@ -1,3 +1,4 @@
+import type { Aria2Task } from '@/library/rpc';
 import type { StorageSnapshot } from '@/library/storage';
 import type { PopupState, RuntimeState } from '@/library/messages';
 
@@ -39,9 +40,35 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
     ...base,
     stat: statResult.status === 'fulfilled' ? statResult.value : undefined,
     tasks: {
-      active: activeResult.status === 'fulfilled' ? activeResult.value : [],
-      waiting: waitingResult.status === 'fulfilled' ? waitingResult.value : [],
-      stopped: stoppedResult.status === 'fulfilled' ? stoppedResult.value : [],
+      active: activeResult.status === 'fulfilled'
+        ? applyTaskNameOverrides(activeResult.value, snapshot.taskNameOverrides)
+        : [],
+      waiting: waitingResult.status === 'fulfilled'
+        ? applyTaskNameOverrides(waitingResult.value, snapshot.taskNameOverrides)
+        : [],
+      stopped: stoppedResult.status === 'fulfilled'
+        ? applyTaskNameOverrides(stoppedResult.value, snapshot.taskNameOverrides)
+        : [],
     },
   };
+}
+
+function applyTaskNameOverrides(tasks: Aria2Task[], overrides: Record<string, string>): Aria2Task[] {
+  return tasks.map((task) => {
+    const override = overrides[task.gid];
+    if (!override) return task;
+
+    const selectedFile = task.files?.find((file) => file.selected === 'true') ?? task.files?.[0];
+    if (!selectedFile) return { ...task, displayName: override };
+
+    const separatorIndex = Math.max(selectedFile.path.lastIndexOf('/'), selectedFile.path.lastIndexOf('\\\\'));
+    const displayPath = separatorIndex >= 0
+      ? `${selectedFile.path.slice(0, separatorIndex + 1)}${override}`
+      : override;
+    return {
+      ...task,
+      displayName: override,
+      files: task.files?.map((file) => file.index === selectedFile.index ? { ...file, path: displayPath } : file),
+    };
+  });
 }
