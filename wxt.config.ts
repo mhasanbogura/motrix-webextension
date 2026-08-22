@@ -1,7 +1,7 @@
 import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
 
-const RELEASE_VERSION = '1.6.7';
+const RELEASE_VERSION = '1.6.8';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -43,6 +43,9 @@ export default defineConfig({
       'http://127.0.0.1:16800/*',
       'http://localhost:16800/*',
       'http://[::1]:16800/*',
+      'http://127.0.0.1:8199/*',
+      'http://localhost:8199/*',
+      'http://[::1]:8199/*',
     ],
   },
 });

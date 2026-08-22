@@ -4,7 +4,8 @@ import type { DownloadCaptureType } from '@/library/storage';
 
 import { loadSnapshot } from '@/library/storage';
 import { filenameFromUrl } from '@/library/download/filename-metadata';
-import { isCaptureTypeEnabled, isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
+import { isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver';
+import { getDownloadCaptureType, isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
 
 import { getCookieHeader } from '../cookies';
 import { duplicateGuard } from '../downloads/state';
@@ -28,20 +29,41 @@ export async function routeUrl(
   if (captureType && !snapshot.settings.captureTypes[captureType]) {
     return { ok: false, code: 'capture_type_disabled', message: `${captureType} capture is disabled` };
   }
-  if (!captureType && !isCaptureTypeEnabled({ url, filename }, snapshot.settings)) {
-    return { ok: false, code: 'capture_type_disabled', message: 'This download type is disabled' };
-  }
   if (!duplicateGuard.reserve([url, pageUrl])) {
     return { ok: true, result: 'duplicate-blocked' };
   }
   const cookie = snapshot.settings.forwardCookies ? await getCookieHeader(url) : undefined;
-  const input: AddDownloadInput = {
-    url,
-    referer: pageUrl,
-    cookie,
-    filename: filename || filenameFromUrl(url),
-    dir: snapshot.settings.defaultDir || undefined,
-  };
+  let input: AddDownloadInput;
+  if (isSocialMediaUrl(url)) {
+    try {
+      input = await resolveSocialMedia({ url, cookie }, snapshot.settings.socialResolverUrl);
+    } catch (error) {
+      return {
+        ok: false,
+        code: 'social_resolver_unavailable',
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
+    input = {
+      ...input,
+      referer: pageUrl,
+      cookie,
+      filename: isSocialMediaUrl(url) ? input.filename : (filename || input.filename),
+      dir: snapshot.settings.defaultDir || undefined,
+    };
+  } else {
+    input = {
+      url,
+      referer: pageUrl,
+      cookie,
+      filename: filename || filenameFromUrl(url),
+      dir: snapshot.settings.defaultDir || undefined,
+    };
+  }
+  const resolvedCaptureType = captureType || getDownloadCaptureType(input);
+  if (!snapshot.settings.captureTypes[resolvedCaptureType]) {
+    return { ok: false, code: 'capture_type_disabled', message: `${resolvedCaptureType} capture is disabled` };
+  }
   if (snapshot.settings.promptBeforeDownload) {
     await openDownloadPicker(input, source);
     return { ok: true, result: 'picker-opened' };

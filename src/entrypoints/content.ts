@@ -1,6 +1,8 @@
 import type { DownloadCaptureType } from '@/library/storage';
 import type { ContextMenuTarget, ContextMenuTargetSource, RuntimeMessage, RuntimeResponse } from '@/library/messages';
 
+import { isSocialMediaUrl } from '@/library/social/resolver';
+
 const PROTOCOL_PATTERN = /^(?:magnet|ed2k|thunder):/i;
 const CONTEXT_MENU_TARGET_TTL_MS = 60000;
 const MEDIA_BUTTON_ID = 'motrix-idm-media-capture';
@@ -357,7 +359,10 @@ function getMediaAtPoint(x: number, y: number): HTMLImageElement | HTMLMediaElem
 
 function getMediaDownloadUrl(media: HTMLImageElement | HTMLMediaElement | undefined): string | undefined {
   if (!media) return undefined;
-  return getMediaUrl(media) || (media instanceof HTMLMediaElement ? getRecentMediaResourceUrl() : undefined);
+  const directUrl = getMediaUrl(media);
+  if (directUrl) return directUrl;
+  if (media instanceof HTMLMediaElement && isSocialMediaUrl(location.href)) return location.href;
+  return media instanceof HTMLMediaElement ? getRecentMediaResourceUrl() : undefined;
 }
 
 function getRecentMediaResourceUrl(): string | undefined {

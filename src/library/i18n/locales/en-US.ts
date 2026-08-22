@@ -89,6 +89,8 @@ export const enUS = {
     captureDocument: 'Documents',
     captureArchive: 'Archives',
     captureOther: 'Other files',
+    socialResolver: 'Social-media resolver',
+    socialResolverHint: 'Local yt-dlp helper URL for public or authorized Facebook, YouTube, and Dailymotion media.',
     rulePattern: 'Pattern',
     rulePatternPlaceholder: '*.example.com or https://host/path/*',
     ruleAction: 'Action',

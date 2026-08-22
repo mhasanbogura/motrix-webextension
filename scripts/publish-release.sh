@@ -3,8 +3,8 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 REPO='mhasanbogura/motrix-webextension'
-EXPECTED_VERSION='1.6.7'
-NOTES='/home/ubuntu/motrix-1.6.7-release-notes.md'
+EXPECTED_VERSION='1.6.8'
+NOTES='/home/ubuntu/motrix-1.6.8-release-notes.md'
 
 VERSION=$(jq -r '.version' .output/chrome-mv3/manifest.json)
 if [[ "$VERSION" != "$EXPECTED_VERSION" ]]; then
@@ -14,12 +14,13 @@ fi
 
 TAG="v${VERSION}"
 PACKAGE='packages/Motrix WebExtension.zip'
+RESOLVER_PACKAGE='packages/Motrix Social Resolver.zip'
 
 if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
-  gh release upload "$TAG" "$PACKAGE" --repo "$REPO" --clobber
+  gh release upload "$TAG" "$PACKAGE" "$RESOLVER_PACKAGE" --repo "$REPO" --clobber
   gh release edit "$TAG" --repo "$REPO" --title "Motrix WebExtension ${VERSION}" --notes-file "$NOTES"
 else
-  gh release create "$TAG" "$PACKAGE" \
+  gh release create "$TAG" "$PACKAGE" "$RESOLVER_PACKAGE" \
     --repo "$REPO" \
     --title "Motrix WebExtension ${VERSION}" \
     --notes-file "$NOTES"
