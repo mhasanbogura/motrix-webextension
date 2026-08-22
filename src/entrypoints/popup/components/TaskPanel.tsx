@@ -11,6 +11,7 @@ interface TaskPanelProps {
   onPause: (gid: string) => void;
   onResume: (gid: string) => void;
   onRemove: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
+  onRename: (gid: string, filename: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
 }
 
 export function TaskPanel({
@@ -19,6 +20,7 @@ export function TaskPanel({
   onPause,
   onResume,
   onRemove,
+  onRename,
   t,
 }: TaskPanelProps) {
   return (
@@ -30,6 +32,7 @@ export function TaskPanel({
         onPause={onPause}
         onResume={onResume}
         onRemove={onRemove}
+        onRename={onRename}
       />
     </section>
   );
@@ -42,12 +45,14 @@ function TaskList({
   onPause,
   onResume,
   onRemove,
+  onRename,
 }: {
   tone: TaskLane;
   tasks: RuntimeState['tasks']['active'];
   empty: string;
   onPause: (gid: string) => void;
   onResume: (gid: string) => void;
+  onRename: (gid: string, filename: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
   onRemove: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
 }) {
   return (
@@ -63,6 +68,7 @@ function TaskList({
                   onPause={onPause}
                   onResume={onResume}
                   onRemove={onRemove}
+                  onRename={onRename}
                 />
               ))}
             </div>

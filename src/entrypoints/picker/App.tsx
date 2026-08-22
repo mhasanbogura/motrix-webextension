@@ -9,6 +9,7 @@ export default function App() {
   const id = useMemo(() => new URLSearchParams(globalThis.location.search).get('id') || '', []);
   const [pending, setPending] = useState<PendingPicker>();
   const [filename, setFilename] = useState('download');
+  const [originalFilename, setOriginalFilename] = useState('download');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -24,7 +25,9 @@ export default function App() {
       }
       const value = response.result as PendingPicker;
       setPending(value);
-      setFilename(value.input.filename || 'download');
+      const initialFilename = value.input.filename || 'download';
+      setFilename(initialFilename);
+      setOriginalFilename(initialFilename);
       setLoading(false);
     }).catch((reason: unknown) => {
       if (!active) return;
@@ -91,11 +94,18 @@ export default function App() {
           <span className='picker-label'>Source URL</span>
           <span className='picker-url' title={pending?.input.url}>{pending?.input.url || 'Unknown source'}</span>
         </div>
-        <label className='picker-label' htmlFor='filename'>File name</label>
+        <div className='picker-label-row'>
+          <label className='picker-label' htmlFor='filename'>File name</label>
+          <span className='picker-label-hint' id='filename-hint'>
+            {filename.trim() && filename.trim() !== originalFilename.trim() ? 'Renamed for Motrix' : 'Editable before download'}
+          </span>
+        </div>
         <input
           id='filename'
+          name='filename'
           value={filename}
           onChange={(event) => setFilename(event.target.value)}
+          aria-describedby='filename-hint'
           autoFocus
           spellCheck={false}
         />

@@ -1,8 +1,10 @@
-import type { Aria2TaskStatus } from '@/library/rpc';
 import type { RuntimeTaskLane } from '@/library/messages';
+import type { Aria2Task, Aria2TaskStatus } from '@/library/rpc';
 
 import { Aria2RpcClient } from '@/library/rpc';
 import { loadSnapshot } from '@/library/storage';
+import { renameLocalFile } from '@/library/social/resolver';
+import { sanitizeFilename } from '@/library/download/filename-metadata';
 
 export async function performTaskAction(
   action: 'pause' | 'resume' | 'remove',
@@ -15,6 +17,32 @@ export async function performTaskAction(
     if (isDownloadResultStatus(status)) return client.removeDownloadResult(gid);
     return client.remove(gid);
   });
+}
+
+export async function renameTask(gid: string, filename: string, status?: Aria2TaskStatus): Promise<void> {
+  const cleanFilename = sanitizeFilename(filename).replace(/\s+/g, ' ').trim();
+  if (!cleanFilename) throw new Error('Enter a filename before saving the rename');
+  const snapshot = await loadSnapshot();
+  const client = new Aria2RpcClient(snapshot.connection);
+  if (isDownloadResultStatus(status)) {
+    const task = await findTask(client, gid, status);
+    const filePath = task.files?.find((file) => file.selected === 'true')?.path || task.files?.[0]?.path;
+    if (!filePath) throw new Error('The completed download has no local file path');
+    await renameLocalFile(filePath, cleanFilename);
+    return;
+  }
+  await client.changeOption(gid, { out: cleanFilename });
+}
+
+async function findTask(client: Aria2RpcClient, gid: string, status: Aria2TaskStatus): Promise<Aria2Task> {
+  const tasks = status === 'active'
+    ? await client.tellActive()
+    : status === 'waiting' || status === 'paused'
+      ? await client.tellWaiting(0, 1000)
+      : await client.tellStopped(0, 1000);
+  const task = tasks.find((item) => item.gid === gid);
+  if (!task) throw new Error('The task is no longer available');
+  return task;
 }
 
 export async function clearTasks(lane: RuntimeTaskLane, gids: string[]): Promise<void> {
@@ -33,7 +61,9 @@ export async function pauseTasks(gids: string[]): Promise<void> {
   });
 }
 
-function isDownloadResultStatus(status?: Aria2TaskStatus): boolean {
+function isDownloadResultStatus(
+  status?: Aria2TaskStatus,
+): status is Extract<Aria2TaskStatus, 'complete' | 'error' | 'removed'> {
   return status === 'complete' || status === 'error' || status === 'removed';
 }
 

@@ -94,7 +94,7 @@ function StatCount({
       className={cn(
         'flex h-11 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-transparent px-2 text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'hover:bg-[color-mix(in_srgb,var(--m3-on-surface)_6%,transparent)]',
-        'data-[selected=true]:border-current data-[selected=true]:bg-(--m3-surface-container-lowest) data-[selected=true]:shadow-(--m3-shadow-card)',
+        'data-[selected=true]:border-muted-foreground/70 data-[selected=true]:bg-muted/70 data-[selected=true]:text-foreground data-[selected=true]:shadow-(--m3-shadow-card)',
         className,
       )}
     >

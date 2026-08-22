@@ -3,7 +3,14 @@ import type { AddDownloadInput } from '@/library/rpc';
 export interface SocialResolverRequest {
   url: string;
   cookie?: string;
+  action?: 'resolve';
   userAgent?: string;
+}
+
+interface NativeRenameRequest {
+  path: string;
+  action: 'rename';
+  filename: string;
 }
 
 export interface SocialResolverResponse {
@@ -18,7 +25,7 @@ export interface SocialResolverResponse {
 }
 
 interface NativeMessagingRuntime {
-  sendNativeMessage: (hostName: string, message: SocialResolverRequest) => Promise<unknown>;
+  sendNativeMessage: (hostName: string, message: SocialResolverRequest | NativeRenameRequest) => Promise<unknown>;
 }
 
 const NATIVE_HOST_NAME = 'com.motrix.social_resolver';
@@ -37,7 +44,7 @@ export async function resolveSocialMedia(request: SocialResolverRequest): Promis
   const runtime = browser.runtime as unknown as NativeMessagingRuntime;
   let result: SocialResolverResponse;
   try {
-    result = parseResolverResponse(await runtime.sendNativeMessage(NATIVE_HOST_NAME, request));
+    result = parseResolverResponse(await runtime.sendNativeMessage(NATIVE_HOST_NAME, { action: 'resolve', ...request }));
   } catch (error) {
     throw new Error(
       error instanceof Error
@@ -54,10 +61,29 @@ export async function resolveSocialMedia(request: SocialResolverRequest): Promis
     .map(([name, value]) => ({ name, value }));
   return {
     url: result.url,
-    filename: result.filename || buildFallbackFilename(result.title, result.ext),
+    filename: buildSocialFilename(result.filename, result.title, result.ext),
     requestHeaders: requestHeaders.length ? requestHeaders : undefined,
     userAgent: request.userAgent,
   };
+}
+
+export async function renameLocalFile(path: string, filename: string): Promise<void> {
+  const runtime = browser.runtime as unknown as NativeMessagingRuntime;
+  let result: SocialResolverResponse;
+  try {
+    result = parseResolverResponse(await runtime.sendNativeMessage(NATIVE_HOST_NAME, {
+      action: 'rename',
+      filename,
+      path,
+    }));
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? `Could not rename the downloaded file: ${error.message}`
+        : 'Could not rename the downloaded file.',
+    );
+  }
+  if (!result.ok) throw new Error(result.error || 'Could not rename the downloaded file');
 }
 
 function parseResolverResponse(value: unknown): SocialResolverResponse {
@@ -77,7 +103,45 @@ function parseResolverResponse(value: unknown): SocialResolverResponse {
   };
 }
 
-function buildFallbackFilename(title?: string, ext?: string): string {
-  const safeTitle = (title || 'social-media').replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim();
-  return `${safeTitle || 'social-media'}${ext ? `.${ext.replace(/^\./, '')}` : '.mp4'}`;
+function buildSocialFilename(filename?: string, title?: string, ext?: string): string {
+  const preferred = title && !isGenericFilename(title) ? title : filename || title || 'social-media';
+  const normalizedExt = (ext || extractExtension(filename) || 'mp4').replace(/^\./, '').toLowerCase();
+  const base = sanitizeFilename(preferred)
+    .replace(new RegExp(`\\.${escapeRegExp(normalizedExt)}$`, 'i'), '')
+    .replace(/\s*\[[^\]]{4,}\]\s*$/, '')
+    .trim();
+  return `${base || 'social-media'}.${normalizedExt}`;
+}
+
+function sanitizeFilename(value: string): string {
+  return Array.from(value.replace(/[\\/:*?"<>|]/g, '_'))
+    .filter((character) => character.charCodeAt(0) >= 32 && character.charCodeAt(0) !== 127)
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const GENERIC_FILENAMES = new Set([
+  'download',
+  'file',
+  'media',
+  'video',
+  'audio',
+  'videoplayback',
+  'manifest',
+  'master',
+  'playlist',
+]);
+
+function isGenericFilename(value: string): boolean {
+  const baseName = value.trim().replace(/\.[a-z0-9]{2,5}$/i, '').toLowerCase();
+  return GENERIC_FILENAMES.has(baseName);
+}
+
+function extractExtension(value?: string): string | undefined {
+  return value?.match(/\.([a-z0-9]{2,5})$/i)?.[1];
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

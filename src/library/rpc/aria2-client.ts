@@ -166,6 +166,10 @@ export class Aria2RpcClient {
     return this.call('aria2.removeDownloadResult', gid);
   }
 
+  changeOption(gid: string, options: Partial<AddUriOptions>): Promise<unknown> {
+    return this.call('aria2.changeOption', gid, options);
+  }
+
   pauseAll(): Promise<unknown> {
     return this.call('aria2.pauseAll');
   }

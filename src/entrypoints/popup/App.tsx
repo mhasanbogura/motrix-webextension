@@ -128,6 +128,10 @@ export default function App() {
     void runAction(t('common.remove'), () => sendRuntimeMessage({ type: 'task-action', action: 'remove', gid, status }));
   }, [runAction, t]);
 
+  const renameTask = useCallback((gid: string, filename: string, status: Aria2TaskStatus) => {
+    void runAction(t('common.rename'), () => sendRuntimeMessage({ type: 'rename-task', gid, filename, status }));
+  }, [runAction, t]);
+
   const clearActiveLane = useCallback(() => {
     const gids = runtime?.tasks[activeLane].map((task) => task.gid) ?? [];
     void runAction(t('popup.clearAll'), () => sendRuntimeMessage({ type: 'clear-tasks', lane: activeLane, gids }));
@@ -217,6 +221,7 @@ export default function App() {
                     onPause={pauseTask}
                     onResume={resumeTask}
                     onRemove={removeTask}
+                    onRename={renameTask}
                     t={t}
                   />
                   <PopupActions

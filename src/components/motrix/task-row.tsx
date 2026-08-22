@@ -1,4 +1,5 @@
-import { Pause, Play, Trash2 } from 'lucide-react';
+import { type KeyboardEvent, useState } from 'react';
+import { Check, Pause, Pencil, Play, Trash2, X } from 'lucide-react';
 
 import type { Aria2Task } from '@/library/rpc';
 
@@ -17,6 +18,7 @@ interface TaskRowProps {
   onPause: (gid: string) => void;
   onResume: (gid: string) => void;
   onRemove: (gid: string, status: Aria2Task['status']) => void;
+  onRename: (gid: string, filename: string, status: Aria2Task['status']) => void;
 }
 
 const toneClassNames: Record<TaskRowTone, string> = {
@@ -25,7 +27,7 @@ const toneClassNames: Record<TaskRowTone, string> = {
   stopped: 'border-task-stopped/30 bg-[color-mix(in_srgb,hsl(var(--task-stopped))_7%,var(--m3-surface))] before:bg-task-stopped',
 };
 
-export function TaskRow({ task, tone, onPause, onResume, onRemove }: TaskRowProps) {
+export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename }: TaskRowProps) {
   const progress = percent(task.completedLength, task.totalLength);
   const isActive = task.status === 'active';
   const isPaused = task.status === 'paused' || task.status === 'waiting';
@@ -34,6 +36,37 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove }: TaskRowProp
   const totalSize = formatBytes(task.totalLength);
   const downloadSpeed = formatSpeed(task.downloadSpeed);
   const uploadSpeed = formatSpeed(task.uploadSpeed);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [draftName, setDraftName] = useState(taskName);
+
+  function startRenaming(): void {
+    setDraftName(taskName);
+    setIsRenaming(true);
+  }
+
+  function cancelRenaming(): void {
+    setDraftName(taskName);
+    setIsRenaming(false);
+  }
+
+  function saveRenaming(): void {
+    const cleanName = draftName.trim();
+    if (!cleanName) return;
+    onRename(task.gid, cleanName, task.status);
+    setIsRenaming(false);
+  }
+
+  function handleRenameKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      saveRenaming();
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      cancelRenaming();
+    }
+  }
+
   return (
     <div
       data-reveal
@@ -44,7 +77,34 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove }: TaskRowProp
     >
       <div className='flex items-start justify-between gap-2'>
         <div className='min-w-0 flex-1 pt-0.5'>
-          <div className='truncate text-[13px] leading-snug font-semibold' title={taskName}>{taskName}</div>
+          {isRenaming
+            ? (
+                <div className='flex min-w-0 items-center gap-1'>
+                  <input
+                    value={draftName}
+                    onChange={(event) => setDraftName(event.target.value)}
+                    onKeyDown={handleRenameKeyDown}
+                    className='h-7 min-w-0 flex-1 rounded-md border bg-(--m3-surface) px-2 text-[12px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                    autoFocus
+                    spellCheck={false}
+                    aria-label='File name'
+                  />
+                  <Button variant='quiet' size='icon' className='size-7 shrink-0 rounded-full' title='Save name' aria-label='Save name' onClick={saveRenaming} disabled={!draftName.trim()}>
+                    <Check />
+                  </Button>
+                  <Button variant='quiet' size='icon' className='size-7 shrink-0 rounded-full' title='Cancel rename' aria-label='Cancel rename' onClick={cancelRenaming}>
+                    <X />
+                  </Button>
+                </div>
+              )
+            : (
+                <div className='flex min-w-0 items-center gap-1'>
+                  <div className='min-w-0 flex-1 truncate text-[13px] leading-snug font-semibold' title={taskName}>{taskName}</div>
+                  <Button variant='quiet' size='icon' className='size-6 shrink-0 rounded-full' title='Rename' aria-label={`Rename ${taskName}`} onClick={startRenaming}>
+                    <Pencil />
+                  </Button>
+                </div>
+              )}
           <div className='mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-xs text-muted-foreground'>
             <Badge variant={isActive ? 'good' : isPaused ? 'warn' : 'quiet'} className='shrink-0 rounded-full px-1.5 py-0 text-[10px] leading-4'>
               {task.status}

@@ -16,6 +16,7 @@ export const enUS = {
     disabled: 'Disabled',
     add: 'Add',
     remove: 'Remove',
+    rename: 'Rename',
     pause: 'Pause',
     resume: 'Resume',
     retry: 'Retry',
