@@ -42,78 +42,93 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
     if not isinstance(page_url, str) or not is_allowed_page_url(page_url):
         return {"ok": False, "error": "Only supported Facebook, YouTube, and Dailymotion page URLs are allowed."}
 
-    command = [
-        sys.executable,
-        "-m",
-        "yt_dlp",
-        "--dump-single-json",
-        "--no-warnings",
-        "--skip-download",
-        "--no-playlist",
-        "--js-runtimes",
-        "deno",
-        "--extractor-args",
-        "youtube:player_client=android_vr",
-        "--format",
-        "best[protocol^=http][ext=mp4]/best[protocol^=http]",
-        page_url,
-    ]
     cookie = payload.get("cookie")
     user_agent = payload.get("userAgent")
-    if isinstance(cookie, str) and cookie:
-        command[4:4] = ["--add-header", f"Cookie: {cookie}"]
-    if isinstance(user_agent, str) and user_agent:
-        command[4:4] = ["--add-header", f"User-Agent: {user_agent}"]
+    hostname = (urlparse(page_url).hostname or "").lower().removeprefix("www.")
+    clients: tuple[str | None, ...] = (
+        ("android_vr", "mweb", "web_safari", "web")
+        if hostname in {"youtube.com", "youtu.be"} or hostname.endswith(".youtube.com")
+        else (None,)
+    )
+    errors: list[str] = []
 
-    try:
-        completed = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            timeout=45,
-            check=False,
-        )
-    except FileNotFoundError:
-        return {"ok": False, "error": "yt-dlp is not installed. Run install.sh once for this resolver."}
-    except subprocess.TimeoutExpired:
-        return {"ok": False, "error": "The social-media resolver timed out."}
+    for client in clients:
+        command = [
+            sys.executable,
+            "-m",
+            "yt_dlp",
+            "--dump-single-json",
+            "--no-warnings",
+            "--skip-download",
+            "--no-playlist",
+            "--js-runtimes",
+            "deno",
+            "--format",
+            "best[protocol^=http][ext=mp4]/best[protocol^=http]",
+            page_url,
+        ]
+        if client:
+            command[9:9] = ["--extractor-args", f"youtube:player_client={client}"]
+        if isinstance(cookie, str) and cookie:
+            command[4:4] = ["--add-header", f"Cookie: {cookie}"]
+        if isinstance(user_agent, str) and user_agent:
+            command[4:4] = ["--add-header", f"User-Agent: {user_agent}"]
 
-    if completed.returncode != 0:
-        return {"ok": False, "error": clean_error(completed.stderr or completed.stdout)}
-    try:
-        info = json.loads(completed.stdout)
-    except json.JSONDecodeError:
-        return {"ok": False, "error": "yt-dlp returned an invalid media description."}
+        try:
+            completed = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=45,
+                check=False,
+            )
+        except FileNotFoundError:
+            return {"ok": False, "error": "yt-dlp is not installed. Run install.sh once for this resolver."}
+        except subprocess.TimeoutExpired:
+            errors.append("The social-media resolver timed out.")
+            continue
 
-    direct_url = info.get("url")
-    if not isinstance(direct_url, str) or urlparse(direct_url).scheme not in {"http", "https"}:
-        requested_formats = info.get("requested_formats")
-        if isinstance(requested_formats, list) and requested_formats:
-            first_format = requested_formats[0]
-            direct_url = first_format.get("url") if isinstance(first_format, dict) else None
-    if not isinstance(direct_url, str) or urlparse(direct_url).scheme not in {"http", "https"}:
-        return {"ok": False, "error": "No direct public media format was exposed for this page."}
+        if completed.returncode != 0:
+            errors.append(clean_error(completed.stderr or completed.stdout))
+            continue
+        try:
+            info = json.loads(completed.stdout)
+        except json.JSONDecodeError:
+            errors.append("yt-dlp returned an invalid media description.")
+            continue
 
-    ext = str(info.get("ext") or "mp4")
-    title = str(info.get("title") or "social-media")
-    filename = build_social_filename(str(info.get("_filename") or ""), title, ext)
-    headers = info.get("http_headers")
-    safe_headers: dict[str, str] = {}
-    if isinstance(headers, dict):
-        for name in ("Cookie", "Referer", "User-Agent"):
-            value = headers.get(name)
-            if isinstance(value, str) and value:
-                safe_headers[name] = value
+        direct_url = info.get("url")
+        if not isinstance(direct_url, str) or urlparse(direct_url).scheme not in {"http", "https"}:
+            requested_formats = info.get("requested_formats")
+            if isinstance(requested_formats, list) and requested_formats:
+                first_format = requested_formats[0]
+                direct_url = first_format.get("url") if isinstance(first_format, dict) else None
+        if not isinstance(direct_url, str) or urlparse(direct_url).scheme not in {"http", "https"}:
+            errors.append("No direct public media format was exposed for this page.")
+            continue
 
-    return {
-        "ok": True,
-        "title": title,
-        "url": direct_url,
-        "filename": filename,
-        "ext": ext,
-        "mime": info.get("mime_type") if isinstance(info.get("mime_type"), str) else None,
-        "headers": safe_headers,
-    }
+        ext = str(info.get("ext") or "mp4")
+        title = str(info.get("title") or "social-media")
+        filename = build_social_filename(str(info.get("_filename") or ""), title, ext)
+        headers = info.get("http_headers")
+        safe_headers: dict[str, str] = {}
+        if isinstance(headers, dict):
+            for name in ("Cookie", "Referer", "User-Agent"):
+                value = headers.get(name)
+                if isinstance(value, str) and value:
+                    safe_headers[name] = value
+
+        return {
+            "ok": True,
+            "title": title,
+            "url": direct_url,
+            "filename": filename,
+            "ext": ext,
+            "mime": info.get("mime_type") if isinstance(info.get("mime_type"), str) else None,
+            "headers": safe_headers,
+        }
+
+    return {"ok": False, "error": clean_error(errors[0] if errors else "")}
 
 
 def build_social_filename(filename: str, title: str, ext: str) -> str:
