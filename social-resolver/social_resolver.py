@@ -13,6 +13,7 @@ import re
 import struct
 import subprocess
 import sys
+from pathlib import Path
 from urllib.parse import urlparse
 
 MAX_MESSAGE_BYTES = 64 * 1024 * 1024
@@ -44,6 +45,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
 
     cookie = payload.get("cookie")
     user_agent = payload.get("userAgent")
+    cookie_file = find_cookie_file()
     hostname = (urlparse(page_url).hostname or "").lower().removeprefix("www.")
     clients: tuple[str | None, ...] = (
         ("android_vr", "mweb", "web_safari", "web")
@@ -69,7 +71,9 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
         ]
         if client:
             command[9:9] = ["--extractor-args", f"youtube:player_client={client}"]
-        if isinstance(cookie, str) and cookie:
+        if cookie_file:
+            command[4:4] = ["--cookies", str(cookie_file)]
+        elif isinstance(cookie, str) and cookie:
             command[4:4] = ["--add-header", f"Cookie: {cookie}"]
         if isinstance(user_agent, str) and user_agent:
             command[4:4] = ["--add-header", f"User-Agent: {user_agent}"]
@@ -129,6 +133,20 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
         }
 
     return {"ok": False, "error": clean_error(errors[0] if errors else "")}
+
+
+def find_cookie_file() -> Path | None:
+    path = Path(__file__).with_name("cookies.txt")
+    if not path.is_file():
+        return None
+    try:
+        has_cookie = any(
+            line.strip() and not line.lstrip().startswith("#") and len(line.rstrip("\n").split("\t")) >= 7
+            for line in path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        )
+    except OSError:
+        return None
+    return path if has_cookie else None
 
 
 def build_social_filename(filename: str, title: str, ext: str) -> str:

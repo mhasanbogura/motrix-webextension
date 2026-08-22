@@ -1,0 +1,4 @@
+# Optional Motrix social resolver cookie file.
+# Export your own cookies in Netscape cookies.txt format and replace this file.
+# Do not share this file or commit real cookies; it grants access to your accounts.
+# Supported domains include youtube.com, facebook.com, and dailymotion.com.

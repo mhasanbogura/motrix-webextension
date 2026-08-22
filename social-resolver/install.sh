@@ -10,6 +10,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 mkdir -p "$INSTALL_DIR"
 cp "$SCRIPT_DIR/social_resolver.py" "$INSTALL_DIR/social_resolver.py"
+if [[ ! -f "$INSTALL_DIR/cookies.txt" ]]; then
+  cp "$SCRIPT_DIR/cookies.txt" "$INSTALL_DIR/cookies.txt"
+fi
+chmod 600 "$INSTALL_DIR/cookies.txt"
 
 "$PYTHON_BIN" -m venv "$INSTALL_DIR/.venv"
 "$INSTALL_DIR/.venv/bin/python" -m pip install --upgrade pip 'yt-dlp[default,deno]'

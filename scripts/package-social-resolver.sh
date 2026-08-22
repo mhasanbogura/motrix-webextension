@@ -12,6 +12,7 @@ cp "$ROOT_DIR/social-resolver/social_resolver.py" "$PACKAGE_ROOT/"
 cp "$ROOT_DIR/social-resolver/install.sh" "$PACKAGE_ROOT/"
 cp "$ROOT_DIR/social-resolver/install-windows.ps1" "$PACKAGE_ROOT/"
 cp "$ROOT_DIR/social-resolver/README.md" "$PACKAGE_ROOT/"
+cp "$ROOT_DIR/social-resolver/cookies.txt" "$PACKAGE_ROOT/"
 chmod +x "$PACKAGE_ROOT/install.sh" "$PACKAGE_ROOT/social_resolver.py"
 rm -f "$PACKAGE_DIR/Motrix Social Resolver.zip"
 (cd "$STAGING_DIR" && zip -qr "$PACKAGE_DIR/Motrix Social Resolver.zip" "Motrix Social Resolver")

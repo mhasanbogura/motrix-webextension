@@ -8,6 +8,10 @@ $FirefoxExtensionId = 'motrix-webextension@mhasanbogura'
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 Copy-Item (Join-Path $ScriptDir 'social_resolver.py') (Join-Path $InstallDir 'social_resolver.py') -Force
+$CookieFile = Join-Path $InstallDir 'cookies.txt'
+if (-not (Test-Path $CookieFile)) {
+  Copy-Item (Join-Path $ScriptDir 'cookies.txt') $CookieFile
+}
 
 $PythonLauncher = (Get-Command py -ErrorAction SilentlyContinue).Source
 $Python = (Get-Command python -ErrorAction SilentlyContinue).Source
