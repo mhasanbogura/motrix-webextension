@@ -1,7 +1,7 @@
 import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
 
-const RELEASE_VERSION = '1.6.44';
+const RELEASE_VERSION = '1.6.45';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
