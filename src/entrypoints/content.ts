@@ -364,11 +364,40 @@ function getFilenameHint(element: Element | undefined): string | undefined {
 }
 
 function getSocialPageTitleHint(): string | undefined {
-  const metaTitle = document.querySelector('meta[property="og:title"], meta[name="twitter:title"]')?.getAttribute('content');
-  const candidates = [metaTitle, document.title]
-    .map((value) => value?.trim())
+  const facebookCaptionSelectors = [
+    '[data-ad-comet-preview="message"]',
+    '[data-ad-preview="message"]',
+    '[data-testid="post_message"]',
+    '[data-testid="reel_video_caption"]',
+  ];
+  const captionCandidates = facebookCaptionSelectors.flatMap((selector) =>
+    Array.from(document.querySelectorAll(selector)).map((element) => element.textContent),
+  );
+  const metadataCandidates = [
+    document.querySelector('meta[property="og:title"]')?.getAttribute('content'),
+    document.querySelector('meta[name="twitter:title"]')?.getAttribute('content'),
+    document.querySelector('meta[property="og:description"]')?.getAttribute('content'),
+    document.title,
+  ];
+  const candidates = [...captionCandidates, ...metadataCandidates]
+    .map((value) => normalizeSocialTitle(value))
     .filter((value): value is string => Boolean(value));
-  return candidates.find((value) => !/^(?:facebook|youtube|watch|reels?)(?:\s*[-|].*)?$/i.test(value));
+  return candidates.find((value) => isUsefulSocialTitle(value));
+}
+
+function normalizeSocialTitle(value: string | null | undefined): string | undefined {
+  const normalized = value
+    ?.replace(/\s+/g, ' ')
+    .replace(/\s*[|•-]\s*(?:facebook|watch|reels?)\s*$/i, '')
+    .trim();
+  if (!normalized || normalized.length > 180 || /^https?:\/\//i.test(normalized)) return undefined;
+  return normalized;
+}
+
+function isUsefulSocialTitle(value: string): boolean {
+  if (/^(?:facebook|facebook watch|watch|reels?|home|log in|sign up)(?:\s*[-|].*)?$/i.test(value)) return false;
+  if (/^[\w-]{12,}$/i.test(value) && !/\s/.test(value)) return false;
+  return value.length >= 4;
 }
 
 function getClosestMediaElement(element: Element | undefined): HTMLImageElement | HTMLMediaElement | undefined {

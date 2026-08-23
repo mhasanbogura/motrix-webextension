@@ -140,7 +140,7 @@ export async function routeUrl(
       cookie,
       finalUrl: resolverPageUrl,
       requestHeaders: requestContext?.requestHeaders,
-      filename: filename || input.filename,
+      filename: input.filename,
       dir: snapshot.settings.defaultDir || undefined,
       candidateUrls: undefined,
       mediaCandidates: [{ url: input.url, filename: input.filename, fileSize: input.fileSize ?? fileSize }],
