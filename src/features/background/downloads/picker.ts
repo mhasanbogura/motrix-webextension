@@ -38,8 +38,12 @@ export async function openDownloadPicker(input: AddDownloadInput, source: string
   const pending: PendingPicker = { id, input: pendingInput, source, createdAt: Date.now() };
   await browser.storage.local.set({ [storageKey(id)]: pending });
   const pickerUrl = browser.runtime.getURL(`/picker.html?id=${encodeURIComponent(id)}`);
+  const sourceCount = Math.max(input.mediaCandidates?.length || 0, input.candidateUrls?.length || 0);
+  const windowSize = sourceCount > 1
+    ? { width: 560, height: 500 }
+    : { width: 500, height: 410 };
   try {
-    await browser.windows.create({ url: pickerUrl, type: 'popup', width: 540, height: 500 });
+    await browser.windows.create({ url: pickerUrl, type: 'popup', ...windowSize });
   } catch {
     await browser.tabs.create({ url: pickerUrl });
   }

@@ -478,13 +478,17 @@ body,
 }
 
 .picker-shell {
-  width: min(100%, calc(100vw - 16px), 560px);
+  width: min(calc(100% - 12px), calc(100vw - 24px), 560px);
   height: auto;
   min-height: 0;
   max-height: calc(100vh - 12px);
+  margin: 6px auto;
   padding: 8px 10px 8px;
   overflow: auto;
+  border: 1px solid var(--picker-border);
+  border-radius: 20px;
   background: var(--picker-bg);
+  box-shadow: 0 10px 24px rgba(37, 28, 97, 0.16);
 }
 
 .picker-header {

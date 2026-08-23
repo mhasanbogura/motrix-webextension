@@ -33,13 +33,14 @@ export function PopupActions({
   return (
     <>
       <Separator className='mt-3' />
-      <div data-reveal className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-3'>
+      <div data-reveal className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-xl border bg-(--m3-surface-container) p-2'>
         <div className='flex min-w-0 flex-wrap items-center gap-1'>
           {showPauseAll
             ? (
                 <Button
-                  variant='quiet'
+                  variant='outline'
                   size='sm'
+                  className='rounded-lg border-transparent bg-(--m3-surface) px-2 text-[11px] font-semibold'
                   disabled={busy || !hasTasks}
                   onClick={onPauseAll}
                 >
@@ -51,8 +52,9 @@ export function PopupActions({
           {showResumeAll
             ? (
                 <Button
-                  variant='quiet'
+                  variant='outline'
                   size='sm'
+                  className='rounded-lg border-transparent bg-(--m3-surface) px-2 text-[11px] font-semibold'
                   disabled={busy || !hasTasks}
                   onClick={onResumeAll}
                 >
@@ -62,8 +64,9 @@ export function PopupActions({
               )
             : null}
           <Button
-            variant='quiet'
+            variant='outline'
             size='sm'
+            className='rounded-lg border-transparent bg-(--m3-surface) px-2 text-[11px] font-semibold text-destructive'
             disabled={busy || !hasTasks}
             onClick={onClearAll}
           >
@@ -72,7 +75,7 @@ export function PopupActions({
           </Button>
         </div>
         <Button
-          className='shrink-0'
+          className='shrink-0 rounded-lg px-3 font-semibold shadow-(--m3-shadow-card)'
           size='sm'
           onClick={onWakeMotrix}
         >
