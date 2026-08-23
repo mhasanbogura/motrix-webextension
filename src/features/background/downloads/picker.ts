@@ -40,8 +40,8 @@ export async function openDownloadPicker(input: AddDownloadInput, source: string
   const pickerUrl = browser.runtime.getURL(`/picker.html?id=${encodeURIComponent(id)}`);
   const sourceCount = Math.max(input.mediaCandidates?.length || 0, input.candidateUrls?.length || 0);
   const windowSize = sourceCount > 1
-    ? { width: 640, height: 520 }
-    : { width: 560, height: 410 };
+    ? { width: 640, height: 560 }
+    : { width: 560, height: 500 };
   try {
     await browser.windows.create({ url: pickerUrl, type: 'popup', ...windowSize });
   } catch {
