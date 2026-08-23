@@ -50,7 +50,7 @@ export function MetricsPanel({ activeLane, runtime, captureEnabled, onLaneChange
         />
         <StatCount
           icon={AlertCircle}
-          label='Failed / Error'
+          label='Error'
           value={counts.error}
           selected={activeLane === 'error'}
           onSelect={() => onLaneChange('error')}
