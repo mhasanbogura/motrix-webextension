@@ -1,7 +1,7 @@
 import type { DownloadCaptureType } from '@/library/storage';
 import type { ContextMenuTarget, ContextMenuTargetSource, RuntimeMessage, RuntimeResponse } from '@/library/messages';
 
-import { isSocialMediaUrl } from '@/library/social/resolver';
+import { isPornhubUrl, isSocialMediaUrl } from '@/library/social/resolver';
 
 const PROTOCOL_PATTERN = /^(?:magnet|ed2k|thunder):/i;
 const CONTEXT_MENU_TARGET_TTL_MS = 60000;
@@ -410,7 +410,11 @@ function getMediaDownloadUrls(media: CaptureTarget | undefined): string[] {
     .filter((url, index, values) => values.indexOf(url) === index)
     .sort((left, right) => mediaResourceScore(right) - mediaResourceScore(left));
   if (candidates.length) return candidates;
-  if ((media instanceof HTMLMediaElement || isPlayerContainer(media)) && isSocialMediaUrl(location.href)) {
+  if (
+    (media instanceof HTMLMediaElement || isPlayerContainer(media))
+    && isSocialMediaUrl(location.href)
+    && !isPornhubUrl(location.href)
+  ) {
     return [location.href];
   }
   return [];
@@ -432,9 +436,13 @@ function getRecentMediaResourceUrls(): string[] {
 
 function getEmbeddedMediaResourceUrls(): string[] {
   const urls = new Set<string>();
-  for (const script of Array.from(document.scripts)) {
-    const text = script.textContent;
-    if (!text || text.length > 2_000_000) continue;
+  const sources = Array.from(document.scripts)
+    .map((script) => script.textContent)
+    .filter((text): text is string => Boolean(text) && text.length <= 2_000_000);
+  const documentText = document.documentElement?.outerHTML;
+  if (documentText && documentText.length <= 8_000_000) sources.push(documentText);
+
+  for (const text of sources) {
     const matches = text.match(/https?:[^"' \t\r\n]+/g) || [];
     for (const match of matches) {
       const url = normalizeSupportedUrl(decodeEmbeddedUrl(match));
