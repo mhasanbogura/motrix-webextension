@@ -87,7 +87,15 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
       case 'content-protocol-click':
         return await routeUrl(message.url, message.pageUrl, 'content_protocol', message.filename);
       case 'capture-url':
-        return await routeUrl(message.url, message.pageUrl, `content_${message.source}`, message.filename, message.captureType);
+        return await routeUrl(
+          message.url,
+          message.pageUrl,
+          `content_${message.source}`,
+          message.filename,
+          message.captureType,
+          message.urls,
+          message.fileSize,
+        );
       case 'capture-site-status': {
         const snapshot = await loadSnapshot();
         return {

@@ -59,7 +59,7 @@ export function handleContextMenuClick(info: Browser.contextMenus.OnClickData, t
 async function routeContextMenuClick(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): Promise<void> {
   const target = await resolveContextMenuTarget(info, tab);
   if (!target.url) return;
-  await routeUrl(target.url, target.pageUrl, `context_menu_${target.source}`, target.filename, target.captureType);
+  await routeUrl(target.url, target.pageUrl, `context_menu_${target.source}`, target.filename, target.captureType, target.urls, target.fileSize);
 }
 
 async function resolveContextMenuTarget(

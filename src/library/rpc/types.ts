@@ -65,9 +65,11 @@ export interface AddDownloadInput {
   cookie?: string;
   referer?: string;
   filename?: string;
+  fileSize?: number;
   /** Browser-resolved URL after redirects. Used for metadata and diagnostics only. */
   finalUrl?: string;
   userAgent?: string;
+  candidateUrls?: string[];
   requestHeaders?: Array<{ name: string; value: string }>;
 }
 

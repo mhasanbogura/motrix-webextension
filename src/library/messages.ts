@@ -38,7 +38,9 @@ export type ContextMenuTargetSource = 'link' | 'media' | 'selection' | 'page';
 export interface ContextMenuTarget {
   url?: string;
   pageUrl: string;
+  urls?: string[];
   filename?: string;
+  fileSize?: number;
   source: ContextMenuTargetSource;
   captureType?: DownloadCaptureType;
 }
@@ -62,7 +64,7 @@ export type RuntimeMessage
     | { type: 'clear-tasks'; lane: RuntimeTaskLane; gids: string[] }
     | { type: 'wake-motrix' }
     | { type: 'content-protocol-click'; url: string; pageUrl: string; filename?: string }
-    | { type: 'capture-url'; url: string; pageUrl: string; source: ContextMenuTargetSource; filename?: string; captureType?: DownloadCaptureType }
+    | { type: 'capture-url'; url: string; urls?: string[]; pageUrl: string; source: ContextMenuTargetSource; filename?: string; fileSize?: number; captureType?: DownloadCaptureType }
     | { type: 'capture-site-status'; url: string; pageUrl: string }
     | { type: 'resolve-context-menu-target' }
     | { type: 'picker:get'; id: string }

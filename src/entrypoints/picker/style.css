@@ -158,6 +158,41 @@ h1 {
   white-space: normal;
 }
 
+.picker-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.picker-meta-grid > div {
+  display: grid;
+  gap: 2px;
+}
+
+.picker-meta-value {
+  color: var(--picker-text);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.picker-candidates {
+  display: grid;
+  gap: 3px;
+  margin-top: 3px;
+  padding-top: 7px;
+  border-top: 1px solid var(--picker-border);
+}
+
+.picker-candidate {
+  overflow: hidden;
+  color: var(--picker-muted);
+  font-size: 10px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 input {
   width: 100%;
   margin: 0;
@@ -235,6 +270,11 @@ input:focus {
 
   .picker-header p {
     max-width: 36ch;
+  }
+
+  .picker-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 }
 

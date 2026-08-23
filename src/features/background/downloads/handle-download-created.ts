@@ -82,6 +82,7 @@ export async function handleDownloadCreated(item: DownloadItem): Promise<void> {
     userAgent: context?.userAgent,
     requestHeaders: snapshot.settings.forwardHeaders ? context?.requestHeaders : undefined,
     dir: snapshot.settings.defaultDir || undefined,
+    fileSize: item.totalBytes && item.totalBytes > 0 ? item.totalBytes : item.fileSize,
   };
   if (snapshot.settings.promptBeforeDownload) {
     await openDownloadPicker(input, 'download_capture');

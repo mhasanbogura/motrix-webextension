@@ -75,6 +75,18 @@ export default function App() {
     globalThis.close();
   }
 
+  function formatFileSize(value: number | undefined): string {
+    if (!value || value <= 0) return 'Unknown';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let size = value;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex += 1;
+    }
+    return `${size >= 10 || unitIndex === 0 ? Math.round(size) : size.toFixed(1)} ${units[unitIndex]}`;
+  }
+
   if (loading) return <div className='picker-loading'>Loading Motrix download details…</div>;
 
   return (
@@ -93,6 +105,28 @@ export default function App() {
         <div className='picker-source'>
           <span className='picker-label'>Source URL</span>
           <span className='picker-url' title={pending?.input.url}>{pending?.input.url || 'Unknown source'}</span>
+          <div className='picker-meta-grid'>
+            <div>
+              <span className='picker-label'>File size</span>
+              <span className='picker-meta-value'>{formatFileSize(pending?.input.fileSize)}</span>
+            </div>
+            <div>
+              <span className='picker-label'>Available sources</span>
+              <span className='picker-meta-value'>{pending?.input.candidateUrls?.length || 1}</span>
+            </div>
+          </div>
+          {pending?.input.candidateUrls && pending.input.candidateUrls.length > 1 && (
+            <div className='picker-candidates'>
+              <span className='picker-label'>Detected media sources</span>
+              {pending.input.candidateUrls.slice(0, 5).map((candidate, index) => (
+                <span className='picker-candidate' key={`${candidate}-${index}`} title={candidate}>
+                  {index + 1}
+                  .
+                  {candidate}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className='picker-label-row'>
           <label className='picker-label' htmlFor='filename'>File name</label>
