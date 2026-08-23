@@ -434,7 +434,7 @@ function getEmbeddedMediaResourceUrls(): string[] {
   for (const script of Array.from(document.scripts)) {
     const text = script.textContent;
     if (!text || text.length > 2_000_000) continue;
-    const matches = text.match(/https?:\\?\/\\?\/[^"'\\s]+/g) || [];
+    const matches = text.match(/https?:[^"' \t\r\n]+/g) || [];
     for (const match of matches) {
       const url = normalizeSupportedUrl(decodeEmbeddedUrl(match));
       if (url && isLikelyMediaResource(url)) urls.add(url);
@@ -477,6 +477,7 @@ function isPornhubDirectMediaUrl(url: string): boolean {
 
 function mediaResourceScore(url: string): number {
   let score = 50;
+  if (isPornhubDirectMediaUrl(url)) score += 220;
   if (/\.(?:m3u8|mpd)(?:$|[?#])/i.test(url)) score += 140;
   if (/\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(url)) score += 90;
   if (MEDIA_RESOURCE_HOSTS.test(url)) score += 25;
