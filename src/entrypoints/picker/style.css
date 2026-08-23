@@ -403,7 +403,7 @@ h1 {
   max-height: 76px;
   margin: 0;
   padding: 5px 6px;
-  overflow: auto;
+  overflow: hidden;
   border: 1px solid var(--picker-border);
   border-radius: 7px;
   outline: none;
