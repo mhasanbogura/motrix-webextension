@@ -27,61 +27,70 @@ export function PopupActions({
   t,
 }: PopupActionsProps) {
   const showPauseAll = activeLane === 'active';
-  const showResumeAll = activeLane === 'active';
   const hasTasks = taskCount > 0;
+  const bulkButtonClass = 'w-full rounded-lg border-transparent bg-(--m3-surface) px-2 text-[11px] font-semibold';
+
+  const clearButton = (
+    <Button
+      variant='outline'
+      size='sm'
+      className={`${bulkButtonClass} text-destructive`}
+      disabled={busy || !hasTasks}
+      onClick={onClearAll}
+    >
+      <Trash2 />
+      {t('popup.clearAll')}
+    </Button>
+  );
+
+  const openMotrixButton = (
+    <Button
+      className='w-full justify-center rounded-lg px-3 font-semibold shadow-(--m3-shadow-card)'
+      size='sm'
+      onClick={onWakeMotrix}
+    >
+      <Power />
+      {t('common.openMotrix')}
+    </Button>
+  );
 
   return (
     <>
       <Separator className='mt-3' />
       <div data-reveal className='space-y-2 rounded-xl border bg-(--m3-surface-container) p-2'>
-        <div className={showPauseAll ? 'grid grid-cols-3 gap-1.5' : 'grid grid-cols-1 gap-1.5'}>
-          {showPauseAll
-            ? (
+        {showPauseAll
+          ? (
+              <div className='grid grid-cols-3 gap-1.5'>
                 <Button
                   variant='outline'
                   size='sm'
-                  className='w-full rounded-lg border-transparent bg-(--m3-surface) px-2 text-[11px] font-semibold text-(--m3-warning)'
+                  className={`${bulkButtonClass} text-(--m3-warning)`}
                   disabled={busy || !hasTasks}
                   onClick={onPauseAll}
                 >
                   <Pause />
                   {t('popup.pauseAll')}
                 </Button>
-              )
-            : null}
-          {showResumeAll
-            ? (
                 <Button
                   variant='outline'
                   size='sm'
-                  className='w-full rounded-lg border-transparent bg-(--m3-surface) px-2 text-[11px] font-semibold text-(--m3-success)'
+                  className={`${bulkButtonClass} text-(--m3-success)`}
                   disabled={busy || !hasTasks}
                   onClick={onResumeAll}
                 >
                   <Play />
                   {t('popup.resumeAll')}
                 </Button>
-              )
-            : null}
-          <Button
-            variant='outline'
-            size='sm'
-            className='w-full rounded-lg border-transparent bg-(--m3-surface) px-2 text-[11px] font-semibold text-destructive'
-            disabled={busy || !hasTasks}
-            onClick={onClearAll}
-          >
-            <Trash2 />
-            {t('popup.clearAll')}
-          </Button>
-        </div>
-        <Button
-          className='w-full justify-center rounded-lg px-3 font-semibold shadow-(--m3-shadow-card)'
-          size='sm'
-          onClick={onWakeMotrix}
-        >
-          <Power />
-          {t('common.openMotrix')}
-        </Button>
+                {clearButton}
+              </div>
+            )
+          : (
+              <div className='grid grid-cols-2 gap-1.5'>
+                {clearButton}
+                {openMotrixButton}
+              </div>
+            )}
+        {showPauseAll ? openMotrixButton : null}
       </div>
     </>
   );

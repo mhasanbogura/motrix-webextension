@@ -345,7 +345,9 @@ function getClosestLinkUrl(element: Element | undefined): string | undefined {
 function getFilenameHint(element: Element | undefined): string | undefined {
   const link = element?.closest('a[href]');
   const metadataElement = element?.closest('[data-filename], [data-file-name], [data-name], [data-title]');
+  const socialTitle = isSocialMediaUrl(location.href) ? getSocialPageTitleHint() : undefined;
   const candidates = [
+    socialTitle,
     link?.getAttribute('download'),
     element?.getAttribute('data-filename'),
     element?.getAttribute('data-file-name'),
@@ -359,6 +361,14 @@ function getFilenameHint(element: Element | undefined): string | undefined {
     element?.getAttribute('aria-label'),
   ];
   return candidates.map((value) => value?.trim()).find((value): value is string => Boolean(value));
+}
+
+function getSocialPageTitleHint(): string | undefined {
+  const metaTitle = document.querySelector('meta[property="og:title"], meta[name="twitter:title"]')?.getAttribute('content');
+  const candidates = [metaTitle, document.title]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+  return candidates.find((value) => !/^(?:facebook|youtube|watch|reels?)(?:\s*[-|].*)?$/i.test(value));
 }
 
 function getClosestMediaElement(element: Element | undefined): HTMLImageElement | HTMLMediaElement | undefined {
@@ -413,6 +423,10 @@ function getMediaDownloadUrls(media: CaptureTarget | undefined): string[] {
     : [];
   const candidates = (youtubeVideoCandidates.length ? youtubeVideoCandidates : allCandidates)
     .sort((left, right) => mediaResourceScore(right) - mediaResourceScore(left));
+  if (isFacebookUrl(location.href) && candidates.length) {
+    const facebookVideo = candidates.find(isLikelyFacebookVideoResource);
+    return [facebookVideo || candidates[0]];
+  }
   if (candidates.length) return candidates;
   if (
     (media instanceof HTMLMediaElement || isPlayerContainer(media))
@@ -500,6 +514,27 @@ function isYouTubeUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+function isFacebookUrl(value: string): boolean {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+    return hostname === 'facebook.com' || hostname.endsWith('.facebook.com') || hostname === 'fb.watch';
+  } catch {
+    return false;
+  }
+}
+function isLikelyFacebookVideoResource(url: string): boolean {
+  if (!isFacebookUrl(location.href)) return false;
+  let decoded = url;
+  try {
+    decoded = decodeURIComponent(url);
+  } catch {
+    // Keep the encoded URL when a query parameter is not fully decodable.
+  }
+  if (/\.(?:m3u8|mpd|m4s|ts)(?:$|[?#])/i.test(decoded)) return false;
+  return /[?&](?:mime|type)=video(?:%2f|\/)/i.test(decoded)
+    || /\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(decoded)
+    || /\/v\/t\d+(?:[./_-]|$)/i.test(decoded);
 }
 function isKnownVideoPageUrl(url: string): boolean {
   return /^https?:\/\/(?:www\.)?pornhub\.com\/(?:view_video\.php|video\/(?!get_media(?:[/?]|$)))/i.test(url);

@@ -137,7 +137,7 @@ Open the extension popup, use the paste-link panel, enter an HTTP(S), magnet, ed
 
 ### Social-media pages
 
-For Facebook, YouTube, Dailymotion, and Pornhub pages, the native resolver obtains a direct media format and a cleaned title when the website exposes an authorized downloadable stream. For Pornhub, this prevents a small HLS manifest or segment from being treated as the video file. The title is used as the default picker filename and remains editable. Direct media URLs may expire, so the picker refreshes a resolved social-media URL when you confirm the download.
+For Facebook, YouTube, Dailymotion, and Pornhub pages, the native resolver obtains a direct media format and a cleaned title when the website exposes an authorized downloadable stream. Facebook capture prefers one direct reel/video candidate instead of listing page, thumbnail, and variant URLs, and uses the social-page title as the picker filename when available. For Pornhub, this prevents a small HLS manifest or segment from being treated as the video file. The title is used as the default picker filename and remains editable. Direct media URLs may expire, so the picker refreshes a resolved social-media URL when you confirm the download.
 
 The resolver does not bypass DRM, paywalls, private access controls, or platform restrictions. Private, age-restricted, bot-protected, or PO-Token-protected videos may require you to be signed in or may remain unavailable.
 

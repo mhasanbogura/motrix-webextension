@@ -44,6 +44,7 @@ function isDirectMediaCandidate(value: string): boolean {
     const parsed = new URL(value);
     return /\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(parsed.pathname)
       || /(?:^|\.)googlevideo\.com$/i.test(parsed.hostname)
+      || (/(?:^|\.)fbcdn\.net$/i.test(parsed.hostname) && /\/v\/t\d+(?:[./_-]|$)/i.test(parsed.pathname))
       || /\/video\/get_media(?:[/?]|$)/i.test(parsed.pathname)
       || /\/videoplayback(?:[/?]|$)/i.test(parsed.pathname);
   } catch {
