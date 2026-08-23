@@ -12,12 +12,12 @@ const MEDIA_BUTTON_IDLE_MS = 5000;
 const MEDIA_RESOURCE_EXTENSIONS = /\.(?:m3u8|mpd|mp4|m4v|webm|m4s|ts)(?:$|[?#])/i;
 const MEDIA_RESOURCE_HOSTS = new RegExp(
   ['googlevideo\\.com', 'fbcdn\\.net', 'dailymotion\\.com', 'dmcdn\\.net', 'akamaized\\.net', 'cloudfront\\.net',
-    'luluvid\\.com', 'lulustream\\.com', 'phncdn\\.com', 'pornhub\\.com'].join('|'),
+    'luluvid\\.com', 'lulustream\\.com', 'phncdn\\.com'].join('|'),
   'i',
 );
 const MEDIA_RESOURCE_HINTS = new RegExp(
-  ['videoplayback', 'manifest', 'master', 'playlist', 'segment', 'stream', 'media', 'download', '\\.m3u8', '\\.mpd',
-    'mime=video', 'mime=audio'].join('|'),
+  ['videoplayback', 'manifest', 'master', 'playlist', 'segment', 'stream', 'media', 'video', 'clip', 'download',
+    'quality', 'resolution', 'height', '\\.m3u8', '\\.mpd', 'mime=video', 'mime=audio'].join('|'),
   'i',
 );
 const MEDIA_URL_ATTRIBUTES = [
@@ -289,9 +289,6 @@ function removeMediaButton(): void {
 
 function resolveContextMenuTarget(event: MouseEvent): ContextMenuTarget {
   const element = getElementAtPoint(event);
-  const linkUrl = getClosestLinkUrl(element);
-  if (linkUrl) return buildTarget(linkUrl, 'link', getFilenameHint(element));
-
   const media = getClosestMediaElement(element) ?? getMediaAtPoint(event.clientX, event.clientY);
   const mediaUrls = getMediaDownloadUrls(media);
   const mediaUrl = mediaUrls[0];
@@ -305,6 +302,9 @@ function resolveContextMenuTarget(event: MouseEvent): ContextMenuTarget {
       getMediaFileSize(media, mediaUrls),
     );
   }
+
+  const linkUrl = getClosestLinkUrl(element);
+  if (linkUrl) return buildTarget(linkUrl, 'link', getFilenameHint(element));
 
   const selectionUrl = findSupportedTextUrl(globalThis.getSelection()?.toString());
   if (selectionUrl) return buildTarget(selectionUrl, 'selection');
@@ -383,17 +383,21 @@ function getMediaDownloadUrl(media: HTMLImageElement | HTMLMediaElement | undefi
 
 function getMediaDownloadUrls(media: HTMLImageElement | HTMLMediaElement | undefined): string[] {
   if (!media) return [];
-  const directUrls = getMediaUrls(media);
-  if (directUrls.length) return directUrls;
+  const directMediaUrls = getMediaUrls(media).filter(isLikelyMediaResource);
+  const runtimeMediaUrls = media instanceof HTMLMediaElement ? getRecentMediaResourceUrls() : [];
+  const candidates = [...directMediaUrls, ...runtimeMediaUrls]
+    .filter((url, index, values) => values.indexOf(url) === index)
+    .sort((left, right) => mediaResourceScore(right) - mediaResourceScore(left));
+  if (candidates.length) return candidates;
   if (media instanceof HTMLMediaElement && isSocialMediaUrl(location.href)) return [location.href];
-  return media instanceof HTMLMediaElement ? getRecentMediaResourceUrls() : [];
+  return [];
 }
 
 function getRecentMediaResourceUrls(): string[] {
   const now = performance.now();
   const resourceCandidates = performance.getEntriesByType('resource')
     .map((entry) => entry as PerformanceResourceTiming)
-    .filter((entry) => now - entry.startTime < 30000)
+    .filter((entry) => now - entry.startTime < 120000)
     .map((entry) => normalizeSupportedUrl(entry.name))
     .filter((url): url is string => Boolean(url))
     .filter(isLikelyMediaResource);
@@ -426,17 +430,29 @@ function decodeEmbeddedUrl(value: string): string {
 }
 
 function isLikelyMediaResource(url: string): boolean {
-  return isSupportedUrl(url) && (
-    MEDIA_RESOURCE_EXTENSIONS.test(url)
-    || (MEDIA_RESOURCE_HOSTS.test(url) && MEDIA_RESOURCE_HINTS.test(url))
-  );
+  if (!isSupportedUrl(url) || isKnownVideoPageUrl(url)) return false;
+  try {
+    const pathname = new URL(url).pathname;
+    if (/\.(?:html?|php)$/i.test(pathname)) return false;
+  } catch {
+    return false;
+  }
+  return MEDIA_RESOURCE_EXTENSIONS.test(url)
+    || (MEDIA_RESOURCE_HOSTS.test(url) && MEDIA_RESOURCE_HINTS.test(url));
+}
+
+function isKnownVideoPageUrl(url: string): boolean {
+  return /^https?:\/\/(?:www\.)?pornhub\.com\/(?:view_video\.php|video\/)/i.test(url);
 }
 
 function mediaResourceScore(url: string): number {
-  if (/\.(?:m3u8|mpd)(?:$|[?#])/i.test(url) || MEDIA_RESOURCE_HINTS.test(url)) return 100;
-  if (/\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(url)) return 90;
-  if (/\.(?:m4s|ts)(?:$|[?#])/i.test(url)) return 30;
-  return 60;
+  let score = 50;
+  if (/\.(?:m3u8|mpd)(?:$|[?#])/i.test(url)) score += 100;
+  if (/\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(url)) score += 90;
+  if (MEDIA_RESOURCE_HOSTS.test(url)) score += 25;
+  if (MEDIA_RESOURCE_HINTS.test(url)) score += 35;
+  if (/\.(?:m4s|ts)(?:$|[?#])/i.test(url) || /segment|chunk|fragment/i.test(url)) score -= 70;
+  return score;
 }
 
 function getMediaUrls(media: HTMLImageElement | HTMLMediaElement | undefined): string[] {

@@ -16,6 +16,21 @@ function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value);
 }
 
+function isPageDocumentUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return /\.(?:html?|php)$/i.test(parsed.pathname)
+      || /^\/view_video\.php(?:\/|$)/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function selectDownloadUrl(url: string, candidates: string[]): string {
+  if (isSocialMediaUrl(url)) return url;
+  return candidates.find((candidate) => !isPageDocumentUrl(candidate)) || url;
+}
+
 export async function routeUrl(
   url: string,
   pageUrl: string,
@@ -26,21 +41,25 @@ export async function routeUrl(
   fileSize?: number,
 ): Promise<RuntimeResponse> {
   const snapshot = await loadSnapshot();
-  if (!isProtocolEnabled(url, snapshot.settings)) {
+  const mediaCandidates = [url, ...(candidateUrls || [])]
+    .filter((candidate, index, values) => isHttpUrl(candidate) && values.indexOf(candidate) === index);
+  const routedUrl = selectDownloadUrl(url, mediaCandidates);
+  const pickerCandidates = mediaCandidates.filter(
+    (candidate) => !isPageDocumentUrl(candidate) || candidate === routedUrl,
+  );
+  if (!isProtocolEnabled(routedUrl, snapshot.settings)) {
     return { ok: false, code: 'disabled', message: 'This protocol is disabled' };
   }
-  if (isUrlBlocked(url, pageUrl, snapshot.settings, snapshot.siteRules)) {
+  if (isUrlBlocked(routedUrl, pageUrl, snapshot.settings, snapshot.siteRules)) {
     return { ok: false, code: 'site_rule_blocked', message: 'Downloads are blocked for this site' };
   }
   if (captureType && !snapshot.settings.captureTypes[captureType]) {
     return { ok: false, code: 'capture_type_disabled', message: `${captureType} capture is disabled` };
   }
-  if (!duplicateGuard.reserve([url, pageUrl])) {
+  if (!duplicateGuard.reserve([routedUrl, pageUrl])) {
     return { ok: true, result: 'duplicate-blocked' };
   }
-  const cookie = snapshot.settings.forwardCookies ? await getCookieHeader(url) : undefined;
-  const mediaCandidates = [url, ...(candidateUrls || [])]
-    .filter((candidate, index, values) => isHttpUrl(candidate) && values.indexOf(candidate) === index);
+  const cookie = snapshot.settings.forwardCookies ? await getCookieHeader(routedUrl) : undefined;
   let input: AddDownloadInput;
   if (isSocialMediaUrl(url)) {
     try {
@@ -59,17 +78,18 @@ export async function routeUrl(
       finalUrl: url,
       filename: isSocialMediaUrl(url) ? input.filename : (filename || input.filename),
       dir: snapshot.settings.defaultDir || undefined,
-      candidateUrls: mediaCandidates.length > 1 ? mediaCandidates : undefined,
+      candidateUrls: pickerCandidates.length > 1 ? pickerCandidates : undefined,
       fileSize,
     };
   } else {
     input = {
-      url,
+      url: routedUrl,
+      finalUrl: routedUrl !== url ? url : undefined,
       referer: pageUrl,
       cookie,
-      filename: filename || filenameFromUrl(url),
+      filename: filename || filenameFromUrl(routedUrl),
       dir: snapshot.settings.defaultDir || undefined,
-      candidateUrls: mediaCandidates.length > 1 ? mediaCandidates : undefined,
+      candidateUrls: pickerCandidates.length > 1 ? pickerCandidates : undefined,
       fileSize,
     };
   }
