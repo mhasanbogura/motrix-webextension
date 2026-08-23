@@ -94,7 +94,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
             continue
 
         if completed.returncode != 0:
-            errors.append(clean_error(completed.stderr or completed.stdout))
+            errors.append(clean_error(completed.stderr or completed.stdout, hostname))
             continue
         try:
             info = json.loads(completed.stdout)
@@ -109,7 +109,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
                 first_format = requested_formats[0]
                 direct_url = first_format.get("url") if isinstance(first_format, dict) else None
         if not isinstance(direct_url, str) or urlparse(direct_url).scheme not in {"http", "https"}:
-            errors.append("No direct public media format was exposed for this page.")
+            errors.append(clean_error("No direct public media format was exposed for this page.", hostname))
             continue
 
         ext = str(info.get("ext") or "mp4")
@@ -135,7 +135,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
             "headers": safe_headers,
         }
 
-    return {"ok": False, "error": clean_error(errors[0] if errors else "")}
+    return {"ok": False, "error": errors[0] if errors else clean_error("", hostname)}
 
 
 def find_cookie_file() -> Path | None:
@@ -210,18 +210,22 @@ def rename_local_file(payload: dict[str, object]) -> dict[str, object]:
     return {"ok": True, "filename": clean_filename}
 
 
-def clean_error(value: str) -> str:
+def clean_error(value: str, hostname: str = "") -> str:
     lines = [line.strip() for line in value.splitlines() if line.strip()]
     detail = lines[-1] if lines else "The social-media resolver could not resolve this page."
     lowered = detail.lower()
-    if "no supported javascript runtime" in lowered or "javascript runtime" in lowered:
+    is_youtube = hostname in {"youtube.com", "youtu.be"} or hostname.endswith(".youtube.com")
+    is_pornhub = hostname == "pornhub.com" or hostname.endswith(".pornhub.com")
+    if is_youtube and ("no supported javascript runtime" in lowered or "javascript runtime" in lowered):
         return "YouTube now requires the resolver's JavaScript runtime. Run the latest one-time Motrix Social Resolver installer."
-    if "sign in to confirm" in lowered or "not a bot" in lowered:
+    if is_youtube and ("sign in to confirm" in lowered or "not a bot" in lowered):
         return "YouTube blocked this request. Keep YouTube signed in in the browser, then run the latest resolver installer and try again."
-    if "po token" in lowered or "poh token" in lowered:
+    if is_youtube and ("po token" in lowered or "poh token" in lowered):
         return "YouTube requires a valid PO Token for this request; cookies alone may not be sufficient. Open the video in the browser and use Motrix media capture instead."
+    if is_pornhub and ("requested format is not available" in lowered or "no direct" in lowered or "unavailable" in lowered):
+        return "Pornhub did not expose a direct downloadable media format for this request. Confirm the video is available in the authorized browser session, then use Motrix media capture."
     if "requested format is not available" in lowered or "no direct" in lowered:
-        return "YouTube did not expose a direct downloadable HTTP video format for this request. Open the video in the browser and use Motrix media capture, or provide a valid authorized cookie export."
+        return "The site did not expose a direct downloadable HTTP media format for this request. Open the page in the browser and use Motrix media capture, or provide an authorized cookie export."
     return detail[:500]
 
 
