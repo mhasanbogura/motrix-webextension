@@ -139,17 +139,30 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
 
 
 def find_cookie_file() -> Path | None:
-    path = Path(__file__).with_name("cookies.txt")
-    if not path.is_file():
-        return None
-    try:
-        has_cookie = any(
-            line.strip() and not line.lstrip().startswith("#") and len(line.rstrip("\n").split("\t")) >= 7
-            for line in path.read_text(encoding="utf-8", errors="ignore").splitlines()
-        )
-    except OSError:
-        return None
-    return path if has_cookie else None
+    candidates: list[Path] = []
+    configured_path = os.environ.get("MOTRIX_COOKIE_FILE")
+    if configured_path:
+        candidates.append(Path(configured_path).expanduser())
+    candidates.append(Path(__file__).with_name("cookies.txt"))
+    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    candidates.append(data_home / "motrix-social-resolver" / "cookies.txt")
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data:
+        candidates.append(Path(local_app_data) / "Motrix Social Resolver" / "cookies.txt")
+
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            has_cookie = any(
+                line.strip() and not line.lstrip().startswith("#") and len(line.rstrip("\n").split("\t")) >= 7
+                for line in path.read_text(encoding="utf-8", errors="ignore").splitlines()
+            )
+        except OSError:
+            continue
+        if has_cookie:
+            return path
+    return None
 
 
 def build_social_filename(filename: str, title: str, ext: str) -> str:
@@ -205,8 +218,10 @@ def clean_error(value: str) -> str:
         return "YouTube now requires the resolver's JavaScript runtime. Run the latest one-time Motrix Social Resolver installer."
     if "sign in to confirm" in lowered or "not a bot" in lowered:
         return "YouTube blocked this request. Keep YouTube signed in in the browser, then run the latest resolver installer and try again."
+    if "po token" in lowered or "poh token" in lowered:
+        return "YouTube requires a valid PO Token for this request; cookies alone may not be sufficient. Open the video in the browser and use Motrix media capture instead."
     if "requested format is not available" in lowered or "no direct" in lowered:
-        return "YouTube did not expose a direct downloadable HTTP video format for this request. The video may require a PO Token or account access."
+        return "YouTube did not expose a direct downloadable HTTP video format for this request. Open the video in the browser and use Motrix media capture, or provide a valid authorized cookie export."
     return detail[:500]
 
 

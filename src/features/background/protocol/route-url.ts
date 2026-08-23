@@ -26,9 +26,25 @@ function isPageDocumentUrl(value: string): boolean {
   }
 }
 
+function isDirectMediaCandidate(value: string): boolean {
+  if (!isHttpUrl(value) || isPageDocumentUrl(value)) return false;
+  if (/\.(?:m3u8|mpd|m4s|ts)(?:$|[?#])/i.test(value) || /(?:^|[/_-])(?:seg|segment|chunk|fragment)[-_/]/i.test(value)) {
+    return false;
+  }
+  try {
+    const parsed = new URL(value);
+    return /\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(parsed.pathname)
+      || /(?:^|\.)googlevideo\.com$/i.test(parsed.hostname)
+      || /\/video\/get_media(?:[/?]|$)/i.test(parsed.pathname)
+      || /\/videoplayback(?:[/?]|$)/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
 function selectDownloadUrl(url: string, candidates: string[]): string {
-  if (isSocialMediaUrl(url)) return url;
-  return candidates.find((candidate) => !isPageDocumentUrl(candidate)) || url;
+  return candidates.find(isDirectMediaCandidate)
+    || (isSocialMediaUrl(url) ? url : candidates.find((candidate) => !isPageDocumentUrl(candidate)) || url);
 }
 
 function buildMediaCandidates(
@@ -66,7 +82,8 @@ export async function routeUrl(
   ].filter((candidate, index, values) => isHttpUrl(candidate) && values.indexOf(candidate) === index);
   const mediaCandidates = buildMediaCandidates(mediaCandidateUrls, suppliedMediaCandidates, fileSize);
   const routedUrl = selectDownloadUrl(url, mediaCandidateUrls);
-  const pickerCandidates = mediaCandidates.filter(
+  const directMediaCandidates = mediaCandidates.filter((candidate) => isDirectMediaCandidate(candidate.url));
+  const pickerCandidates = (directMediaCandidates.length ? directMediaCandidates : mediaCandidates).filter(
     (candidate) => !isPageDocumentUrl(candidate.url) || candidate.url === routedUrl,
   );
   if (!isProtocolEnabled(routedUrl, snapshot.settings)) {
@@ -81,9 +98,9 @@ export async function routeUrl(
   if (!duplicateGuard.reserve([routedUrl, pageUrl])) {
     return { ok: true, result: 'duplicate-blocked' };
   }
-  const resolverPageUrl = isSocialMediaUrl(url)
-    ? url
-    : isSocialMediaUrl(pageUrl)
+  const resolverPageUrl = isSocialMediaUrl(routedUrl)
+    ? routedUrl
+    : isSocialMediaUrl(pageUrl) && !isDirectMediaCandidate(routedUrl)
       ? pageUrl
       : undefined;
   const cookie = snapshot.settings.forwardCookies
