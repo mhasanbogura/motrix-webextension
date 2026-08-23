@@ -9,8 +9,8 @@ import { formatSocialResolverError, isSocialMediaUrl, resolveSocialMedia } from 
 
 import { getCookieHeader } from '../cookies';
 import { openDownloadPicker } from '../downloads/picker';
-import { duplicateGuard, filenameMetadata } from '../downloads/state';
 import { routeDownloadInput } from '../downloads/route-download-input';
+import { duplicateGuard, filenameMetadata, requestContexts } from '../downloads/state';
 
 function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value);
@@ -98,13 +98,14 @@ export async function routeUrl(
   if (!duplicateGuard.reserve([routedUrl, pageUrl])) {
     return { ok: true, result: 'duplicate-blocked' };
   }
+  const requestContext = requestContexts.resolve([routedUrl, ...mediaCandidateUrls]);
   const resolverPageUrl = isSocialMediaUrl(routedUrl)
     ? routedUrl
     : isSocialMediaUrl(pageUrl) && !isDirectMediaCandidate(routedUrl)
       ? pageUrl
       : undefined;
   const cookie = snapshot.settings.forwardCookies
-    ? await getCookieHeader(resolverPageUrl || routedUrl)
+    ? requestContext?.cookie || await getCookieHeader(resolverPageUrl || routedUrl)
     : undefined;
   let input: AddDownloadInput;
   if (resolverPageUrl) {
@@ -119,9 +120,10 @@ export async function routeUrl(
     }
     input = {
       ...input,
-      referer: pageUrl,
+      referer: requestContext?.referer || pageUrl,
       cookie,
       finalUrl: resolverPageUrl,
+      requestHeaders: requestContext?.requestHeaders,
       filename: filename || input.filename,
       dir: snapshot.settings.defaultDir || undefined,
       candidateUrls: undefined,
@@ -132,9 +134,11 @@ export async function routeUrl(
     input = {
       url: routedUrl,
       finalUrl: routedUrl !== url ? url : undefined,
-      referer: pageUrl,
+      referer: requestContext?.referer || pageUrl,
       cookie,
       filename: filename || filenameFromUrl(routedUrl),
+      requestHeaders: requestContext?.requestHeaders,
+      userAgent: requestContext?.userAgent,
       dir: snapshot.settings.defaultDir || undefined,
       candidateUrls: pickerCandidates.length > 1 ? pickerCandidates.map((candidate) => candidate.url) : undefined,
       mediaCandidates: pickerCandidates.length > 1 ? pickerCandidates : undefined,
