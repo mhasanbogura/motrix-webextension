@@ -379,13 +379,17 @@ function getSocialPageTitleHint(): string | undefined {
         .map((element) => element.textContent)
     : [];
   const metadataCandidates = [
-    getFacebookReelTitleOverride(location.href),
     document.querySelector('meta[property="og:title"]')?.getAttribute('content'),
     document.querySelector('meta[name="twitter:title"]')?.getAttribute('content'),
     document.querySelector('meta[property="og:description"]')?.getAttribute('content'),
     document.title,
   ];
-  const candidates = [...captionCandidates, ...visibleTextCandidates, ...metadataCandidates]
+  const candidates = [
+    getFacebookReelTitleOverride(location.href),
+    ...captionCandidates,
+    ...visibleTextCandidates,
+    ...metadataCandidates,
+  ]
     .map((value) => normalizeSocialTitle(value))
     .filter((value): value is string => Boolean(value));
   return candidates.find((value) => isUsefulSocialTitle(value));
@@ -402,6 +406,8 @@ function normalizeSocialTitle(value: string | null | undefined): string | undefi
 }
 
 function isUsefulSocialTitle(value: string): boolean {
+  if (/^\d+\s+(?:unread\s+)?chats?$/i.test(value)) return false;
+  if (/^\d+\s+(?:notifications?|messages?)$/i.test(value)) return false;
   const genericTitlePattern = new RegExp(
     `^(?:${[
       'facebook',
