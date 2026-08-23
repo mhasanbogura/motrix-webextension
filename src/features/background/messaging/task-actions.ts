@@ -44,16 +44,17 @@ export async function renameTask(gid: string, filename: string, status?: Aria2Ta
   if (!cleanFilename) throw new Error('Enter a filename before saving the rename');
   const snapshot = await loadSnapshot();
   const client = new Aria2RpcClient(snapshot.connection);
+  const task = await findTask(client, gid, status || 'active');
+  const filePath = task.files?.find((file) => file.selected === 'true')?.path || task.files?.[0]?.path;
+  const targetFilename = preserveFileExtension(cleanFilename, filePath);
   if (isDownloadResultStatus(status)) {
-    const task = await findTask(client, gid, status);
-    const filePath = task.files?.find((file) => file.selected === 'true')?.path || task.files?.[0]?.path;
     if (!filePath) throw new Error('The completed download has no local file path');
-    await renameLocalFile(filePath, cleanFilename);
-    await saveTaskNameOverride(gid, cleanFilename);
+    await renameLocalFile(filePath, targetFilename);
+    await saveTaskNameOverride(gid, targetFilename);
     return;
   }
-  await client.changeOption(gid, { out: cleanFilename });
-  await saveTaskNameOverride(gid, cleanFilename);
+  await client.changeOption(gid, { out: targetFilename });
+  await saveTaskNameOverride(gid, targetFilename);
 }
 
 async function findTask(client: Aria2RpcClient, gid: string, status: Aria2TaskStatus): Promise<Aria2Task> {
@@ -98,6 +99,13 @@ function getTaskUri(task: Aria2Task): string | undefined {
     ?.flatMap((file) => file.uris || [])
     .map((uri) => uri.uri)
     .find((uri) => /^https?:\/\//i.test(uri));
+}
+
+function preserveFileExtension(filename: string, originalPath?: string): string {
+  if (/\.[a-z0-9]{1,8}$/i.test(filename) || !originalPath) return filename;
+  const originalFilename = originalPath.split(/[\\/]/).filter(Boolean).pop() || '';
+  const extension = originalFilename.match(/\.[a-z0-9]{1,8}$/i)?.[0];
+  return extension ? `${filename}${extension}` : filename;
 }
 
 function getTaskFilename(task: Aria2Task): string | undefined {
