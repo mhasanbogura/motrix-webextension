@@ -12,6 +12,7 @@ const MEDIA_BUTTON_IDLE_MS = 5000;
 const MEDIA_RESOURCE_EXTENSIONS = /\.(?:m3u8|mpd|mp4|m4v|webm|m4s|ts)(?:$|[?#])/i;
 const MEDIA_NON_VIDEO_EXTENSIONS = /\.(?:html?|php|js|css|json|jpg|jpeg|png|gif|svg|avif|webp)(?:$|[?#])/i;
 const MEDIA_THUMBNAIL_PATHS = /\/(?:pics\/gifs|thumbs?|thumbnails?|posters?|previews?|images?)\//i;
+const MEDIA_PREVIEW_TRANSFORMS = /\/(?:plain|rs:fit|rs:fill|vts)(?:\/|$)/i;
 const MEDIA_RESOURCE_HOSTS = new RegExp(
   ['googlevideo\\.com', 'fbcdn\\.net', 'dailymotion\\.com', 'dmcdn\\.net', 'akamaized\\.net', 'cloudfront\\.net',
     'luluvid\\.com', 'lulustream\\.com', 'phncdn\\.com'].join('|'),
@@ -451,31 +452,37 @@ function decodeEmbeddedUrl(value: string): string {
 }
 
 function isLikelyMediaResource(url: string): boolean {
-  if (!isSupportedUrl(url) || isKnownVideoPageUrl(url)) return false;
+  if (!isSupportedUrl(url) || (isKnownVideoPageUrl(url) && !isPornhubDirectMediaUrl(url))) return false;
   try {
     const parsed = new URL(url);
     const pathname = parsed.pathname;
     const isPhnCdn = /(?:^|\.)phncdn\.com$/i.test(parsed.hostname);
     if (MEDIA_NON_VIDEO_EXTENSIONS.test(pathname)) return false;
-    if (isPhnCdn && MEDIA_THUMBNAIL_PATHS.test(pathname)) return false;
+    if (isPhnCdn && (MEDIA_THUMBNAIL_PATHS.test(pathname) || MEDIA_PREVIEW_TRANSFORMS.test(pathname))) return false;
   } catch {
     return false;
   }
   return MEDIA_RESOURCE_EXTENSIONS.test(url)
+    || isPornhubDirectMediaUrl(url)
     || (MEDIA_RESOURCE_HOSTS.test(url) && MEDIA_RESOURCE_HINTS.test(url));
 }
 
 function isKnownVideoPageUrl(url: string): boolean {
-  return /^https?:\/\/(?:www\.)?pornhub\.com\/(?:view_video\.php|video\/)/i.test(url);
+  return /^https?:\/\/(?:www\.)?pornhub\.com\/(?:view_video\.php|video\/(?!get_media(?:[/?]|$)))/i.test(url);
+}
+
+function isPornhubDirectMediaUrl(url: string): boolean {
+  return /^https?:\/\/(?:www\.)?pornhub\.com\/video\/get_media(?:[/?]|$)/i.test(url);
 }
 
 function mediaResourceScore(url: string): number {
   let score = 50;
-  if (/\.(?:m3u8|mpd)(?:$|[?#])/i.test(url)) score += 100;
+  if (/\.(?:m3u8|mpd)(?:$|[?#])/i.test(url)) score += 140;
   if (/\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(url)) score += 90;
   if (MEDIA_RESOURCE_HOSTS.test(url)) score += 25;
   if (MEDIA_RESOURCE_HINTS.test(url)) score += 35;
   if (/\.(?:m4s|ts)(?:$|[?#])/i.test(url) || /segment|chunk|fragment/i.test(url)) score -= 70;
+  if (MEDIA_PREVIEW_TRANSFORMS.test(url)) score -= 120;
   return score;
 }
 

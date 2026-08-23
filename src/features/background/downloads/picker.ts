@@ -39,7 +39,7 @@ export async function openDownloadPicker(input: AddDownloadInput, source: string
   await browser.storage.local.set({ [storageKey(id)]: pending });
   const pickerUrl = browser.runtime.getURL(`/picker.html?id=${encodeURIComponent(id)}`);
   try {
-    await browser.windows.create({ url: pickerUrl, type: 'popup', width: 620, height: 720 });
+    await browser.windows.create({ url: pickerUrl, type: 'popup', width: 600, height: 560 });
   } catch {
     await browser.tabs.create({ url: pickerUrl });
   }

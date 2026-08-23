@@ -351,3 +351,97 @@ input:focus {
     background: #3b2031;
   }
 }
+
+/* Compact popup layout: keep the full workflow visible without page scrolling. */
+.picker-shell {
+  padding: 8px 10px 7px;
+}
+
+.picker-header {
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 7px 9px;
+}
+
+.picker-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+h1 {
+  margin-bottom: 2px;
+  font-size: 17px;
+}
+
+.picker-header p {
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.picker-card {
+  padding: 10px;
+}
+
+.picker-card-title {
+  margin: -10px -10px 8px;
+  padding: 6px 9px;
+  font-size: 13px;
+}
+
+.picker-source {
+  gap: 4px;
+  margin-bottom: 7px;
+  padding: 7px 8px;
+}
+
+.picker-url {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.picker-meta-grid {
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.picker-meta-value {
+  font-size: 11px;
+}
+
+.picker-candidates {
+  gap: 4px;
+  margin-top: 2px;
+  padding-top: 5px;
+}
+
+.picker-candidate-select {
+  padding: 6px 7px;
+  font-size: 10px;
+}
+
+.picker-candidate-selection {
+  font-size: 9px;
+}
+
+.picker-label-row {
+  margin-bottom: 3px;
+}
+
+input {
+  padding: 8px 9px;
+  font-size: 12px;
+}
+
+.picker-actions {
+  margin-top: 7px;
+}
+
+.button {
+  padding: 8px 10px;
+}
