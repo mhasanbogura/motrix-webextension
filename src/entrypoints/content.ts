@@ -10,6 +10,8 @@ const SUPPORTED_PROTOCOLS = new Set(['http:', 'https:', 'magnet:', 'ed2k:', 'thu
 const TEXT_URL_PATTERN = /(https?:\/\/[^\s<>"'`]+|magnet:\?[^\s<>"'`]+|ed2k:\/\/[^\s<>"'`]+|thunder:\/\/[A-Z0-9+/=]+)/i;
 const MEDIA_BUTTON_IDLE_MS = 5000;
 const MEDIA_RESOURCE_EXTENSIONS = /\.(?:m3u8|mpd|mp4|m4v|webm|m4s|ts)(?:$|[?#])/i;
+const MEDIA_NON_VIDEO_EXTENSIONS = /\.(?:html?|php|js|css|json|jpg|jpeg|png|gif|svg|avif|webp)(?:$|[?#])/i;
+const MEDIA_THUMBNAIL_PATHS = /\/(?:pics\/gifs|thumbs?|thumbnails?|posters?|previews?|images?)\//i;
 const MEDIA_RESOURCE_HOSTS = new RegExp(
   ['googlevideo\\.com', 'fbcdn\\.net', 'dailymotion\\.com', 'dmcdn\\.net', 'akamaized\\.net', 'cloudfront\\.net',
     'luluvid\\.com', 'lulustream\\.com', 'phncdn\\.com'].join('|'),
@@ -20,6 +22,7 @@ const MEDIA_RESOURCE_HINTS = new RegExp(
     'quality', 'resolution', 'height', '\\.m3u8', '\\.mpd', 'mime=video', 'mime=audio'].join('|'),
   'i',
 );
+const MEDIA_PLAYER_SELECTORS = '[id^="playerDiv_"], [data-player], .mgp, .video-player, .jwplayer';
 const MEDIA_URL_ATTRIBUTES = [
   'src',
   'data-src',
@@ -40,7 +43,9 @@ interface RecordedContextMenuTarget {
 }
 
 let lastContextMenuTarget: RecordedContextMenuTarget | undefined;
-let activeMedia: HTMLImageElement | HTMLMediaElement | undefined;
+type CaptureTarget = HTMLImageElement | HTMLMediaElement | HTMLElement;
+
+let activeMedia: CaptureTarget | undefined;
 let mediaButton: HTMLButtonElement | undefined;
 let mediaButtonFadeTimer: number | undefined;
 let lastPointerPoint: { x: number; y: number } | undefined;
@@ -153,7 +158,7 @@ function handleMediaPointerOut(event: PointerEvent): void {
   const next = event.relatedTarget instanceof Node ? event.relatedTarget : undefined;
   if (next && activeMedia.contains(next)) return;
   if (next && mediaButton?.contains(next)) return;
-  const nextMedia = next instanceof Element ? getClosestMediaElement(next) : undefined;
+  const nextMedia = next instanceof Element ? getClosestCaptureTarget(next) : undefined;
   if (nextMedia === activeMedia) return;
   scheduleMediaButtonFade();
 }
@@ -184,7 +189,7 @@ function handleMediaSourceReady(event: Event): void {
   if (activeMedia === media || (pointer && isPointInRect(pointer.x, pointer.y, rect))) activateMedia(media);
 }
 
-function activateMedia(media: HTMLImageElement | HTMLMediaElement): void {
+function activateMedia(media: CaptureTarget): void {
   if (pageBlocked || !captureTypes[getMediaCaptureType(media)] || !isSupportedUrl(getMediaDownloadUrl(media))) return;
   activeMedia = media;
   ensureMediaButton();
@@ -362,37 +367,50 @@ function getClosestMediaElement(element: Element | undefined): HTMLImageElement 
   return undefined;
 }
 
-function getMediaFromPointer(event: PointerEvent): HTMLImageElement | HTMLMediaElement | undefined {
-  const target = event.target instanceof Element ? event.target : undefined;
-  return getClosestMediaElement(target) ?? getMediaAtPoint(event.clientX, event.clientY);
+function getClosestPlayerContainer(element: Element | undefined): HTMLElement | undefined {
+  const player = element?.closest(MEDIA_PLAYER_SELECTORS);
+  return player instanceof HTMLElement ? player : undefined;
 }
 
-function getMediaAtPoint(x: number, y: number): HTMLImageElement | HTMLMediaElement | undefined {
+function getClosestCaptureTarget(element: Element | undefined): CaptureTarget | undefined {
+  return getClosestMediaElement(element) ?? getClosestPlayerContainer(element);
+}
+
+function getMediaFromPointer(event: PointerEvent): CaptureTarget | undefined {
+  const target = event.target instanceof Element ? event.target : undefined;
+  return getClosestCaptureTarget(target) ?? getMediaAtPoint(event.clientX, event.clientY);
+}
+
+function getMediaAtPoint(x: number, y: number): CaptureTarget | undefined {
   const fromLayers = document.elementsFromPoint(x, y)
-    .map((element) => getClosestMediaElement(element))
-    .find((media): media is HTMLImageElement | HTMLMediaElement => Boolean(media));
+    .map((element) => getClosestCaptureTarget(element))
+    .find((media): media is CaptureTarget => Boolean(media));
   if (fromLayers) return fromLayers;
-  return Array.from(document.querySelectorAll('video, audio, img'))
-    .map((element) => getClosestMediaElement(element))
-    .find((media): media is HTMLImageElement | HTMLMediaElement => {
+  return Array.from(document.querySelectorAll(`video, audio, img, ${MEDIA_PLAYER_SELECTORS}`))
+    .map((element) => getClosestCaptureTarget(element))
+    .find((media): media is CaptureTarget => {
       if (!media) return false;
       return isPointInRect(x, y, media.getBoundingClientRect());
     });
 }
 
-function getMediaDownloadUrl(media: HTMLImageElement | HTMLMediaElement | undefined): string | undefined {
+function getMediaDownloadUrl(media: CaptureTarget | undefined): string | undefined {
   return getMediaDownloadUrls(media)[0];
 }
 
-function getMediaDownloadUrls(media: HTMLImageElement | HTMLMediaElement | undefined): string[] {
+function getMediaDownloadUrls(media: CaptureTarget | undefined): string[] {
   if (!media) return [];
   const directMediaUrls = getMediaUrls(media).filter(isLikelyMediaResource);
-  const runtimeMediaUrls = media instanceof HTMLMediaElement ? getRecentMediaResourceUrls() : [];
+  const runtimeMediaUrls = media instanceof HTMLMediaElement || isPlayerContainer(media)
+    ? getRecentMediaResourceUrls()
+    : [];
   const candidates = [...directMediaUrls, ...runtimeMediaUrls]
     .filter((url, index, values) => values.indexOf(url) === index)
     .sort((left, right) => mediaResourceScore(right) - mediaResourceScore(left));
   if (candidates.length) return candidates;
-  if (media instanceof HTMLMediaElement && isSocialMediaUrl(location.href)) return [location.href];
+  if ((media instanceof HTMLMediaElement || isPlayerContainer(media)) && isSocialMediaUrl(location.href)) {
+    return [location.href];
+  }
   return [];
 }
 
@@ -426,7 +444,7 @@ function getEmbeddedMediaResourceUrls(): string[] {
 
 function decodeEmbeddedUrl(value: string): string {
   return value
-    .replaceAll('\\\\/', '/')
+    .replaceAll('\\/', '/')
     .replaceAll('\\u0026', '&')
     .replaceAll('\\u003d', '=')
     .replaceAll('\\u00253A', ':');
@@ -435,8 +453,11 @@ function decodeEmbeddedUrl(value: string): string {
 function isLikelyMediaResource(url: string): boolean {
   if (!isSupportedUrl(url) || isKnownVideoPageUrl(url)) return false;
   try {
-    const pathname = new URL(url).pathname;
-    if (/\.(?:html?|php)$/i.test(pathname)) return false;
+    const parsed = new URL(url);
+    const pathname = parsed.pathname;
+    const isPhnCdn = /(?:^|\.)phncdn\.com$/i.test(parsed.hostname);
+    if (MEDIA_NON_VIDEO_EXTENSIONS.test(pathname)) return false;
+    if (isPhnCdn && MEDIA_THUMBNAIL_PATHS.test(pathname)) return false;
   } catch {
     return false;
   }
@@ -458,7 +479,7 @@ function mediaResourceScore(url: string): number {
   return score;
 }
 
-function getMediaUrls(media: HTMLImageElement | HTMLMediaElement | undefined): string[] {
+function getMediaUrls(media: CaptureTarget | undefined): string[] {
   if (!media) return [];
   const attributeCandidates = MEDIA_URL_ATTRIBUTES.flatMap((attribute) => [
     media.getAttribute(attribute),
@@ -471,8 +492,8 @@ function getMediaUrls(media: HTMLImageElement | HTMLMediaElement | undefined): s
       ])
     : [];
   const candidates = [
-    media instanceof HTMLImageElement ? media.currentSrc : media.currentSrc,
-    media instanceof HTMLImageElement ? media.src : media.src,
+    media instanceof HTMLMediaElement || media instanceof HTMLImageElement ? media.currentSrc : undefined,
+    media instanceof HTMLMediaElement || media instanceof HTMLImageElement ? media.src : undefined,
     ...sourceCandidates,
     ...attributeCandidates,
   ];
@@ -483,13 +504,13 @@ function getMediaUrls(media: HTMLImageElement | HTMLMediaElement | undefined): s
 }
 
 function getMediaCandidateMetadata(
-  media: HTMLImageElement | HTMLMediaElement | undefined,
+  media: CaptureTarget | undefined,
   urls: string[],
 ): Array<{ url: string; fileSize?: number }> {
   return urls.map((url) => ({ url, fileSize: getMediaFileSize(media, [url]) }));
 }
 
-function getMediaFileSize(media: HTMLImageElement | HTMLMediaElement | undefined, urls: string[]): number | undefined {
+function getMediaFileSize(media: CaptureTarget | undefined, urls: string[]): number | undefined {
   if (!media) return undefined;
   const sizeHint = [
     media.getAttribute('data-size'),
@@ -515,15 +536,19 @@ function parseSizeHint(value: string | null): number | undefined {
   return Number.isFinite(amount) ? Math.round(amount * multiplier) : undefined;
 }
 
-function getMediaSource(media: HTMLImageElement | HTMLMediaElement | undefined): ContextMenuTargetSource {
+function getMediaSource(media: CaptureTarget | undefined): ContextMenuTargetSource {
   return media instanceof HTMLImageElement ? 'media' : 'media';
 }
 
-function getMediaCaptureType(media: HTMLImageElement | HTMLMediaElement | undefined): DownloadCaptureType {
-  if (media instanceof HTMLVideoElement) return 'video';
+function getMediaCaptureType(media: CaptureTarget | undefined): DownloadCaptureType {
+  if (media instanceof HTMLVideoElement || isPlayerContainer(media)) return 'video';
   if (media instanceof HTMLAudioElement) return 'audio';
   if (media instanceof HTMLImageElement) return 'image';
   return 'other';
+}
+
+function isPlayerContainer(media: CaptureTarget | undefined): boolean {
+  return media instanceof HTMLElement && media.matches(MEDIA_PLAYER_SELECTORS);
 }
 
 function buildTarget(
