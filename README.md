@@ -50,6 +50,12 @@ Select the directory containing `manifest.json`, not the parent archive folder. 
 
 After replacing the extension files with a newer release, return to `chrome://extensions` and click the extension’s reload button. Reload the page being captured as well when content-script behavior changed. [1]
 
+### Chrome persistence after browser restart
+
+A Chrome or Chromium extension loaded with **Load unpacked** should remain installed after the browser restarts, but the selected folder must remain at the same permanent path. Do not load it from a temporary directory, an extracted folder that is later moved, or a build directory that is deleted and recreated.
+
+If Chrome asks you to load it again, remove the old entry from `chrome://extensions`, extract the release to a stable folder such as `C:\\Motrix WebExtension\\` or `~/Motrix WebExtension/`, and load `Motrix WebExtension/Chrome/` again. If Chrome still removes it, check `chrome://extensions` for an error or a managed-browser policy. A browser extension cannot force Chrome to keep an unpacked developer extension installed. For automatic persistent installation and updates, the supported options are a Chrome Web Store installation or a managed Chrome Enterprise policy. [4] [5]
+
 ## Step 3: Install in Firefox
 
 For testing or local use, open `about:debugging`, select **This Firefox**, click **Load Temporary Add-on**, and select `manifest.json` inside:
@@ -59,6 +65,8 @@ Motrix WebExtension/Firefox/
 ```
 
 Firefox temporary add-ons remain installed until removed or Firefox restarts. A permanent end-user installation requires a Mozilla-signed add-on; the temporary workflow is intended for testing and debugging. [2]
+
+To keep the Firefox extension across restarts in the normal Release or Beta browser, the add-on must be submitted to Mozilla for signing and then installed as a signed package. An unsigned local build can remain persistent only in supported development-oriented Firefox editions with the required unsigned-extension preference enabled. [2]
 
 ## Step 4: Install the native social resolver
 
@@ -196,3 +204,7 @@ The archive is written to `packages/Motrix WebExtension_v<version>.zip` and incl
 [2]: https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/ "Mozilla Extension Workshop — Temporary installation in Firefox"
 
 [3]: https://aria2.github.io/manual/en/html/aria2c.html "aria2 1.37.0 Manual — aria2c and RPC documentation"
+
+[4]: https://developer.chrome.com/docs/chromedriver/extensions "Chrome for Developers — Chrome Extensions: packed and unpacked extensions"
+
+[5]: https://support.google.com/chrome/a/answer/7532015?hl=en "Chrome Enterprise and Education Help — Set Chrome app and extension policies"
