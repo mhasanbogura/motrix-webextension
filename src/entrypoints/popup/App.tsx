@@ -6,6 +6,7 @@ import type { DiagnosticEvent } from '@/library/storage';
 
 import { useI18n } from '@/hooks/use-i18n';
 import { useTheme } from '@/hooks/use-theme';
+import { globMatch } from '@/library/download/filter';
 import { sendRuntimeMessage } from '@/library/runtime';
 import { useAnimeReveal } from '@/hooks/use-anime-reveal';
 import { triggerMotrixProtocol } from '@/library/protocol/launcher';
@@ -38,6 +39,7 @@ export default function App() {
   const hasSessionVerifiedConnectionRef = useRef(false);
   const [busy, setBusy] = useState(false);
   const [activeLane, setActiveLane] = useState<TaskLane>('active');
+  const [currentSite, setCurrentSite] = useState<{ pattern: string; url: string }>();
   const { t } = useI18n(snapshot.ui.locale);
   useTheme(snapshot.ui);
 
@@ -83,6 +85,42 @@ export default function App() {
       setSnapshot(response.snapshot);
     }
   }, [setSnapshot]);
+
+  useEffect(() => {
+    let active = true;
+    void browser.tabs.query({ active: true, lastFocusedWindow: true }).then((tabs) => {
+      if (!active) return;
+      const tabUrl = tabs[0]?.url;
+      if (!tabUrl) {
+        setCurrentSite(undefined);
+        return;
+      }
+      const pattern = sitePatternFromUrl(tabUrl);
+      setCurrentSite(pattern ? { pattern, url: tabUrl } : undefined);
+    }).catch(() => {
+      if (active) setCurrentSite(undefined);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const currentSiteEnabled = !currentSite
+    || !snapshot.siteRules.some(
+      (rule) => rule.enabled && rule.action === 'block' && globMatch(rule.pattern, currentSite.url),
+    );
+  const updateCurrentSite = useCallback(async (enabled: boolean) => {
+    if (!currentSite) return;
+    const matchingRule = snapshot.siteRules.find(
+      (rule) => rule.pattern === currentSite.pattern && rule.action === 'block',
+    );
+    if (enabled && !matchingRule && !currentSiteEnabled) return;
+    const siteRules = matchingRule
+      ? snapshot.siteRules.map((rule) => rule.id === matchingRule.id ? { ...rule, enabled: !enabled } : rule)
+      : [...snapshot.siteRules, { id: `current-site:${new URL(currentSite.url).host}`, pattern: currentSite.pattern, action: 'block' as const, enabled: !enabled }];
+    const response = await sendRuntimeMessage({ type: 'save-site-rules', siteRules });
+    if (response.ok && response.snapshot) setSnapshot(response.snapshot);
+  }, [currentSite, currentSiteEnabled, setSnapshot, snapshot.siteRules]);
 
   const recordPopupDiagnostic = useCallback(async (
     level: DiagnosticEvent['level'],
@@ -196,6 +234,9 @@ export default function App() {
         status={status}
         version={runtime?.connection.version || '1.6.1'}
         onToggleCapture={(enabled) => void updateInterception(enabled)}
+        currentSiteEnabled={currentSiteEnabled}
+        currentSitePattern={currentSite?.pattern}
+        onToggleCurrentSite={(enabled) => void updateCurrentSite(enabled)}
         onRefresh={() => void refreshRuntime(false)}
         onOpenOptions={openOptions}
         t={t}
@@ -250,6 +291,16 @@ export default function App() {
             : null}
     </div>
   );
+}
+
+function sitePatternFromUrl(value: string): string | undefined {
+  try {
+    const parsed = new URL(value);
+    if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) return undefined;
+    return `*://${parsed.host}/*`;
+  } catch {
+    return undefined;
+  }
 }
 
 function usePopupPolling(callback: () => void) {

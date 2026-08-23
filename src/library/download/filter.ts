@@ -174,7 +174,7 @@ function isUrlPattern(value: string): boolean {
   return /^(?:https?|file|ftp):\/\//i.test(value) || value.includes('*') || value.includes('://');
 }
 
-function globMatch(pattern: string, value: string): boolean {
+export function globMatch(pattern: string, value: string): boolean {
   if (!pattern || !value) return false;
   const escaped = pattern
     .replace(/[.+^${}()|[\]\\]/g, '\\$&')

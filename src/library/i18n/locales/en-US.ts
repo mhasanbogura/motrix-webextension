@@ -33,6 +33,8 @@ export const enUS = {
     interception: 'Download capture',
     captureOn: 'Intercepting',
     captureOff: 'Paused',
+    siteLabel: 'This site',
+    siteToggle: 'Enable or disable capture for this site',
     pauseAll: 'Pause all',
     resumeAll: 'Resume all',
     clearAll: 'Clear all',

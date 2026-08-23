@@ -16,7 +16,10 @@ interface PopupHeaderProps {
   onRefresh: () => void;
   onOpenOptions: () => void;
   snapshot: StorageSnapshot;
+  currentSiteEnabled: boolean;
+  currentSitePattern?: string;
   onToggleCapture: (enabled: boolean) => void;
+  onToggleCurrentSite: (enabled: boolean) => void;
 }
 
 export function PopupHeader({
@@ -24,6 +27,9 @@ export function PopupHeader({
   status,
   version,
   onToggleCapture,
+  currentSiteEnabled,
+  currentSitePattern,
+  onToggleCurrentSite,
   onRefresh,
   onOpenOptions,
   t,
@@ -54,6 +60,20 @@ export function PopupHeader({
       </div>
 
       <div className='flex shrink-0 items-center gap-1.5'>
+        {currentSitePattern
+          ? (
+              <div className='flex min-w-0 items-center gap-1.5' title={currentSitePattern}>
+                <span className='max-w-24 truncate text-[10px] font-semibold text-muted-foreground'>
+                  {t('popup.siteLabel')}
+                </span>
+                <Switch
+                  checked={currentSiteEnabled}
+                  onCheckedChange={onToggleCurrentSite}
+                  aria-label={t('popup.siteToggle')}
+                />
+              </div>
+            )
+          : null}
         <div className='flex items-center gap-1.5'>
           <span className='pointer-events-none relative grid min-w-[66px] text-right text-[11px] font-semibold'>
             <span

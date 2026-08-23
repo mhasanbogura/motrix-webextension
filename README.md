@@ -160,6 +160,8 @@ The Settings page controls interception, prompt-before-download behavior, automa
 
 To prevent capture on a site, add its URL pattern under **Extension filters → Blocked sites**. Changes apply to future capture events; reload the page if a content script was already active before the rule changed.
 
+When a normal website is open, the popup also shows a compact **This site** switch. Turn it off to disable the picker and capture behavior for the current host. Motrix stores this choice in **Rules** as a cross-scheme wildcard such as `*://www.example.com/*`, so it covers both HTTP and HTTPS pages on that host. Turn the switch on again in the popup, or disable the corresponding rule in Settings, to re-enable capture. Browser-internal pages and extension pages do not show this control.
+
 ## Troubleshooting
 
 | Symptom | Recommended action |
