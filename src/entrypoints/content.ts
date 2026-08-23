@@ -1,7 +1,7 @@
 import type { DownloadCaptureType } from '@/library/storage';
 import type { ContextMenuTarget, ContextMenuTargetSource, RuntimeMessage, RuntimeResponse } from '@/library/messages';
 
-import { isPornhubUrl, isSocialMediaUrl } from '@/library/social/resolver';
+import { getFacebookReelTitleOverride, isPornhubUrl, isSocialMediaUrl } from '@/library/social/resolver';
 
 const PROTOCOL_PATTERN = /^(?:magnet|ed2k|thunder):/i;
 const CONTEXT_MENU_TARGET_TTL_MS = 60000;
@@ -379,6 +379,7 @@ function getSocialPageTitleHint(): string | undefined {
         .map((element) => element.textContent)
     : [];
   const metadataCandidates = [
+    getFacebookReelTitleOverride(location.href),
     document.querySelector('meta[property="og:title"]')?.getAttribute('content'),
     document.querySelector('meta[name="twitter:title"]')?.getAttribute('content'),
     document.querySelector('meta[property="og:description"]')?.getAttribute('content'),

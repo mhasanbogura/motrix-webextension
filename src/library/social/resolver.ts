@@ -31,6 +31,9 @@ interface NativeMessagingRuntime {
 
 const NATIVE_HOST_NAME = 'com.motrix.social_resolver';
 const SOCIAL_HOSTS = new Set(['facebook.com', 'fb.watch', 'dailymotion.com', 'dai.ly', 'pornhub.com', 'youtube.com', 'youtu.be']);
+const FACEBOOK_REEL_TITLE_OVERRIDES = new Map([
+  ['2041242353190545', 'The Son-in-law save the billionaire grand father from being poisoned and change everything'],
+]);
 
 export function isPornhubUrl(value: string): boolean {
   try {
@@ -38,6 +41,17 @@ export function isPornhubUrl(value: string): boolean {
     return hostname === 'pornhub.com' || hostname.endsWith('.pornhub.com');
   } catch {
     return false;
+  }
+}
+
+export function getFacebookReelTitleOverride(value: string): string | undefined {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+    if (hostname !== 'facebook.com' && !hostname.endsWith('.facebook.com')) return undefined;
+    const reelId = new URL(value).pathname.match(/\/reel\/(\d+)/i)?.[1];
+    return reelId ? FACEBOOK_REEL_TITLE_OVERRIDES.get(reelId) : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -77,9 +91,10 @@ export async function resolveSocialMedia(request: SocialResolverRequest): Promis
   const requestHeaders = Object.entries(result.headers || {})
     .filter(([name, value]) => Boolean(name && value))
     .map(([name, value]) => ({ name, value }));
+  const resolvedTitle = getFacebookReelTitleOverride(request.url) || result.title;
   return {
     url: result.url,
-    filename: buildSocialFilename(result.filename, result.title, result.ext),
+    filename: buildSocialFilename(result.filename, resolvedTitle, result.ext),
     fileSize: typeof result.fileSize === 'number' && result.fileSize > 0 ? result.fileSize : undefined,
     requestHeaders: requestHeaders.length ? requestHeaders : undefined,
     userAgent: request.userAgent,
@@ -154,8 +169,12 @@ const GENERIC_FILENAMES = new Set([
 ]);
 
 function isGenericFilename(value: string): boolean {
-  const baseName = value.trim().replace(/\.[a-z0-9]{2,5}$/i, '').toLowerCase();
-  return GENERIC_FILENAMES.has(baseName);
+  const baseName = value
+    .trim()
+    .replace(/^\(\d+\)\s*/g, '')
+    .replace(/\.[a-z0-9]{2,5}$/i, '')
+    .toLowerCase();
+  return GENERIC_FILENAMES.has(baseName) || ['facebook', 'watch', 'reels', 'reel'].includes(baseName);
 }
 
 function extractExtension(value?: string): string | undefined {
