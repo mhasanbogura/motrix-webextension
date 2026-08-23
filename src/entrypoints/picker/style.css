@@ -481,7 +481,7 @@ body,
 }
 
 .picker-shell {
-  width: min(calc(100% - 12px), calc(100vw - 24px), 560px);
+  width: min(calc(100% - 12px), calc(100vw - 24px), 640px);
   height: calc(100% - 12px);
   min-height: 0;
   margin: 6px auto;
