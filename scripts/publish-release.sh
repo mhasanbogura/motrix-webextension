@@ -16,10 +16,10 @@ TAG="v${VERSION}"
 PACKAGE="packages/Motrix WebExtension_v${VERSION}.zip"
 
 if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
-  gh release upload "$TAG" "$PACKAGE" --repo "$REPO" --clobber
+  gh release upload "$TAG" "${PACKAGE}#Motrix WebExtension_v${VERSION}.zip" --repo "$REPO" --clobber
   gh release edit "$TAG" --repo "$REPO" --title "Motrix WebExtension ${VERSION}" --notes-file "$NOTES"
 else
-  gh release create "$TAG" "$PACKAGE" \
+  gh release create "$TAG" "${PACKAGE}#Motrix WebExtension_v${VERSION}.zip" \
     --repo "$REPO" \
     --title "Motrix WebExtension ${VERSION}" \
     --notes-file "$NOTES"
