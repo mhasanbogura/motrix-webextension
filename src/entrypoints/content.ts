@@ -13,6 +13,7 @@ const MEDIA_RESOURCE_EXTENSIONS = /\.(?:m3u8|mpd|mp4|m4v|webm|m4s|ts)(?:$|[?#])/
 const MEDIA_NON_VIDEO_EXTENSIONS = /\.(?:html?|php|js|css|json|jpg|jpeg|png|gif|svg|avif|webp)(?:$|[?#])/i;
 const MEDIA_THUMBNAIL_PATHS = /\/(?:pics\/gifs|thumbs?|thumbnails?|posters?|previews?|images?)\//i;
 const MEDIA_PREVIEW_TRANSFORMS = /\/(?:plain|rs:fit|rs:fill|vts)(?:\/|$)/i;
+const MEDIA_SEGMENT_RESOURCES = /(?:^|[/_-])(?:seg|segment|chunk|fragment)[-_/]/i;
 const MEDIA_RESOURCE_HOSTS = new RegExp(
   ['googlevideo\\.com', 'fbcdn\\.net', 'dailymotion\\.com', 'dmcdn\\.net', 'akamaized\\.net', 'cloudfront\\.net',
     'luluvid\\.com', 'lulustream\\.com', 'phncdn\\.com'].join('|'),
@@ -458,6 +459,7 @@ function isLikelyMediaResource(url: string): boolean {
     const pathname = parsed.pathname;
     const isPhnCdn = /(?:^|\.)phncdn\.com$/i.test(parsed.hostname);
     if (MEDIA_NON_VIDEO_EXTENSIONS.test(pathname)) return false;
+    if (/\.(?:m4s|ts)(?:$|[?#])/i.test(pathname) || MEDIA_SEGMENT_RESOURCES.test(pathname)) return false;
     if (isPhnCdn && (MEDIA_THUMBNAIL_PATHS.test(pathname) || MEDIA_PREVIEW_TRANSFORMS.test(pathname))) return false;
   } catch {
     return false;
@@ -482,7 +484,7 @@ function mediaResourceScore(url: string): number {
   if (/\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(url)) score += 90;
   if (MEDIA_RESOURCE_HOSTS.test(url)) score += 25;
   if (MEDIA_RESOURCE_HINTS.test(url)) score += 35;
-  if (/\.(?:m4s|ts)(?:$|[?#])/i.test(url) || /segment|chunk|fragment/i.test(url)) score -= 70;
+  if (/\.(?:m4s|ts)(?:$|[?#])/i.test(url) || MEDIA_SEGMENT_RESOURCES.test(url)) score -= 300;
   if (MEDIA_PREVIEW_TRANSFORMS.test(url)) score -= 120;
   return score;
 }
