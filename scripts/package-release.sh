@@ -32,9 +32,10 @@ cp "$ROOT_DIR/social-resolver/README.md" "$RESOLVER_ROOT/"
 cp "$ROOT_DIR/social-resolver/cookies.txt" "$RESOLVER_ROOT/"
 chmod +x "$RESOLVER_ROOT/install.sh" "$RESOLVER_ROOT/social_resolver.py"
 cp "$ROOT_DIR/Motrix WebExtension.md" "$STAGING_DIR/$DOCUMENT_NAME"
+cp "$ROOT_DIR/README.md" "$STAGING_DIR/README.md"
 
 rm -f "$PACKAGE_DIR/$PACKAGE_NAME"
-(cd "$STAGING_DIR" && zip -qr "$PACKAGE_DIR/$PACKAGE_NAME" "$ROOT_NAME" "Motrix Social Resolver" "$DOCUMENT_NAME")
+(cd "$STAGING_DIR" && zip -qr "$PACKAGE_DIR/$PACKAGE_NAME" "$ROOT_NAME" "Motrix Social Resolver" "$DOCUMENT_NAME" "README.md")
 
 printf 'Created package:\n'
 printf '%s\n' "$PACKAGE_NAME"

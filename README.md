@@ -1,221 +1,198 @@
-<p align="center">
-  <img src="./src/public/icon/128.png" alt="Motrix Extension" width="96" height="96">
-</p>
+# Motrix WebExtension
 
-# Motrix Extension
+**Motrix WebExtension** routes browser downloads to Motrix through aria2 JSON-RPC and provides an IDM-style review picker, media and link capture, context-menu downloading, editable filenames, task management, retry actions, and an optional native social-media resolver.
 
-Browser extension for Motrix — download interception, aria2 JSON-RPC delegation, and live task control from Chrome.
+> Use this software only for files and media you are authorized to download, and follow the terms and policies of each website.
 
-![Manifest](https://img.shields.io/badge/manifest-v3-blue)
-![Chrome](https://img.shields.io/badge/Chrome-116%2B-4285F4)
-![WXT](https://img.shields.io/badge/WXT-React-0ea5e9)
-![License](https://img.shields.io/badge/license-MIT-green)
+## Package contents
 
----
+The release archive is named `Motrix WebExtension_v<version>.zip`. After extraction, it contains the following top-level entries:
 
-**Popup** — connection status, speed metrics, and task controls
-**Options** — RPC connection, interception behavior, site rules, appearance, language, and maintenance
+| Entry | Purpose |
+|---|---|
+| `Motrix WebExtension/Chrome/` | Chrome/Chromium MV3 extension build. |
+| `Motrix WebExtension/Firefox/` | Firefox MV2 extension build. |
+| `Motrix Social Resolver/` | Native resolver, Windows and Linux/macOS installers, and optional `cookies.txt` template. |
+| `Motrix WebExtension_v<version>.md` | Versioned package summary. |
+| `README.md` | This complete installation and usage guide. |
 
-## Features
+## Requirements
 
-- **Download interception** — Captures browser downloads and routes matching tasks to Motrix through aria2 JSON-RPC.
-- **Smart filtering** — Applies the global switch, self-download guard, protocol switches, size limits, extension lists, and site rules before intercepting.
-- **Context menu** — Adds "Download with Motrix" for links, images, audio, video, pages, and selected text.
-- **Protocol links** — Handles `magnet:`, `ed2k:`, and `thunder:` links from pages when the corresponding option is enabled.
-- **Cookie forwarding** — Optionally forwards cookies to the local aria2 task for authenticated downloads.
-- **Request context forwarding** — Optionally forwards a small allowlist of request headers such as Referer and User-Agent.
-- **Filename preservation** — Reads `Content-Disposition` response headers and URL paths to preserve delegated filenames.
-- **Popup dashboard** — Shows connection status, global speeds, active/waiting/stopped tasks, and per-task actions.
-- **Task actions** — Pause, resume, remove, pause all, and resume all through aria2 RPC.
-- **Auto wake and fallback** — Attempts to wake Motrix with `motrix://` and falls back to `motrix://new-task` when RPC submission fails.
-- **Settings management** — Stores connection, download, site rule, UI, and diagnostic settings locally.
-- **English-only interface** — The popup, Options page, picker, and diagnostics use fixed English copy.
+You need Motrix running locally with its aria2 JSON-RPC endpoint enabled. The extension’s default connection is `127.0.0.1:16800/jsonrpc`. If your Motrix installation uses a different host, port, path, or RPC secret, update those values in the extension’s **Settings** page. aria2 supports JSON-RPC over HTTP and WebSocket; this extension uses the configured HTTP JSON-RPC endpoint. [3]
 
-## Installation
+For social-media page resolution, install Python 3 and run the native resolver installer once. The installer creates its own environment and installs yt-dlp with the required JavaScript runtime support. The native helper is launched by the browser on demand; you do not start a server for every download.
 
-### From Source
+## Step 1: Extract the archive
+
+Extract the ZIP to a permanent local folder. Do not load the extension directly from inside the ZIP. Keep the extracted folder in a stable location because the browser loads files from the selected directory.
+
+The extension and resolver are both inside the same archive:
+
+```text
+Motrix WebExtension_v<version>.zip/
+├── Motrix WebExtension/
+│   ├── Chrome/
+│   └── Firefox/
+├── Motrix Social Resolver/
+├── Motrix WebExtension_v<version>.md
+└── README.md
+```
+
+## Step 2: Install in Chrome or Chromium
+
+Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select:
+
+```text
+Motrix WebExtension/Chrome/
+```
+
+Select the directory containing `manifest.json`, not the parent archive folder. Pin Motrix to the toolbar if desired. These are the standard Chrome local-extension steps. [1]
+
+After replacing the extension files with a newer release, return to `chrome://extensions` and click the extension’s reload button. Reload the page being captured as well when content-script behavior changed. [1]
+
+## Step 3: Install in Firefox
+
+For testing or local use, open `about:debugging`, select **This Firefox**, click **Load Temporary Add-on**, and select `manifest.json` inside:
+
+```text
+Motrix WebExtension/Firefox/
+```
+
+Firefox temporary add-ons remain installed until removed or Firefox restarts. A permanent end-user installation requires a Mozilla-signed add-on; the temporary workflow is intended for testing and debugging. [2]
+
+## Step 4: Install the native social resolver
+
+Open a terminal or PowerShell in the extracted folder:
+
+### Linux or macOS
 
 ```bash
-git clone https://github.com/mhasanbogura/motrix-webextension.git
-cd motrix-webextension
+cd "Motrix Social Resolver"
+chmod +x install.sh
+./install.sh
+```
+
+### Windows PowerShell
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\install-windows.ps1
+```
+
+The installer registers the native-messaging host for the stable Chrome/Chromium and Firefox extension IDs. Restart the browser after installation. The resolver is used for supported Facebook, YouTube, and Dailymotion page URLs; ordinary downloads continue to work without it.
+
+If the resolver was installed by an earlier package, run the latest installer again after upgrading so its helper files and yt-dlp dependencies are current.
+
+## Step 5: Configure Motrix RPC
+
+Start Motrix before testing a download. Open the extension popup and check the connection indicator. If it remains in **Checking** or shows offline:
+
+1. Confirm that Motrix is running.
+2. Open the extension **Settings** page.
+3. Verify the host, port, RPC path, and secret.
+4. Confirm that the RPC endpoint is reachable from the browser.
+5. Click **Test connection**.
+6. Reload the extension after changing its manifest or permissions.
+
+The default endpoint is:
+
+```text
+http://127.0.0.1:16800/jsonrpc
+```
+
+## Optional cookies.txt setup
+
+The package contains an empty `Motrix Social Resolver/cookies.txt` template. It contains no real credentials. If a supported site requires authenticated access, provide your own Netscape-format cookie export.
+
+After running the installer, replace the installed template at one of these locations:
+
+| Operating system | Installed cookie-file path |
+|---|---|
+| Linux/macOS | `~/.local/share/motrix-social-resolver/cookies.txt` |
+| Windows | `%LOCALAPPDATA%\Motrix Social Resolver\cookies.txt` |
+
+The resolver uses the local file when it contains valid Netscape cookie rows and otherwise falls back to browser cookies passed by the extension. Never upload, publish, commit, or share a real cookies file. It can grant access to your accounts. Delete it when it is no longer needed and export a fresh file when the cookies expire.
+
+## Download workflows
+
+### Browser download interception
+
+With **Download capture** enabled, supported browser downloads are intercepted and routed to Motrix. If **Review before sending** is enabled, the compact IDM-style picker opens first. Review or edit the filename, then choose **Send to Motrix**. The picker does not expose a Save directory field; the destination is controlled by Motrix or the extension’s configured default directory.
+
+### Media and link capture
+
+On supported pages, hover over a media element and use the Motrix capture overlay, or use the page/link context menu. The context menu contains only **Download with Motrix**. Capture behavior can be controlled in Settings under **Download capture** and **Extension filters**, including audio, video, image, document, archive, and other file types.
+
+### Paste a link
+
+Open the extension popup, use the paste-link panel, enter an HTTP(S), magnet, ed2k, or supported browser download URL, and submit it. If picker review is enabled, confirm the task in the picker before sending it to Motrix.
+
+### Social-media pages
+
+For Facebook, YouTube, and Dailymotion pages, the native resolver obtains a direct media format and a cleaned title when the website exposes an authorized downloadable stream. The title is used as the default picker filename and remains editable. Direct media URLs may expire, so the picker refreshes a resolved social-media URL when you confirm the download.
+
+The resolver does not bypass DRM, paywalls, private access controls, or platform restrictions. Private, age-restricted, bot-protected, or PO-Token-protected videos may require you to be signed in or may remain unavailable.
+
+## Task management
+
+The popup displays **Active**, **Error**, and **Stopped** lanes. Active includes both running and waiting aria2 tasks while retaining each task’s actual status. Error contains failed tasks. Stopped contains completed and other non-error stopped results.
+
+Every task row supports filename editing. For active or waiting tasks, the new name is sent to aria2. For completed files, the native helper renames the actual local file on disk and the popup immediately refreshes the displayed name. If you enter a base name without an extension, the original extension is preserved.
+
+Error rows provide two additional actions:
+
+| Action | Result |
+|---|---|
+| **Retry** | Re-resolves the original source URL when available, refreshes expiring social-media URLs, and opens the picker again when review mode is enabled. |
+| **Open link** | Opens the original source URL in a new browser tab. Older tasks fall back to an HTTP(S) URI reported by aria2 when available. |
+
+## Settings and filters
+
+The Settings page controls interception, prompt-before-download behavior, automatic Motrix launching, cookie/header forwarding, default directory, capture types, allowed and blocked extensions, blocked site URL patterns, theme, density, and RPC connection details.
+
+To prevent capture on a site, add its URL pattern under **Extension filters → Blocked sites**. Changes apply to future capture events; reload the page if a content script was already active before the rule changed.
+
+## Troubleshooting
+
+| Symptom | Recommended action |
+|---|---|
+| Popup stays on **Checking** | Start Motrix, verify the RPC host/port/path/secret, and run **Test connection**. |
+| Chrome will not load the extension | Select `Motrix WebExtension/Chrome/`, the folder containing `manifest.json`, not the parent archive folder. |
+| Firefox cannot load the extension | Use `about:debugging → This Firefox → Load Temporary Add-on` and select the Firefox `manifest.json`. |
+| Social resolver is unavailable | Run the latest installer once, restart the browser, and confirm the native helper folder was installed. |
+| YouTube reports no direct format | Try the latest resolver installer, keep YouTube signed in if required, and use your own local cookies.txt only when authorized. Some videos remain unavailable. |
+| A download fails after the picker | Open the **Error** lane and use **Retry**. Retry resolves the original page again instead of reusing an expired direct stream. |
+| Rename appears unchanged | Install the latest extension package, ensure Motrix/aria2 still reports the task, and enter a filename without folders. The original extension is preserved automatically. |
+| Capture works on a blocked site | Check the blocked URL pattern, save Settings, then reload the page so the current content script receives the updated rule. |
+
+## Privacy and security
+
+The extension stores settings, diagnostics, task-name overrides, and recent source URLs locally in browser storage. It does not place real social-media cookies in the GitHub repository or release archive. Keep any personal `cookies.txt` outside source control and protect it with operating-system file permissions.
+
+The native resolver accepts only supported HTTP(S) page URLs and does not bypass DRM, authentication, paywalls, or other access controls.
+
+## Development and release builds
+
+The project uses WXT, React, TypeScript, and pnpm. To build from source:
+
+```bash
 pnpm install
 pnpm build
+pnpm exec wxt build -b firefox
 ```
 
-Then load the unpacked extension:
-
-1. Open `chrome://extensions`.
-2. Enable **Developer mode**.
-3. Click **Load unpacked**.
-4. Select `.output/chrome-mv3`.
-
-To create a ZIP package for Chrome Web Store submission:
+To create the combined versioned ZIP after both browser builds complete:
 
 ```bash
-pnpm zip
+scripts/package-release.sh
 ```
 
-### From GitHub Releases
+The archive is written to `packages/Motrix WebExtension_v<version>.zip` and includes the Chrome build, Firefox build, native resolver, versioned Markdown summary, and this README.
 
-Pre-built ZIP packages are published on the [Releases](https://github.com/mhasanbogura/motrix-webextension/releases) page.
+## References
 
-1. Download the latest `Motrix WebExtension.zip` asset.
-2. Unzip the archive.
-3. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the extracted folder.
+[1]: https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world "Chrome for Developers — Hello World extension"
 
-Release tags use the manifest date version format, for example `v2026.07.08.12345`, which matches the extension's `version_name` shown in `chrome://extensions`.
+[2]: https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/ "Mozilla Extension Workshop — Temporary installation in Firefox"
 
-## Releases
-
-### For users
-
-Download the latest ZIP from [GitHub Releases](https://github.com/mhasanbogura/motrix-webextension/releases) and load the unpacked extension as described above.
-
-### For maintainers
-
-1. Merge the changes you want to ship into the default branch.
-2. Open **Actions** → **Release** → **Run workflow**.
-3. Optionally set custom release notes, or leave them empty to auto-generate from commits.
-4. Optionally enable **draft** or **prerelease**, and choose whether to run ESLint before packaging.
-5. After the workflow completes, verify the new release tag (for example `v2026.07.07.12345`) and attached ZIP on the Releases page.
-
-The workflow packages the Chrome MV3 build with `pnpm zip`, reads `version_name` from the built manifest, and uploads `Motrix WebExtension.zip` to GitHub Releases. Manifest versions are computed in UTC so local builds and CI releases follow the same rules.
-
-Ensure the repository allows workflow write access under **Settings** → **Actions** → **General** → **Workflow permissions** → **Read and write permissions**.
-
-## FAQ
-
-### What is Motrix?
-
-[Motrix](https://github.com/agalwood/Motrix) is a download manager powered by aria2. This extension bridges Chrome downloads to a local Motrix or aria2-compatible JSON-RPC endpoint.
-
-### Do I need the desktop app?
-
-Yes. The extension sends tasks to a local JSON-RPC endpoint. By default it uses `http://127.0.0.1:16800/jsonrpc`. Without Motrix or a compatible aria2 service running, the popup will show a disconnected state and downloads cannot be delegated through RPC.
-
-### Why does the extension request broad host permissions?
-
-Downloads can originate from any website. The extension needs matching `http://*/*` and `https://*/*` host permissions so Chrome allows it to read cookies, request headers, and response filename headers for delegated downloads. These values are used only to submit download tasks to the local RPC endpoint. Cookie forwarding and request header forwarding can be disabled in Options.
-
-### Does this extension collect data?
-
-No. The extension does not send analytics, telemetry, advertising data, or browsing data to the developer or to third-party services. Runtime communication is intended for the local Motrix/aria2 endpoint configured by the user. See the [Privacy Policy](PRIVACY_POLICY.md).
-
-## Development
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/)
-- [pnpm](https://pnpm.io/)
-- Motrix or another aria2 JSON-RPC-compatible service
-
-### Setup
-
-```bash
-# Install dependencies
-pnpm install
-
-# Start WXT dev mode
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Package for Chrome Web Store submission
-pnpm zip
-```
-
-### Project Structure
-
-```text
-motrix_webextension/
-├── src/
-│   ├── components/
-│   │   ├── motrix/             # Motrix task/status presentation components
-│   │   └── ui/                 # Reusable Radix/Tailwind UI primitives
-│   ├── entrypoints/            # WXT extension entry points
-│   │   ├── background.ts       # Service worker bootstrap
-│   │   ├── content.ts          # Protocol-link click interception
-│   │   ├── options/            # Full-page settings app
-│   │   └── popup/              # Browser action popup app
-│   ├── features/
-│   │   ├── background/         # Downloads, context menu, messaging, runtime state
-│   │   └── options/            # Options page components, hooks, sections, constants
-│   ├── hooks/                  # Shared React hooks
-│   ├── library/
-│   │   ├── download/           # Filtering, duplicate guard, metadata, request context
-│   │   ├── i18n/               # Runtime dictionaries and locale helpers
-│   │   ├── protocol/           # motrix:// protocol launcher
-│   │   ├── rpc/                # aria2 JSON-RPC client and error types
-│   │   ├── storage/            # Zod schemas and browser storage helpers
-│   │   ├── messages.ts         # Runtime message and state contracts
-│   │   ├── runtime.ts          # Browser runtime messaging helper
-│   │   └── utils.ts            # Shared formatting and class helpers
-│   ├── locales/                # WXT i18n resources
-│   ├── public/icon/            # Extension icons
-│   └── styles/                 # Global styles
-├── wxt.config.ts               # WXT and manifest configuration
-├── eslint.config.mjs           # ESLint configuration
-└── package.json                # Scripts and dependencies
-```
-
-### Scripts
-
-| Command            | Description                       |
-| ------------------ | --------------------------------- |
-| `pnpm dev`         | Start WXT dev mode                |
-| `pnpm build`       | Build the Chrome MV3 extension    |
-| `pnpm zip`         | Package the Chrome build as a ZIP |
-| `pnpm clean`       | Clean WXT output                  |
-| `pnpm lint:eslint` | Run ESLint with auto-fix          |
-
-## Chrome Web Store Notes
-
-The current manifest requests only the permissions used by the implementation:
-
-| Permission                  | Reason                                                                    |
-| --------------------------- | ------------------------------------------------------------------------- |
-| `downloads`                 | Detect, cancel, and erase Chrome downloads delegated to Motrix            |
-| `storage`                   | Store settings, site rules, UI preferences, and diagnostic events locally |
-| `contextMenus`              | Provide the "Download with Motrix" right-click command                    |
-| `cookies`                   | Forward cookies to the local RPC task when cookie forwarding is enabled   |
-| `webRequest`                | Capture request headers and `Content-Disposition` filename metadata       |
-| `http://*/*`, `https://*/*` | Match download origins for cookie and request metadata access             |
-
-The extension does not use remote code and does not include analytics or telemetry.
-
-## Acknowledgements
-
-This project references the product direction and documentation structure of [AnInsomniacy/motrix-next-extension](https://github.com/AnInsomniacy/motrix-next-extension), which is licensed under the MIT License.
-
-```text
-MIT License
-Copyright (c) 2026 AnInsomniac
-```
-
-This repository's README and privacy policy are written for the current Motrix Extension implementation. If substantial code or assets from the referenced project are copied, modified, or redistributed, keep the corresponding MIT copyright notice and license text.
-
-## Privacy
-
-See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
-
-
-## Motrix WebExtension IDM edition
-
-This separate repository keeps the reference Motrix dashboard/options design while adding a full IDM-style review picker. Captured browser downloads, context-menu links, protocol URLs, images, audio, and video can be reviewed before their filename, referrer, cookies, headers, and aria2 destination directory are sent to Motrix. The picker is enabled by default and can be controlled from **Options → Download**.
-
-The only right-click command is **Download with Motrix**. Media capture also provides a small **Download with Motrix** action when hovering supported remote images, audio, and video elements. Capture runs in nested frames where possible and falls back to the browser download interception path for protected or blob-backed media.
-
-### Requested downloadable layout
-
-The combined release uses this exact structure:
-
-```text
-Motrix WebExtension/
-├── Chrome/
-│   └── Chrome MV3 extension files
-└── Firefox/
-    └── Firefox extension files
-```
-
-The Chrome package can be loaded from `chrome://extensions` with Developer mode enabled. The Firefox package can be loaded temporarily from `about:debugging`. Motrix should be running with its aria2 JSON-RPC endpoint enabled, normally at `127.0.0.1:16800/jsonrpc`.
+[3]: https://aria2.github.io/manual/en/html/aria2c.html "aria2 1.37.0 Manual — aria2c and RPC documentation"
