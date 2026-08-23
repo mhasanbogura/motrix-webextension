@@ -374,7 +374,9 @@ function getSocialPageTitleHint(): string | undefined {
     Array.from(document.querySelectorAll(selector)).map((element) => element.textContent),
   );
   const visibleTextCandidates = isFacebookUrl(location.href)
-    ? (document.body?.textContent?.split(/\n+/) || [])
+    ? Array.from(document.querySelectorAll('div,span,p'))
+        .filter((element) => element.children.length === 0)
+        .map((element) => element.textContent)
     : [];
   const metadataCandidates = [
     document.querySelector('meta[property="og:title"]')?.getAttribute('content'),
@@ -390,7 +392,8 @@ function getSocialPageTitleHint(): string | undefined {
 
 function normalizeSocialTitle(value: string | null | undefined): string | undefined {
   const normalized = value
-    ?.replace(/\s+/g, ' ')
+    ?.replace(/^\(\d+\)\s*/g, '')
+    .replace(/\s+/g, ' ')
     .replace(/\s*[|•-]\s*(?:facebook|watch|reels?)\s*$/i, '')
     .trim();
   if (!normalized || normalized.length > 180 || /^https?:\/\//i.test(normalized)) return undefined;
