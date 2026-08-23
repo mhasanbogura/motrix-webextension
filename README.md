@@ -87,7 +87,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\install-windows.ps1
 ```
 
-The installer registers the native-messaging host for the stable Chrome/Chromium and Firefox extension IDs. Restart the browser after installation. The resolver is used for supported Facebook, YouTube, and Dailymotion page URLs; ordinary downloads continue to work without it.
+The installer registers the native-messaging host for the stable Chrome/Chromium and Firefox extension IDs. Restart the browser after installation. The resolver is used for supported Facebook, YouTube, Dailymotion, and Pornhub page URLs; ordinary downloads continue to work without it.
 
 If the resolver was installed by an earlier package, run the latest installer again after upgrading so its helper files and yt-dlp dependencies are current.
 
@@ -137,7 +137,7 @@ Open the extension popup, use the paste-link panel, enter an HTTP(S), magnet, ed
 
 ### Social-media pages
 
-For Facebook, YouTube, and Dailymotion pages, the native resolver obtains a direct media format and a cleaned title when the website exposes an authorized downloadable stream. The title is used as the default picker filename and remains editable. Direct media URLs may expire, so the picker refreshes a resolved social-media URL when you confirm the download.
+For Facebook, YouTube, Dailymotion, and Pornhub pages, the native resolver obtains a direct media format and a cleaned title when the website exposes an authorized downloadable stream. For Pornhub, this prevents a small HLS manifest or segment from being treated as the video file. The title is used as the default picker filename and remains editable. Direct media URLs may expire, so the picker refreshes a resolved social-media URL when you confirm the download.
 
 The resolver does not bypass DRM, paywalls, private access controls, or platform restrictions. Private, age-restricted, bot-protected, or PO-Token-protected videos may require you to be signed in or may remain unavailable.
 
@@ -168,7 +168,7 @@ To prevent capture on a site, add its URL pattern under **Extension filters → 
 | Chrome will not load the extension | Select `Motrix WebExtension/Chrome/`, the folder containing `manifest.json`, not the parent archive folder. |
 | Firefox cannot load the extension | Use `about:debugging → This Firefox → Load Temporary Add-on` and select the Firefox `manifest.json`. |
 | Social resolver is unavailable | Run the latest installer once, restart the browser, and confirm the native helper folder was installed. |
-| YouTube reports no direct format | Try the latest resolver installer, keep YouTube signed in if required, and use your own local cookies.txt only when authorized. Some videos remain unavailable. |
+| Social resolver reports no direct format | Try the latest resolver installer, keep the site signed in if required, and use your own local cookies.txt only when authorized. Some videos remain unavailable. |
 | A download fails after the picker | Open the **Error** lane and use **Retry**. Retry resolves the original page again instead of reusing an expired direct stream. |
 | Rename appears unchanged | Install the latest extension package, ensure Motrix/aria2 still reports the task, and enter a filename without folders. The original extension is preserved automatically. |
 | Capture works on a blocked site | Check the blocked URL pattern, save Settings, then reload the page so the current content script receives the updated rule. |

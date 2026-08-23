@@ -21,6 +21,7 @@ export interface SocialResolverResponse {
   error?: string;
   title?: string;
   filename?: string;
+  fileSize?: number;
   headers?: Record<string, string>;
 }
 
@@ -29,7 +30,7 @@ interface NativeMessagingRuntime {
 }
 
 const NATIVE_HOST_NAME = 'com.motrix.social_resolver';
-const SOCIAL_HOSTS = new Set(['facebook.com', 'fb.watch', 'dailymotion.com', 'dai.ly', 'youtube.com', 'youtu.be']);
+const SOCIAL_HOSTS = new Set(['facebook.com', 'fb.watch', 'dailymotion.com', 'dai.ly', 'pornhub.com', 'youtube.com', 'youtu.be']);
 
 export function isSocialMediaUrl(value: string): boolean {
   try {
@@ -62,6 +63,7 @@ export async function resolveSocialMedia(request: SocialResolverRequest): Promis
   return {
     url: result.url,
     filename: buildSocialFilename(result.filename, result.title, result.ext),
+    fileSize: typeof result.fileSize === 'number' && result.fileSize > 0 ? result.fileSize : undefined,
     requestHeaders: requestHeaders.length ? requestHeaders : undefined,
     userAgent: request.userAgent,
   };
@@ -92,6 +94,7 @@ function parseResolverResponse(value: unknown): SocialResolverResponse {
   return {
     error: typeof result.error === 'string' ? result.error : undefined,
     ext: typeof result.ext === 'string' ? result.ext : undefined,
+    fileSize: typeof result.fileSize === 'number' ? result.fileSize : undefined,
     filename: typeof result.filename === 'string' ? result.filename : undefined,
     headers: result.headers && typeof result.headers === 'object'
       ? Object.fromEntries(Object.entries(result.headers).filter((entry): entry is [string, string] => typeof entry[1] === 'string'))

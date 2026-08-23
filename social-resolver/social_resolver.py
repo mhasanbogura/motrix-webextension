@@ -24,6 +24,7 @@ ALLOWED_HOSTS = {
     "dai.ly",
     "youtube.com",
     "youtu.be",
+    "pornhub.com",
 }
 
 
@@ -41,7 +42,7 @@ def is_allowed_page_url(value: str) -> bool:
 def resolve_page(payload: dict[str, object]) -> dict[str, object]:
     page_url = payload.get("url")
     if not isinstance(page_url, str) or not is_allowed_page_url(page_url):
-        return {"ok": False, "error": "Only supported Facebook, YouTube, and Dailymotion page URLs are allowed."}
+        return {"ok": False, "error": "Only supported Facebook, YouTube, Dailymotion, and Pornhub page URLs are allowed."}
 
     cookie = payload.get("cookie")
     user_agent = payload.get("userAgent")
@@ -112,6 +113,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
             continue
 
         ext = str(info.get("ext") or "mp4")
+        file_size = info.get("filesize") or info.get("filesize_approx")
         title = str(info.get("title") or "social-media")
         filename = build_social_filename(str(info.get("_filename") or ""), title, ext)
         headers = info.get("http_headers")
@@ -128,6 +130,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
             "url": direct_url,
             "filename": filename,
             "ext": ext,
+            "fileSize": file_size if isinstance(file_size, int) and file_size > 0 else None,
             "mime": info.get("mime_type") if isinstance(info.get("mime_type"), str) else None,
             "headers": safe_headers,
         }

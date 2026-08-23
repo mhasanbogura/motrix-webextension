@@ -81,11 +81,18 @@ export async function routeUrl(
   if (!duplicateGuard.reserve([routedUrl, pageUrl])) {
     return { ok: true, result: 'duplicate-blocked' };
   }
-  const cookie = snapshot.settings.forwardCookies ? await getCookieHeader(routedUrl) : undefined;
+  const resolverPageUrl = isSocialMediaUrl(url)
+    ? url
+    : isSocialMediaUrl(pageUrl)
+      ? pageUrl
+      : undefined;
+  const cookie = snapshot.settings.forwardCookies
+    ? await getCookieHeader(resolverPageUrl || routedUrl)
+    : undefined;
   let input: AddDownloadInput;
-  if (isSocialMediaUrl(url)) {
+  if (resolverPageUrl) {
     try {
-      input = await resolveSocialMedia({ url, cookie });
+      input = await resolveSocialMedia({ url: resolverPageUrl, cookie });
     } catch (error) {
       return {
         ok: false,
@@ -97,12 +104,12 @@ export async function routeUrl(
       ...input,
       referer: pageUrl,
       cookie,
-      finalUrl: url,
-      filename: isSocialMediaUrl(url) ? input.filename : (filename || input.filename),
+      finalUrl: resolverPageUrl,
+      filename: filename || input.filename,
       dir: snapshot.settings.defaultDir || undefined,
-      candidateUrls: pickerCandidates.length > 1 ? pickerCandidates.map((candidate) => candidate.url) : undefined,
-      mediaCandidates: pickerCandidates.length > 1 ? pickerCandidates : undefined,
-      fileSize: pickerCandidates.find((candidate) => candidate.url === input.url)?.fileSize ?? fileSize,
+      candidateUrls: undefined,
+      mediaCandidates: [{ url: input.url, filename: input.filename, fileSize: input.fileSize ?? fileSize }],
+      fileSize: input.fileSize ?? fileSize,
     };
   } else {
     input = {
@@ -121,7 +128,7 @@ export async function routeUrl(
   if (!snapshot.settings.captureTypes[resolvedCaptureType]) {
     return { ok: false, code: 'capture_type_disabled', message: `${resolvedCaptureType} capture is disabled` };
   }
-  if (snapshot.settings.promptBeforeDownload || mediaCandidates.length > 1) {
+  if (snapshot.settings.promptBeforeDownload || (input.mediaCandidates?.length || 0) > 1) {
     await openDownloadPicker(input, source);
     return { ok: true, result: 'picker-opened' };
   }
