@@ -33,8 +33,8 @@ export function PopupActions({
   return (
     <>
       <Separator className='mt-3' />
-      <div data-reveal className='flex items-center justify-between gap-2 p-3'>
-        <div className='flex min-w-0 items-center gap-2'>
+      <div data-reveal className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-3'>
+        <div className='flex min-w-0 flex-wrap items-center gap-1'>
           {showPauseAll
             ? (
                 <Button
@@ -72,6 +72,7 @@ export function PopupActions({
           </Button>
         </div>
         <Button
+          className='shrink-0'
           size='sm'
           onClick={onWakeMotrix}
         >

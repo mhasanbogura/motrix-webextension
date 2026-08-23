@@ -1,23 +1,24 @@
 html,
 body,
 #root {
-  width: 380px;
+  width: min(100%, 380px);
   height: auto;
   min-height: 0;
   margin: 0;
   overflow: hidden;
+  background: transparent;
 }
 
-body {
-  display: block;
-  background: var(--m3-surface);
-}
-
+body,
 #root {
   display: block;
 }
 
 .popup-shell {
   display: flow-root;
+  width: 100%;
   min-height: 0;
+  border-radius: 16px;
+  background: var(--m3-surface);
+  overflow: hidden;
 }

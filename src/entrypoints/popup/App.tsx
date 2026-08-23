@@ -117,7 +117,7 @@ export default function App() {
     if (enabled && !matchingRule && !currentSiteEnabled) return;
     const siteRules = matchingRule
       ? snapshot.siteRules.map((rule) => rule.id === matchingRule.id ? { ...rule, enabled: !enabled } : rule)
-      : [...snapshot.siteRules, { id: `current-site:${new URL(currentSite.url).host}`, pattern: currentSite.pattern, action: 'block' as const, enabled: !enabled }];
+      : [...snapshot.siteRules, { id: `current-site:${currentSite.pattern}`, pattern: currentSite.pattern, action: 'block' as const, enabled: !enabled }];
     const response = await sendRuntimeMessage({ type: 'save-site-rules', siteRules });
     if (response.ok && response.snapshot) setSnapshot(response.snapshot);
   }, [currentSite, currentSiteEnabled, setSnapshot, snapshot.siteRules]);
@@ -297,7 +297,9 @@ function sitePatternFromUrl(value: string): string | undefined {
   try {
     const parsed = new URL(value);
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) return undefined;
-    return `*://${parsed.host}/*`;
+    const hostname = parsed.hostname.toLowerCase();
+    const baseHostname = hostname.startsWith('www.') ? hostname.slice(4) : hostname;
+    return `*://*.${baseHostname}/*`;
   } catch {
     return undefined;
   }
