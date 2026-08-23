@@ -478,6 +478,8 @@ body,
   max-height: 100%;
   overflow: hidden;
   background: transparent;
+  border-radius: 24px;
+  clip-path: inset(0 round 24px);
 }
 
 .picker-shell {
@@ -488,7 +490,7 @@ body,
   padding: 8px 10px 8px;
   overflow: hidden;
   border: 1px solid var(--picker-border);
-  border-radius: 20px;
+  border-radius: 24px;
   background: var(--picker-bg);
   box-shadow: 0 10px 24px rgba(37, 28, 97, 0.16);
 }
