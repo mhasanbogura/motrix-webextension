@@ -16,6 +16,15 @@ function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value);
 }
 
+function isYouTubeUrl(value: string): boolean {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+    return hostname === 'youtube.com' || hostname.endsWith('.youtube.com') || hostname === 'youtu.be';
+  } catch {
+    return false;
+  }
+}
+
 function isPageDocumentUrl(value: string): boolean {
   try {
     const parsed = new URL(value);
@@ -101,16 +110,22 @@ export async function routeUrl(
   const requestContext = requestContexts.resolve([routedUrl, ...mediaCandidateUrls]);
   const resolverPageUrl = isSocialMediaUrl(routedUrl)
     ? routedUrl
-    : isSocialMediaUrl(pageUrl) && !isDirectMediaCandidate(routedUrl)
+    : isYouTubeUrl(pageUrl)
       ? pageUrl
-      : undefined;
+      : isSocialMediaUrl(pageUrl) && !isDirectMediaCandidate(routedUrl)
+        ? pageUrl
+        : undefined;
   const cookie = snapshot.settings.forwardCookies
     ? requestContext?.cookie || await getCookieHeader(resolverPageUrl || routedUrl)
     : undefined;
   let input: AddDownloadInput;
   if (resolverPageUrl) {
     try {
-      input = await resolveSocialMedia({ url: resolverPageUrl, cookie });
+      input = await resolveSocialMedia({
+        url: resolverPageUrl,
+        cookie,
+        userAgent: requestContext?.userAgent,
+      });
     } catch (error) {
       return {
         ok: false,

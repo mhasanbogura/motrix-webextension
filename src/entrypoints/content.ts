@@ -406,8 +406,12 @@ function getMediaDownloadUrls(media: CaptureTarget | undefined): string[] {
   const runtimeMediaUrls = media instanceof HTMLMediaElement || isPlayerContainer(media)
     ? getRecentMediaResourceUrls()
     : [];
-  const candidates = [...directMediaUrls, ...runtimeMediaUrls]
-    .filter((url, index, values) => values.indexOf(url) === index)
+  const allCandidates = [...directMediaUrls, ...runtimeMediaUrls]
+    .filter((url, index, values) => values.indexOf(url) === index);
+  const youtubeVideoCandidates = isYouTubeUrl(location.href)
+    ? allCandidates.filter(isLikelyYouTubeVideoResource)
+    : [];
+  const candidates = (youtubeVideoCandidates.length ? youtubeVideoCandidates : allCandidates)
     .sort((left, right) => mediaResourceScore(right) - mediaResourceScore(left));
   if (candidates.length) return candidates;
   if (
@@ -477,6 +481,26 @@ function isLikelyMediaResource(url: string): boolean {
     || (MEDIA_RESOURCE_HOSTS.test(url) && MEDIA_RESOURCE_HINTS.test(url));
 }
 
+function isLikelyYouTubeVideoResource(url: string): boolean {
+  if (!isYouTubeUrl(location.href)) return false;
+  let decoded = url;
+  try {
+    decoded = decodeURIComponent(url);
+  } catch {
+    // Keep the encoded URL when a query parameter is not fully decodable.
+  }
+  if (/[?&](?:mime|type)=audio(?:%2f|\/)/i.test(decoded)) return false;
+  return /[?&](?:mime|type)=video(?:%2f|\/)/i.test(decoded)
+    || /\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(decoded);
+}
+function isYouTubeUrl(value: string): boolean {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+    return hostname === 'youtube.com' || hostname.endsWith('.youtube.com') || hostname === 'youtu.be';
+  } catch {
+    return false;
+  }
+}
 function isKnownVideoPageUrl(url: string): boolean {
   return /^https?:\/\/(?:www\.)?pornhub\.com\/(?:view_video\.php|video\/(?!get_media(?:[/?]|$)))/i.test(url);
 }
@@ -487,6 +511,8 @@ function isPornhubDirectMediaUrl(url: string): boolean {
 
 function mediaResourceScore(url: string): number {
   let score = 50;
+  if (isLikelyYouTubeVideoResource(url)) score += 180;
+  if (/[?&](?:mime|type)=audio(?:%2f|\/)/i.test(url)) score -= 160;
   if (isPornhubDirectMediaUrl(url)) score += 220;
   if (/\.(?:m3u8|mpd)(?:$|[?#])/i.test(url)) score += 140;
   if (/\.(?:mp4|m4v|webm)(?:$|[?#])/i.test(url)) score += 90;
