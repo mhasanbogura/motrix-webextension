@@ -10,7 +10,9 @@ interface TaskPanelProps {
   runtime: RuntimeState;
   onPause: (gid: string) => void;
   onResume: (gid: string) => void;
+  onRetry: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
   onRemove: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
+  onOpenLink: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
   onRename: (gid: string, filename: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
 }
 
@@ -21,6 +23,8 @@ export function TaskPanel({
   onResume,
   onRemove,
   onRename,
+  onRetry,
+  onOpenLink,
   t,
 }: TaskPanelProps) {
   return (
@@ -33,6 +37,8 @@ export function TaskPanel({
         onResume={onResume}
         onRemove={onRemove}
         onRename={onRename}
+        onRetry={onRetry}
+        onOpenLink={onOpenLink}
       />
     </section>
   );
@@ -46,6 +52,8 @@ function TaskList({
   onResume,
   onRemove,
   onRename,
+  onRetry,
+  onOpenLink,
 }: {
   tone: TaskLane;
   tasks: RuntimeState['tasks']['active'];
@@ -53,6 +61,8 @@ function TaskList({
   onPause: (gid: string) => void;
   onResume: (gid: string) => void;
   onRename: (gid: string, filename: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
+  onRetry: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
+  onOpenLink: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
   onRemove: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
 }) {
   return (
@@ -69,6 +79,8 @@ function TaskList({
                   onResume={onResume}
                   onRemove={onRemove}
                   onRename={onRename}
+                  onRetry={onRetry}
+                  onOpenLink={onOpenLink}
                 />
               ))}
             </div>

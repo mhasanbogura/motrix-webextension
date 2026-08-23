@@ -1,5 +1,5 @@
 import { type KeyboardEvent, useState } from 'react';
-import { Check, Pause, Pencil, Play, Trash2, X } from 'lucide-react';
+import { Check, ExternalLink, Pause, Pencil, Play, RotateCcw, Trash2, X } from 'lucide-react';
 
 import type { Aria2Task } from '@/library/rpc';
 
@@ -17,7 +17,9 @@ interface TaskRowProps {
   tone: TaskRowTone;
   onPause: (gid: string) => void;
   onResume: (gid: string) => void;
+  onRetry: (gid: string, status: Aria2Task['status']) => void;
   onRemove: (gid: string, status: Aria2Task['status']) => void;
+  onOpenLink: (gid: string, status: Aria2Task['status']) => void;
   onRename: (gid: string, filename: string, status: Aria2Task['status']) => void;
 }
 
@@ -27,7 +29,7 @@ const toneClassNames: Record<TaskRowTone, string> = {
   stopped: 'border-task-stopped/30 bg-[color-mix(in_srgb,hsl(var(--task-stopped))_7%,var(--m3-surface))] before:bg-task-stopped',
 };
 
-export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename }: TaskRowProps) {
+export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename, onRetry, onOpenLink }: TaskRowProps) {
   const progress = percent(task.completedLength, task.totalLength);
   const isActive = task.status === 'active';
   const isPaused = task.status === 'paused' || task.status === 'waiting';
@@ -106,10 +108,10 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename }: T
                 </div>
               )}
           <div className='mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-xs text-muted-foreground'>
-            <Badge variant={isActive ? 'good' : isPaused ? 'warn' : 'quiet'} className='shrink-0 rounded-full px-1.5 py-0 text-[10px] leading-4'>
+            <Badge variant={isActive ? 'good' : isPaused ? 'warn' : 'quiet'} className='shrink-0 rounded-full px-1.5 py-0 text-[10px]/4'>
               {task.status}
             </Badge>
-            <span className='metric-font min-w-[5.25rem] max-w-[8.25rem] shrink truncate' title={`${completedSize} / ${totalSize}`}>
+            <span className='metric-font max-w-33 min-w-21 shrink truncate' title={`${completedSize} / ${totalSize}`}>
               {completedSize}
               {' '}
               /
@@ -117,7 +119,7 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename }: T
             </span>
             {task.status === 'active' && !task.errorMessage
               ? (
-                  <span className='metric-font ml-auto grid min-w-0 max-w-[9.75rem] shrink grid-cols-2 gap-1 overflow-hidden text-right text-[11px] leading-4'>
+                  <span className='metric-font ml-auto grid max-w-39 min-w-0 shrink grid-cols-2 gap-1 overflow-hidden text-right text-[11px]/4'>
                     <span className='truncate text-speed-download' title={downloadSpeed}>
                       ↓
                       {downloadSpeed}
@@ -132,17 +134,28 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename }: T
           </div>
         </div>
         <div className='flex shrink-0 gap-1'>
-          {isActive
+          {task.status === 'error'
             ? (
-                <Button variant='quiet' size='icon' className='size-7 rounded-full' title='Pause' aria-label='Pause' onClick={() => onPause(task.gid)}>
-                  <Pause />
-                </Button>
+                <>
+                  <Button variant='quiet' size='icon' className='size-7 rounded-full' title='Retry' aria-label='Retry' onClick={() => onRetry(task.gid, task.status)}>
+                    <RotateCcw />
+                  </Button>
+                  <Button variant='quiet' size='icon' className='size-7 rounded-full' title='Open link' aria-label='Open link' onClick={() => onOpenLink(task.gid, task.status)}>
+                    <ExternalLink />
+                  </Button>
+                </>
               )
-            : (
-                <Button variant='quiet' size='icon' className='size-7 rounded-full' title='Resume' aria-label='Resume' onClick={() => onResume(task.gid)}>
-                  <Play />
-                </Button>
-              )}
+            : isActive
+              ? (
+                  <Button variant='quiet' size='icon' className='size-7 rounded-full' title='Pause' aria-label='Pause' onClick={() => onPause(task.gid)}>
+                    <Pause />
+                  </Button>
+                )
+              : (
+                  <Button variant='quiet' size='icon' className='size-7 rounded-full' title='Resume' aria-label='Resume' onClick={() => onResume(task.gid)}>
+                    <Play />
+                  </Button>
+                )}
           <Button variant='quiet' size='icon' className='size-7 rounded-full' title='Remove' aria-label='Remove' onClick={() => onRemove(task.gid, task.status)}>
             <Trash2 />
           </Button>
@@ -155,7 +168,7 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename }: T
           %
         </span>
       </div>
-      <div className='mt-1 flex h-4 items-center overflow-hidden text-[11px] leading-4 text-muted-foreground'>
+      <div className='mt-1 flex h-4 items-center overflow-hidden text-[11px]/4 text-muted-foreground'>
         {task.errorMessage
           ? (
               <span className='truncate text-destructive' title={task.errorMessage}>{task.errorMessage}</span>

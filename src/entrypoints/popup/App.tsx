@@ -132,6 +132,14 @@ export default function App() {
     void runAction(t('common.rename'), () => sendRuntimeMessage({ type: 'rename-task', gid, filename, status }));
   }, [runAction, t]);
 
+  const retryTask = useCallback((gid: string, status: Aria2TaskStatus) => {
+    void runAction(t('common.retry'), () => sendRuntimeMessage({ type: 'retry-task', gid, status }));
+  }, [runAction, t]);
+
+  const openTaskLink = useCallback((gid: string, status: Aria2TaskStatus) => {
+    void runAction(t('common.openLink'), () => sendRuntimeMessage({ type: 'open-task-link', gid, status }));
+  }, [runAction, t]);
+
   const clearActiveLane = useCallback(() => {
     const gids = runtime?.tasks[activeLane].map((task) => task.gid) ?? [];
     void runAction(t('popup.clearAll'), () => sendRuntimeMessage({ type: 'clear-tasks', lane: activeLane, gids }));
@@ -222,6 +230,8 @@ export default function App() {
                     onResume={resumeTask}
                     onRemove={removeTask}
                     onRename={renameTask}
+                    onRetry={retryTask}
+                    onOpenLink={openTaskLink}
                     t={t}
                   />
                   <PopupActions

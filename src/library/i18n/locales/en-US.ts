@@ -7,6 +7,7 @@ export const enUS = {
     reset: 'Reset',
     settings: 'Settings',
     openMotrix: 'Open Motrix',
+    openLink: 'Open link',
     test: 'Test connection',
     checking: 'Checking...',
     connected: 'Connected',

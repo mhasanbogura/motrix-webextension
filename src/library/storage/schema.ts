@@ -82,6 +82,7 @@ export const StorageSnapshotSchema = z.object({
   ui: UiPrefsSchema.default(DEFAULT_UI_PREFS),
   diagnostics: z.array(DiagnosticEventSchema).default([]),
   taskNameOverrides: z.record(z.string(), z.string()).default({}),
+  taskSourceUrls: z.record(z.string(), z.string()).default({}),
 });
 
 export type ConnectionConfig = z.infer<typeof ConnectionConfigSchema>;

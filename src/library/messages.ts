@@ -55,6 +55,8 @@ export type RuntimeMessage
     | { type: 'add-url'; url: string; pageUrl?: string; filename?: string }
     | { type: 'task-action'; action: 'pause' | 'resume' | 'remove'; gid: string; status?: Aria2TaskStatus }
     | { type: 'rename-task'; gid: string; filename: string; status?: Aria2TaskStatus }
+    | { type: 'retry-task'; gid: string; status?: Aria2TaskStatus }
+    | { type: 'open-task-link'; gid: string; status?: Aria2TaskStatus }
     | { type: 'pause-all'; gids?: string[] }
     | { type: 'resume-all' }
     | { type: 'clear-tasks'; lane: RuntimeTaskLane; gids: string[] }

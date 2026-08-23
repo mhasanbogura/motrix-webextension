@@ -19,7 +19,15 @@ import {
 } from '@/library/storage';
 
 import { handlePickerMessage } from '../downloads/picker';
-import { clearTasks, pauseTasks, performTaskAction, renameTask, withClient } from './task-actions';
+import {
+  clearTasks,
+  openTaskLink,
+  pauseTasks,
+  performTaskAction,
+  renameTask,
+  retryTask,
+  withClient,
+} from './task-actions';
 
 export async function handleMessage(message: RuntimeMessage): Promise<RuntimeResponse> {
   try {
@@ -53,6 +61,12 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
         return { ok: true };
       case 'rename-task':
         await renameTask(message.gid, message.filename, message.status);
+        return { ok: true };
+      case 'retry-task':
+        await retryTask(message.gid, message.status);
+        return { ok: true };
+      case 'open-task-link':
+        await openTaskLink(message.gid, message.status);
         return { ok: true };
       case 'pause-all':
         if (message.gids?.length) {
