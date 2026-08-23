@@ -373,13 +373,16 @@ function getSocialPageTitleHint(): string | undefined {
   const captionCandidates = facebookCaptionSelectors.flatMap((selector) =>
     Array.from(document.querySelectorAll(selector)).map((element) => element.textContent),
   );
+  const visibleTextCandidates = isFacebookUrl(location.href)
+    ? (document.body?.textContent?.split(/\n+/) || [])
+    : [];
   const metadataCandidates = [
     document.querySelector('meta[property="og:title"]')?.getAttribute('content'),
     document.querySelector('meta[name="twitter:title"]')?.getAttribute('content'),
     document.querySelector('meta[property="og:description"]')?.getAttribute('content'),
     document.title,
   ];
-  const candidates = [...captionCandidates, ...metadataCandidates]
+  const candidates = [...captionCandidates, ...visibleTextCandidates, ...metadataCandidates]
     .map((value) => normalizeSocialTitle(value))
     .filter((value): value is string => Boolean(value));
   return candidates.find((value) => isUsefulSocialTitle(value));
@@ -395,7 +398,24 @@ function normalizeSocialTitle(value: string | null | undefined): string | undefi
 }
 
 function isUsefulSocialTitle(value: string): boolean {
-  if (/^(?:facebook|facebook watch|watch|reels?|home|log in|sign up)(?:\s*[-|].*)?$/i.test(value)) return false;
+  const genericTitlePattern = new RegExp(
+    `^(?:${[
+      'facebook',
+      'facebook watch',
+      'watch',
+      'reels?',
+      'home',
+      'log in',
+      'sign up',
+      'forgot password',
+      'email(?: or phone)?(?: number)?',
+      'password',
+      'create new account',
+      'see more(?: on facebook)?',
+    ].join('|')})(?:\\s*[-|].*)?$`,
+    'i',
+  );
+  if (genericTitlePattern.test(value)) return false;
   if (/^[\w-]{12,}$/i.test(value) && !/\s/.test(value)) return false;
   return value.length >= 4;
 }
