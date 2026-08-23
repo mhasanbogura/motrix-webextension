@@ -127,8 +127,16 @@ export default function App() {
       <section className='picker-card'>
         <div className='picker-card-title'>Download details</div>
         <div className='picker-source'>
-          <span className='picker-label'>Selected media URL</span>
-          <span className='picker-url' title={selectedSourceUrl}>{selectedSourceUrl || 'Unknown source'}</span>
+          <label className='picker-label' htmlFor='selected-media-url'>Selected media URL</label>
+          <textarea
+            id='selected-media-url'
+            className='picker-url'
+            value={selectedSourceUrl || 'Unknown source'}
+            readOnly
+            rows={4}
+            aria-label='Complete selected media URL'
+            title='Complete selected media URL'
+          />
           <div className='picker-meta-grid'>
             <div>
               <span className='picker-label'>File size</span>

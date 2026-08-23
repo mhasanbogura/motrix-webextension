@@ -397,12 +397,29 @@ h1 {
 }
 
 .picker-url {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  font-size: 11px;
+  display: block;
+  width: 100%;
+  min-height: 58px;
+  max-height: 76px;
+  margin: 0;
+  padding: 5px 6px;
+  overflow: auto;
+  border: 1px solid var(--picker-border);
+  border-radius: 7px;
+  outline: none;
+  resize: none;
+  color: var(--picker-text);
+  background: var(--picker-bg);
+  font: inherit;
+  font-size: 10px;
   line-height: 1.25;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.picker-url:focus {
+  border-color: var(--picker-primary);
+  box-shadow: 0 0 0 2px rgba(117, 97, 217, 0.17);
 }
 
 .picker-meta-grid {
@@ -444,4 +461,48 @@ input {
 
 .button {
   padding: 8px 10px;
+}
+
+/* Rounded compact window surface. */
+html,
+body,
+#root,
+.picker-shell {
+  border-radius: 18px;
+}
+
+html,
+body,
+#root {
+  background: var(--picker-bg);
+}
+
+.picker-shell {
+  width: min(100%, 520px);
+  padding: 6px 8px 6px;
+}
+
+.picker-header {
+  border-radius: 16px;
+  padding: 6px 8px;
+}
+
+.picker-card {
+  border-radius: 15px;
+  padding: 8px;
+}
+
+.picker-card-title {
+  margin: -8px -8px 6px;
+  border-radius: 14px 14px 0 0;
+  padding: 5px 8px;
+}
+
+.picker-source {
+  border-radius: 10px;
+  padding: 6px 7px;
+}
+
+.picker-actions {
+  margin-top: 5px;
 }
