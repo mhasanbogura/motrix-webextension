@@ -1,6 +1,6 @@
 import type * as React from 'react';
 
-import { ArrowDown, ArrowUp, CheckCircle2, Clock, Zap } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowUp, CheckCircle2, Zap } from 'lucide-react';
 
 import type { RuntimeState } from '@/library/messages';
 
@@ -19,7 +19,7 @@ interface MetricsPanelProps {
 export function MetricsPanel({ activeLane, runtime, captureEnabled, onLaneChange, t }: MetricsPanelProps) {
   const counts = {
     active: runtime.tasks.active.length,
-    waiting: runtime.tasks.waiting.length,
+    error: runtime.tasks.error.length,
     stopped: runtime.tasks.stopped.length,
   };
   const isIdle = (Number(runtime.stat?.numActive) || 0) === 0;
@@ -49,12 +49,12 @@ export function MetricsPanel({ activeLane, runtime, captureEnabled, onLaneChange
           className='text-primary'
         />
         <StatCount
-          icon={Clock}
-          label={t('common.waiting')}
-          value={counts.waiting}
-          selected={activeLane === 'waiting'}
-          onSelect={() => onLaneChange('waiting')}
-          className='text-(--m3-warning)'
+          icon={AlertCircle}
+          label='Failed / Error'
+          value={counts.error}
+          selected={activeLane === 'error'}
+          onSelect={() => onLaneChange('error')}
+          className='text-destructive'
         />
         <StatCount
           icon={CheckCircle2}

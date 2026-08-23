@@ -166,8 +166,9 @@ export default function App() {
         ...current,
         tasks: {
           ...current.tasks,
-          active: current.tasks.active.filter((task) => !gidSet.has(task.gid)),
-          waiting: [...pausedTasks, ...current.tasks.waiting],
+          active: current.tasks.active.map(
+            (task) => pausedTasks.find((pausedTask) => pausedTask.gid === task.gid) || task,
+          ),
         },
       };
     });
@@ -269,6 +270,7 @@ function buildFallbackRuntime(status: 'connecting' | 'connected' | 'offline', me
       message,
       checkedAt: Date.now(),
     },
-    tasks: { active: [], waiting: [], stopped: [] },
+    tasks: { active: [], error: [], stopped: [] },
+
   };
 }

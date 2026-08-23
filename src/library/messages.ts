@@ -18,7 +18,7 @@ export interface RuntimeState {
   stat?: Aria2GlobalStat;
   tasks: {
     active: Aria2Task[];
-    waiting: Aria2Task[];
+    error: Aria2Task[];
     stopped: Aria2Task[];
   };
   connection: {

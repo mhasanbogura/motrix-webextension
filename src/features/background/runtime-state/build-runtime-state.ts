@@ -24,7 +24,7 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
   const connection = await client.checkConnection();
   const base = {
     connection: { ...connection, checkedAt: Date.now() },
-    tasks: { active: [], waiting: [], stopped: [] },
+    tasks: { active: [], error: [], stopped: [] },
   };
   if (!connection.ok) return base;
   if (!snapshot.connection.verifiedAt) {
@@ -36,19 +36,19 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
     client.tellWaiting(0, 20),
     client.tellStopped(0, 20),
   ]);
+  const activeTasks = activeResult.status === 'fulfilled' ? activeResult.value : [];
+  const waitingTasks = waitingResult.status === 'fulfilled' ? waitingResult.value : [];
+  const stoppedTasks = stoppedResult.status === 'fulfilled' ? stoppedResult.value : [];
+  const preparedActiveTasks = applyTaskNameOverrides([...activeTasks, ...waitingTasks], snapshot.taskNameOverrides);
+  const preparedStoppedTasks = applyTaskNameOverrides(stoppedTasks, snapshot.taskNameOverrides);
+
   return {
     ...base,
     stat: statResult.status === 'fulfilled' ? statResult.value : undefined,
     tasks: {
-      active: activeResult.status === 'fulfilled'
-        ? applyTaskNameOverrides(activeResult.value, snapshot.taskNameOverrides)
-        : [],
-      waiting: waitingResult.status === 'fulfilled'
-        ? applyTaskNameOverrides(waitingResult.value, snapshot.taskNameOverrides)
-        : [],
-      stopped: stoppedResult.status === 'fulfilled'
-        ? applyTaskNameOverrides(stoppedResult.value, snapshot.taskNameOverrides)
-        : [],
+      active: preparedActiveTasks,
+      error: preparedStoppedTasks.filter((task) => task.status === 'error'),
+      stopped: preparedStoppedTasks.filter((task) => task.status !== 'error'),
     },
   };
 }

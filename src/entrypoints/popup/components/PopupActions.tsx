@@ -27,7 +27,7 @@ export function PopupActions({
   t,
 }: PopupActionsProps) {
   const showPauseAll = activeLane === 'active';
-  const showResumeAll = activeLane === 'waiting';
+  const showResumeAll = activeLane === 'active';
   const hasTasks = taskCount > 0;
 
   return (

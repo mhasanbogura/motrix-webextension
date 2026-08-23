@@ -10,7 +10,7 @@ import { cn, formatBytes, formatSpeed, percent } from '@/library/utils';
 
 import { getTaskName } from './task-name';
 
-type TaskRowTone = 'active' | 'waiting' | 'stopped';
+type TaskRowTone = 'active' | 'error' | 'stopped';
 
 interface TaskRowProps {
   task: Aria2Task;
@@ -25,7 +25,7 @@ interface TaskRowProps {
 
 const toneClassNames: Record<TaskRowTone, string> = {
   active: 'border-task-active/30 bg-[color-mix(in_srgb,hsl(var(--task-active))_7%,var(--m3-surface))] before:bg-task-active',
-  waiting: 'border-[color-mix(in_srgb,var(--m3-warning)_35%,hsl(var(--border)))] bg-[color-mix(in_srgb,var(--m3-warning)_8%,var(--m3-surface))] before:bg-(--m3-warning)',
+  error: 'border-destructive/30 bg-[color-mix(in_srgb,hsl(var(--destructive))_7%,var(--m3-surface))] before:bg-destructive',
   stopped: 'border-task-stopped/30 bg-[color-mix(in_srgb,hsl(var(--task-stopped))_7%,var(--m3-surface))] before:bg-task-stopped',
 };
 

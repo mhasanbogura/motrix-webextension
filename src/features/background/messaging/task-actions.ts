@@ -73,6 +73,10 @@ export async function clearTasks(lane: RuntimeTaskLane, gids: string[]): Promise
       await client.purgeDownloadResult();
       return;
     }
+    if (lane === 'error') {
+      await Promise.all(gids.map((gid) => client.removeDownloadResult(gid)));
+      return;
+    }
     await Promise.all(gids.map((gid) => client.remove(gid)));
   });
 }
