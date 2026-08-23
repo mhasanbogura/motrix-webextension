@@ -3,8 +3,8 @@ import type { StorageSnapshot } from '@/library/storage';
 import type { RuntimeResponse } from '@/library/messages';
 
 import { loadSnapshot } from '@/library/storage';
-import { isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver';
 import { filenameFromUrl, isWeakFilename, sanitizeFilename } from '@/library/download/filename-metadata';
+import { formatSocialResolverError, isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver';
 
 import { routeDownloadInput } from './route-download-input';
 
@@ -72,13 +72,18 @@ export async function submitPendingPicker(
   const selectedCandidate = pending.input.mediaCandidates?.find((candidate) => candidate.url === selectedUrl);
   const selectedInputUrl = selectedCandidate?.url || pending.input.url;
   const pageUrl = pending.input.finalUrl;
-  const resolvedInput = pageUrl && isSocialMediaUrl(pageUrl)
-    ? await resolveSocialMedia({
+  let resolvedInput: AddDownloadInput | undefined;
+  if (pageUrl && isSocialMediaUrl(pageUrl)) {
+    try {
+      resolvedInput = await resolveSocialMedia({
         url: pageUrl,
         cookie: pending.input.cookie,
         userAgent: pending.input.userAgent,
-      })
-    : undefined;
+      });
+    } catch (error) {
+      throw new Error(formatSocialResolverError(error, pageUrl));
+    }
+  }
   const input: AddDownloadInput = {
     ...pending.input,
     ...resolvedInput,

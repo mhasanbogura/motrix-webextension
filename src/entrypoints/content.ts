@@ -298,7 +298,7 @@ function removeMediaButton(): void {
 
 function resolveContextMenuTarget(event: MouseEvent): ContextMenuTarget {
   const element = getElementAtPoint(event);
-  const media = getClosestMediaElement(element) ?? getMediaAtPoint(event.clientX, event.clientY);
+  const media = getClosestCaptureTarget(element) ?? getMediaAtPoint(event.clientX, event.clientY);
   const mediaUrls = getMediaDownloadUrls(media);
   const mediaUrl = mediaUrls[0];
   if (mediaUrl && isSupportedUrl(mediaUrl)) {

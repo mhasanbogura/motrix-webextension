@@ -4,8 +4,8 @@ import type { AddDownloadInput, MediaCandidate } from '@/library/rpc';
 
 import { loadSnapshot } from '@/library/storage';
 import { filenameFromUrl } from '@/library/download/filename-metadata';
-import { isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver';
 import { getDownloadCaptureType, isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
+import { formatSocialResolverError, isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver';
 
 import { getCookieHeader } from '../cookies';
 import { openDownloadPicker } from '../downloads/picker';
@@ -114,7 +114,7 @@ export async function routeUrl(
       return {
         ok: false,
         code: 'social_resolver_unavailable',
-        message: error instanceof Error ? error.message : String(error),
+        message: formatSocialResolverError(error, resolverPageUrl || pageUrl),
       };
     }
     input = {

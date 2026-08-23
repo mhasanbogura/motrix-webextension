@@ -32,6 +32,15 @@ interface NativeMessagingRuntime {
 const NATIVE_HOST_NAME = 'com.motrix.social_resolver';
 const SOCIAL_HOSTS = new Set(['facebook.com', 'fb.watch', 'dailymotion.com', 'dai.ly', 'pornhub.com', 'youtube.com', 'youtu.be']);
 
+export function isPornhubUrl(value: string): boolean {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+    return hostname === 'pornhub.com' || hostname.endsWith('.pornhub.com');
+  } catch {
+    return false;
+  }
+}
+
 export function isSocialMediaUrl(value: string): boolean {
   try {
     const hostname = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
@@ -39,6 +48,14 @@ export function isSocialMediaUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+export function formatSocialResolverError(error: unknown, pageUrl?: string): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (pageUrl && isPornhubUrl(pageUrl) && /youtube|po token|account access/i.test(message)) {
+    return 'Pornhub did not expose a direct downloadable media format for this request. Confirm the video is available in the authorized browser session, then use Motrix media capture.';
+  }
+  return message;
 }
 
 export async function resolveSocialMedia(request: SocialResolverRequest): Promise<AddDownloadInput> {
