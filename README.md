@@ -143,7 +143,7 @@ The resolver does not bypass DRM, paywalls, private access controls, or platform
 
 ## Task management
 
-The popup displays **Active**, **Error**, and **Stopped** lanes. Active includes both running and waiting aria2 tasks while retaining each task’s actual status. Error contains failed tasks. Stopped contains completed and other non-error stopped results.
+The popup displays **Active**, **Error**, and **Finished** lanes. Active includes both running and waiting aria2 tasks while retaining each task’s actual status. Error contains failed tasks. Finished contains completed and other non-error stopped results.
 
 Every task row supports filename editing. For active or waiting tasks, the new name is sent to aria2. For completed files, the native helper renames the actual local file on disk and the popup immediately refreshes the displayed name. If you enter a base name without an extension, the original extension is preserved.
 

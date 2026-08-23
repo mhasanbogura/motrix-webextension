@@ -23,7 +23,7 @@ export const enUS = {
     retry: 'Retry',
     active: 'Active',
     waiting: 'Waiting',
-    stopped: 'Stopped',
+    stopped: 'Finished',
     all: 'All',
     copied: 'Copied',
   },

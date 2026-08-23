@@ -481,10 +481,9 @@ body,
   width: min(calc(100% - 12px), calc(100vw - 24px), 560px);
   height: auto;
   min-height: 0;
-  max-height: calc(100vh - 12px);
   margin: 6px auto;
   padding: 8px 10px 8px;
-  overflow: auto;
+  overflow: hidden;
   border: 1px solid var(--picker-border);
   border-radius: 20px;
   background: var(--picker-bg);
