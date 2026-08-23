@@ -64,10 +64,13 @@ export async function deletePendingPicker(id: string): Promise<void> {
 export async function submitPendingPicker(
   id: string,
   filename: string,
+  selectedUrl?: string,
 ): Promise<void> {
   const pending = await getPendingPicker(id);
   if (!pending) throw new Error('The download picker request has expired');
   const snapshot = await loadSnapshot();
+  const selectedCandidate = pending.input.mediaCandidates?.find((candidate) => candidate.url === selectedUrl);
+  const selectedInputUrl = selectedCandidate?.url || pending.input.url;
   const pageUrl = pending.input.finalUrl;
   const resolvedInput = pageUrl && isSocialMediaUrl(pageUrl)
     ? await resolveSocialMedia({
@@ -79,8 +82,10 @@ export async function submitPendingPicker(
   const input: AddDownloadInput = {
     ...pending.input,
     ...resolvedInput,
+    url: selectedInputUrl,
+    fileSize: selectedCandidate?.fileSize ?? pending.input.fileSize,
     finalUrl: pageUrl,
-    filename: safeOutputName(filename, resolvePickerFilename(pending.input)),
+    filename: safeOutputName(filename, selectedCandidate?.filename || resolvePickerFilename(pending.input)),
     dir: snapshot.settings.defaultDir || undefined,
   };
   await routeDownloadInput(input, snapshot, `${pending.source}_picker`);
@@ -95,6 +100,7 @@ export async function handlePickerMessage(message: {
   type: 'picker:get' | 'picker:submit' | 'picker:cancel';
   id: string;
   filename?: string;
+  selectedUrl?: string;
 }): Promise<RuntimeResponse> {
   if (message.type === 'picker:get') {
     const pending = await getPendingPicker(message.id);
@@ -104,7 +110,7 @@ export async function handlePickerMessage(message: {
     await cancelPendingPicker(message.id);
     return { ok: true };
   }
-  await submitPendingPicker(message.id, message.filename || '');
+  await submitPendingPicker(message.id, message.filename || '', message.selectedUrl);
   return { ok: true };
 }
 

@@ -1,6 +1,6 @@
-import type { AddDownloadInput } from '@/library/rpc';
 import type { RuntimeResponse } from '@/library/messages';
 import type { DownloadCaptureType } from '@/library/storage';
+import type { AddDownloadInput, MediaCandidate } from '@/library/rpc';
 
 import { loadSnapshot } from '@/library/storage';
 import { filenameFromUrl } from '@/library/download/filename-metadata';
@@ -8,8 +8,8 @@ import { isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver'
 import { getDownloadCaptureType, isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
 
 import { getCookieHeader } from '../cookies';
-import { duplicateGuard } from '../downloads/state';
 import { openDownloadPicker } from '../downloads/picker';
+import { duplicateGuard, filenameMetadata } from '../downloads/state';
 import { routeDownloadInput } from '../downloads/route-download-input';
 
 function isHttpUrl(value: string): boolean {
@@ -31,6 +31,23 @@ function selectDownloadUrl(url: string, candidates: string[]): string {
   return candidates.find((candidate) => !isPageDocumentUrl(candidate)) || url;
 }
 
+function buildMediaCandidates(
+  urls: string[],
+  suppliedCandidates: MediaCandidate[] | undefined,
+  primaryFileSize: number | undefined,
+): MediaCandidate[] {
+  const suppliedByUrl = new Map((suppliedCandidates || []).map((candidate) => [candidate.url, candidate]));
+  return urls.map((candidateUrl) => {
+    const supplied = suppliedByUrl.get(candidateUrl);
+    const metadata = filenameMetadata.resolve([candidateUrl]);
+    return {
+      url: candidateUrl,
+      filename: supplied?.filename || metadata?.filename || filenameFromUrl(candidateUrl),
+      fileSize: supplied?.fileSize ?? metadata?.fileSize ?? (candidateUrl === urls[0] ? primaryFileSize : undefined),
+    };
+  });
+}
+
 export async function routeUrl(
   url: string,
   pageUrl: string,
@@ -39,13 +56,18 @@ export async function routeUrl(
   captureType?: DownloadCaptureType,
   candidateUrls?: string[],
   fileSize?: number,
+  suppliedMediaCandidates?: MediaCandidate[],
 ): Promise<RuntimeResponse> {
   const snapshot = await loadSnapshot();
-  const mediaCandidates = [url, ...(candidateUrls || [])]
-    .filter((candidate, index, values) => isHttpUrl(candidate) && values.indexOf(candidate) === index);
-  const routedUrl = selectDownloadUrl(url, mediaCandidates);
+  const mediaCandidateUrls = [
+    url,
+    ...(candidateUrls || []),
+    ...(suppliedMediaCandidates || []).map((candidate) => candidate.url),
+  ].filter((candidate, index, values) => isHttpUrl(candidate) && values.indexOf(candidate) === index);
+  const mediaCandidates = buildMediaCandidates(mediaCandidateUrls, suppliedMediaCandidates, fileSize);
+  const routedUrl = selectDownloadUrl(url, mediaCandidateUrls);
   const pickerCandidates = mediaCandidates.filter(
-    (candidate) => !isPageDocumentUrl(candidate) || candidate === routedUrl,
+    (candidate) => !isPageDocumentUrl(candidate.url) || candidate.url === routedUrl,
   );
   if (!isProtocolEnabled(routedUrl, snapshot.settings)) {
     return { ok: false, code: 'disabled', message: 'This protocol is disabled' };
@@ -78,8 +100,9 @@ export async function routeUrl(
       finalUrl: url,
       filename: isSocialMediaUrl(url) ? input.filename : (filename || input.filename),
       dir: snapshot.settings.defaultDir || undefined,
-      candidateUrls: pickerCandidates.length > 1 ? pickerCandidates : undefined,
-      fileSize,
+      candidateUrls: pickerCandidates.length > 1 ? pickerCandidates.map((candidate) => candidate.url) : undefined,
+      mediaCandidates: pickerCandidates.length > 1 ? pickerCandidates : undefined,
+      fileSize: pickerCandidates.find((candidate) => candidate.url === input.url)?.fileSize ?? fileSize,
     };
   } else {
     input = {
@@ -89,8 +112,9 @@ export async function routeUrl(
       cookie,
       filename: filename || filenameFromUrl(routedUrl),
       dir: snapshot.settings.defaultDir || undefined,
-      candidateUrls: pickerCandidates.length > 1 ? pickerCandidates : undefined,
-      fileSize,
+      candidateUrls: pickerCandidates.length > 1 ? pickerCandidates.map((candidate) => candidate.url) : undefined,
+      mediaCandidates: pickerCandidates.length > 1 ? pickerCandidates : undefined,
+      fileSize: pickerCandidates.find((candidate) => candidate.url === routedUrl)?.fileSize ?? fileSize,
     };
   }
   const resolvedCaptureType = captureType || getDownloadCaptureType(input);

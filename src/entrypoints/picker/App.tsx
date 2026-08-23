@@ -1,15 +1,27 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+
 import { useEffect, useMemo, useState } from 'react';
 
+import type { MediaCandidate } from '@/library/rpc';
 import type { PendingPicker } from '@/features/background/downloads/picker';
 
 import { sendRuntimeMessage } from '@/library/runtime';
+import { filenameFromUrl } from '@/library/download/filename-metadata';
+
+interface PickerCandidate extends MediaCandidate {
+  name: string;
+  order: number;
+}
+
+type CandidateSort = 'size' | 'name';
 
 export default function App() {
   const id = useMemo(() => new URLSearchParams(globalThis.location.search).get('id') || '', []);
   const [pending, setPending] = useState<PendingPicker>();
   const [filename, setFilename] = useState('download');
   const [originalFilename, setOriginalFilename] = useState('download');
+  const [selectedUrl, setSelectedUrl] = useState('');
+  const [candidateSort, setCandidateSort] = useState<CandidateSort>('size');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -24,7 +36,9 @@ export default function App() {
         return;
       }
       const value = response.result as PendingPicker;
+      const candidates = getPickerCandidates(value);
       setPending(value);
+      setSelectedUrl(candidates[0]?.url || value.input.url);
       const initialFilename = value.input.filename || 'download';
       setFilename(initialFilename);
       setOriginalFilename(initialFilename);
@@ -39,6 +53,15 @@ export default function App() {
     };
   }, [id]);
 
+  const candidates = useMemo(() => getPickerCandidates(pending), [pending]);
+  const sortedCandidates = useMemo(
+    () => sortCandidates(candidates, candidateSort),
+    [candidateSort, candidates],
+  );
+  const selectedCandidate = candidates.find((candidate) => candidate.url === selectedUrl) || candidates[0];
+  const selectedSourceUrl = selectedCandidate?.url || pending?.input.url || '';
+  const selectedFileSize = selectedCandidate?.fileSize ?? pending?.input.fileSize;
+
   async function submit(): Promise<void> {
     const cleanFilename = filename.trim();
     if (!cleanFilename) {
@@ -52,6 +75,7 @@ export default function App() {
         type: 'picker:submit',
         id,
         filename: cleanFilename,
+        selectedUrl: selectedCandidate?.url,
       });
       if (!response.ok) {
         setError(response.message);
@@ -103,28 +127,58 @@ export default function App() {
       <section className='picker-card'>
         <div className='picker-card-title'>Download details</div>
         <div className='picker-source'>
-          <span className='picker-label'>Source URL</span>
-          <span className='picker-url' title={pending?.input.url}>{pending?.input.url || 'Unknown source'}</span>
+          <span className='picker-label'>Selected media URL</span>
+          <span className='picker-url' title={selectedSourceUrl}>{selectedSourceUrl || 'Unknown source'}</span>
           <div className='picker-meta-grid'>
             <div>
               <span className='picker-label'>File size</span>
-              <span className='picker-meta-value'>{formatFileSize(pending?.input.fileSize)}</span>
+              <span className='picker-meta-value'>{formatFileSize(selectedFileSize)}</span>
             </div>
             <div>
               <span className='picker-label'>Available sources</span>
-              <span className='picker-meta-value'>{pending?.input.candidateUrls?.length || 1}</span>
+              <span className='picker-meta-value'>{candidates.length || 1}</span>
             </div>
           </div>
-          {pending?.input.candidateUrls && pending.input.candidateUrls.length > 1 && (
+          {candidates.length > 1 && (
             <div className='picker-candidates'>
-              <span className='picker-label'>Detected media sources</span>
-              {pending.input.candidateUrls.slice(0, 5).map((candidate, index) => (
-                <span className='picker-candidate' key={`${candidate}-${index}`} title={candidate}>
-                  {index + 1}
-                  .
-                  {candidate}
-                </span>
-              ))}
+              <div className='picker-candidate-toolbar'>
+                <span className='picker-label'>Available media</span>
+                <label className='picker-sort-label'>
+                  <span>Sort</span>
+                  <select
+                    aria-label='Sort available media'
+                    value={candidateSort}
+                    onChange={(event) => setCandidateSort(event.target.value as CandidateSort)}
+                  >
+                    <option value='size'>Size</option>
+                    <option value='name'>Name</option>
+                  </select>
+                </label>
+              </div>
+              <select
+                className='picker-candidate-select'
+                aria-label='Select media source'
+                value={selectedCandidate?.url || ''}
+                onChange={(event) => setSelectedUrl(event.target.value)}
+              >
+                {sortedCandidates.map((candidate) => (
+                  <option key={candidate.url} value={candidate.url}>
+                    {candidate.name}
+                    {' '}
+                    ·
+                    {formatFileSize(candidate.fileSize)}
+                  </option>
+                ))}
+              </select>
+              <span className='picker-candidate-selection' title={selectedCandidate?.url}>
+                Selected:
+                {' '}
+                {selectedCandidate?.name || 'Media source'}
+                {' '}
+                ·
+                {' '}
+                {formatFileSize(selectedFileSize)}
+              </span>
             </div>
           )}
         </div>
@@ -155,4 +209,40 @@ export default function App() {
       </footer>
     </main>
   );
+}
+
+function getPickerCandidates(pending: PendingPicker | undefined): PickerCandidate[] {
+  if (!pending) return [];
+  const structured = pending.input.mediaCandidates || [];
+  const candidates = structured.length
+    ? structured
+    : (pending.input.candidateUrls || [pending.input.url]).map((url): MediaCandidate => ({
+        url,
+        fileSize: url === pending.input.url ? pending.input.fileSize : undefined,
+      }));
+  return candidates
+    .filter(
+      (candidate, index, values) => candidate.url && values.findIndex((value) => value.url === candidate.url) === index,
+    )
+    .map((candidate, order) => ({
+      ...candidate,
+      name: candidate.filename || filenameFromUrl(candidate.url) || 'Media source',
+      order,
+    }));
+}
+
+function sortCandidates(candidates: PickerCandidate[], sort: CandidateSort): PickerCandidate[] {
+  return [...candidates].sort((left, right) => {
+    const comparison = sort === 'name'
+      ? left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
+      : compareFileSize(left.fileSize, right.fileSize);
+    return comparison || left.order - right.order;
+  });
+}
+
+function compareFileSize(left: number | undefined, right: number | undefined): number {
+  if (left === undefined && right === undefined) return 0;
+  if (left === undefined) return 1;
+  if (right === undefined) return -1;
+  return right - left;
 }

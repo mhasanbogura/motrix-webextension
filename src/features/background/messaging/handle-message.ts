@@ -95,6 +95,7 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
           message.captureType,
           message.urls,
           message.fileSize,
+          message.mediaCandidates,
         );
       case 'capture-site-status': {
         const snapshot = await loadSnapshot();

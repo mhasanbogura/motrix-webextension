@@ -224,6 +224,7 @@ function ensureMediaButton(): void {
     const urls = target ? getMediaDownloadUrls(target) : [];
     const url = urls[0];
     if (!url || !isSupportedUrl(url)) return;
+    const mediaCandidates = target ? getMediaCandidateMetadata(target, urls) : [];
 
     mediaButton!.disabled = true;
     mediaButton!.textContent = 'Opening picker…';
@@ -231,10 +232,11 @@ function ensureMediaButton(): void {
       type: 'capture-url',
       url,
       urls: urls.length > 1 ? urls : undefined,
+      mediaCandidates: mediaCandidates.length > 1 ? mediaCandidates : undefined,
       pageUrl: location.href,
       source: getMediaSource(target),
       filename: getFilenameHint(target),
-      fileSize: getMediaFileSize(target, urls),
+      fileSize: mediaCandidates[0]?.fileSize ?? getMediaFileSize(target, urls),
       captureType: getMediaCaptureType(target),
     }).then((response: RuntimeResponse) => {
       if (!response.ok) {
@@ -300,6 +302,7 @@ function resolveContextMenuTarget(event: MouseEvent): ContextMenuTarget {
       getMediaCaptureType(media),
       mediaUrls,
       getMediaFileSize(media, mediaUrls),
+      getMediaCandidateMetadata(media, mediaUrls),
     );
   }
 
@@ -479,6 +482,13 @@ function getMediaUrls(media: HTMLImageElement | HTMLMediaElement | undefined): s
     .filter((candidate, index, values) => values.indexOf(candidate) === index);
 }
 
+function getMediaCandidateMetadata(
+  media: HTMLImageElement | HTMLMediaElement | undefined,
+  urls: string[],
+): Array<{ url: string; fileSize?: number }> {
+  return urls.map((url) => ({ url, fileSize: getMediaFileSize(media, [url]) }));
+}
+
 function getMediaFileSize(media: HTMLImageElement | HTMLMediaElement | undefined, urls: string[]): number | undefined {
   if (!media) return undefined;
   const sizeHint = [
@@ -523,10 +533,12 @@ function buildTarget(
   captureType?: DownloadCaptureType,
   urls?: string[],
   fileSize?: number,
+  mediaCandidates?: Array<{ url: string; fileSize?: number }>,
 ): ContextMenuTarget {
   return {
     url,
     urls: urls?.length && urls.length > 1 ? urls : undefined,
+    mediaCandidates: mediaCandidates?.length && mediaCandidates.length > 1 ? mediaCandidates : undefined,
     pageUrl: location.href,
     source,
     filename,

@@ -58,6 +58,12 @@ export interface AddUriOptions {
   'user-agent'?: string;
 }
 
+export interface MediaCandidate {
+  url: string;
+  filename?: string;
+  fileSize?: number;
+}
+
 export interface AddDownloadInput {
   /** Original browser download URL. This is the task URL Motrix should store. */
   url: string;
@@ -70,6 +76,7 @@ export interface AddDownloadInput {
   finalUrl?: string;
   userAgent?: string;
   candidateUrls?: string[];
+  mediaCandidates?: MediaCandidate[];
   requestHeaders?: Array<{ name: string; value: string }>;
 }
 

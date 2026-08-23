@@ -1,7 +1,8 @@
 export interface FilenameMetadata {
   url: string;
   time: number;
-  filename: string;
+  filename?: string;
+  fileSize?: number;
 }
 
 export class FilenameMetadataStore {
@@ -14,8 +15,18 @@ export class FilenameMetadataStore {
       (header) => header.name.toLowerCase() === 'content-disposition',
     )?.value;
     const filename = disposition ? parseContentDispositionFilename(disposition) : undefined;
-    if (!filename) return;
-    this.metadata.set(details.url, { url: details.url, filename, time: Date.now() });
+    const contentLength = details.responseHeaders?.find(
+      (header) => header.name.toLowerCase() === 'content-length',
+    )?.value;
+    const fileSize = contentLength ? parsePositiveInteger(contentLength) : undefined;
+    if (!filename && fileSize === undefined) return;
+    const previous = this.metadata.get(details.url);
+    this.metadata.set(details.url, {
+      url: details.url,
+      filename: filename || previous?.filename,
+      fileSize: fileSize ?? previous?.fileSize,
+      time: Date.now(),
+    });
     this.prune();
   }
 
@@ -67,6 +78,11 @@ export function isWeakFilename(value: string | undefined): boolean {
   if (!value) return true;
   const stem = value.replace(/\.[a-z0-9]{1,8}$/i, '').toLowerCase();
   return new Set(['download', 'file', 'media', 'video', 'audio', 'blob', 'document', 'untitled']).has(stem);
+}
+
+function parsePositiveInteger(value: string): number | undefined {
+  const parsed = Number.parseInt(value.trim(), 10);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 function safeDecodeURIComponent(value: string): string {

@@ -1,4 +1,4 @@
-import type { Aria2GlobalStat, Aria2Task, Aria2TaskStatus } from '@/library/rpc';
+import type { Aria2GlobalStat, Aria2Task, Aria2TaskStatus, MediaCandidate } from '@/library/rpc';
 import type {
   ConnectionConfig,
   DiagnosticEvent,
@@ -43,6 +43,7 @@ export interface ContextMenuTarget {
   fileSize?: number;
   source: ContextMenuTargetSource;
   captureType?: DownloadCaptureType;
+  mediaCandidates?: MediaCandidate[];
 }
 
 export type RuntimeMessage
@@ -64,11 +65,11 @@ export type RuntimeMessage
     | { type: 'clear-tasks'; lane: RuntimeTaskLane; gids: string[] }
     | { type: 'wake-motrix' }
     | { type: 'content-protocol-click'; url: string; pageUrl: string; filename?: string }
-    | { type: 'capture-url'; url: string; urls?: string[]; pageUrl: string; source: ContextMenuTargetSource; filename?: string; fileSize?: number; captureType?: DownloadCaptureType }
+    | { type: 'capture-url'; url: string; urls?: string[]; mediaCandidates?: MediaCandidate[]; pageUrl: string; source: ContextMenuTargetSource; filename?: string; fileSize?: number; captureType?: DownloadCaptureType }
     | { type: 'capture-site-status'; url: string; pageUrl: string }
     | { type: 'resolve-context-menu-target' }
     | { type: 'picker:get'; id: string }
-    | { type: 'picker:submit'; id: string; filename: string }
+    | { type: 'picker:submit'; id: string; filename: string; selectedUrl?: string }
     | { type: 'picker:cancel'; id: string }
     | { type: 'append-diagnostic'; event: Omit<DiagnosticEvent, 'id' | 'timestamp'> }
     | { type: 'clear-diagnostics' }
