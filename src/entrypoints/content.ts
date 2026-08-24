@@ -400,6 +400,7 @@ function normalizeSocialTitle(value: string | null | undefined): string | undefi
     ?.replace(/^\(\d+\)\s*/g, '')
     .replace(/\s+/g, ' ')
     .replace(/\s*[|•-]\s*(?:facebook|watch|reels?)\s*$/i, '')
+    .replace(/(?:\.\.\.|…)?[ \t]+see more(?:[ \t]+on facebook)?$/i, '')
     .trim();
   if (!normalized || normalized.length > 180 || /^https?:\/\//i.test(normalized)) return undefined;
   return normalized;
@@ -408,6 +409,7 @@ function normalizeSocialTitle(value: string | null | undefined): string | undefi
 function isUsefulSocialTitle(value: string): boolean {
   if (/^\d+\s+(?:unread\s+)?chats?$/i.test(value)) return false;
   if (/^\d+\s+(?:notifications?|messages?)$/i.test(value)) return false;
+  if (/^(?:number of )?(?:unread )?(?:notifications?|messages?|chats?)$/i.test(value)) return false;
   const genericTitlePattern = new RegExp(
     `^(?:${[
       'facebook',

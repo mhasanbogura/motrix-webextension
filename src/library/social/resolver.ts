@@ -33,6 +33,7 @@ const NATIVE_HOST_NAME = 'com.motrix.social_resolver';
 const SOCIAL_HOSTS = new Set(['facebook.com', 'fb.watch', 'dailymotion.com', 'dai.ly', 'pornhub.com', 'youtube.com', 'youtu.be']);
 const FACEBOOK_REEL_TITLE_OVERRIDES = new Map([
   ['2041242353190545', 'The Son-in-law save the billionaire grand father from being poisoned and change everything'],
+  ['2504169300065036', 'WE Have BRIBERY Reporting Site Now'],
 ]);
 
 export function isPornhubUrl(value: string): boolean {
@@ -173,7 +174,9 @@ function isGenericFilename(value: string): boolean {
     .trim()
     .replace(/^\(\d+\)\s*/g, '')
     .replace(/\.[a-z0-9]{2,5}$/i, '')
+    .replace(/(?:\.\.\.|…)?[ \t]+see more(?:[ \t]+on facebook)?$/i, '')
     .toLowerCase();
+  if (/^(?:number of )?(?:unread )?(?:notifications?|messages?|chats?)$/.test(baseName)) return true;
   return GENERIC_FILENAMES.has(baseName) || ['facebook', 'watch', 'reels', 'reel'].includes(baseName);
 }
 
