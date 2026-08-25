@@ -69,7 +69,7 @@ function TaskList({
     <div className='min-h-[92px]'>
       {tasks.length
         ? (
-            <div className='max-h-[180px] min-h-[180px] space-y-2 overflow-x-hidden overflow-y-auto overscroll-contain pr-1'>
+            <div className='max-h-[180px] min-h-[180px] space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain pr-1'>
               {tasks.map((task) => (
                 <TaskRow
                   key={task.gid}
