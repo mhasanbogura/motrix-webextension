@@ -28,7 +28,7 @@ export function TaskPanel({
   t,
 }: TaskPanelProps) {
   return (
-    <section data-reveal className='mx-3 mt-1 rounded-xl border bg-(--m3-surface-container) p-2.5 shadow-(--m3-shadow-card)'>
+    <section data-reveal className='mx-3 mt-3 rounded-xl border bg-(--m3-surface-container) p-3 shadow-(--m3-shadow-card)'>
       <TaskList
         tone={activeLane}
         tasks={runtime.tasks[activeLane]}
@@ -69,7 +69,7 @@ function TaskList({
     <div className='min-h-[92px]'>
       {tasks.length
         ? (
-            <div className='max-h-[92px] min-h-[92px] space-y-2 overflow-x-hidden overflow-y-auto overscroll-contain pr-1'>
+            <div className='max-h-[180px] min-h-[180px] space-y-2 overflow-x-hidden overflow-y-auto overscroll-contain pr-1'>
               {tasks.map((task) => (
                 <TaskRow
                   key={task.gid}
@@ -86,7 +86,7 @@ function TaskList({
             </div>
           )
         : (
-            <div className='pointer-events-none flex h-[92px] items-center justify-center rounded-md border border-dashed bg-(--m3-surface) p-5 text-center text-sm text-muted-foreground'>
+            <div className='pointer-events-none flex h-[180px] items-center justify-center rounded-md border border-dashed bg-(--m3-surface) p-5 text-center text-sm text-muted-foreground'>
               {empty}
             </div>
           )}
