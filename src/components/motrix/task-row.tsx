@@ -73,7 +73,8 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename, onR
     <div
       data-reveal
       className={cn(
-        'h-[92px] overflow-hidden rounded-lg border py-2 pr-3 pl-3 shadow-(--m3-shadow-card) transition-colors duration-200',
+        'min-h-[92px] overflow-hidden rounded-lg border py-2 pr-3 pl-3 shadow-(--m3-shadow-card) transition-colors duration-200',
+        task.errorMessage ? 'h-auto' : 'h-[92px]',
         toneClassNames[tone],
       )}
     >
@@ -168,10 +169,10 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename, onR
           %
         </span>
       </div>
-      <div className='mt-1 flex h-4 items-center overflow-hidden text-[11px]/4 text-muted-foreground'>
+      <div className='mt-1 flex min-h-4 items-start text-[11px]/4 text-muted-foreground'>
         {task.errorMessage
           ? (
-              <span className='truncate text-destructive' title={task.errorMessage}>{task.errorMessage}</span>
+              <span className='break-words whitespace-normal text-destructive' title={task.errorMessage}>{task.errorMessage}</span>
             )
           : null}
       </div>
