@@ -6,6 +6,7 @@ import { getFacebookReelTitleOverride, isPornhubUrl, isSocialMediaUrl } from '@/
 const PROTOCOL_PATTERN = /^(?:magnet|ed2k|thunder):/i;
 const CONTEXT_MENU_TARGET_TTL_MS = 60000;
 const MEDIA_BUTTON_ID = 'motrix-idm-media-capture';
+const MEDIA_CLOSE_BUTTON_ID = 'motrix-idm-media-capture-close';
 const SUPPORTED_PROTOCOLS = new Set(['http:', 'https:', 'magnet:', 'ed2k:', 'thunder:']);
 const TEXT_URL_PATTERN = /(https?:\/\/[^\s<>"'`]+|magnet:\?[^\s<>"'`]+|ed2k:\/\/[^\s<>"'`]+|thunder:\/\/[A-Z0-9+/=]+)/i;
 const MEDIA_BUTTON_IDLE_MS = 5000;
@@ -48,7 +49,9 @@ let lastContextMenuTarget: RecordedContextMenuTarget | undefined;
 type CaptureTarget = HTMLImageElement | HTMLMediaElement | HTMLElement;
 
 let activeMedia: CaptureTarget | undefined;
+let dismissedMedia: CaptureTarget | undefined;
 let mediaButton: HTMLButtonElement | undefined;
+let mediaCloseButton: HTMLButtonElement | undefined;
 let mediaButtonFadeTimer: number | undefined;
 let lastPointerPoint: { x: number; y: number } | undefined;
 let pageBlocked = true;
@@ -159,7 +162,7 @@ function handleMediaPointerOut(event: PointerEvent): void {
   if (!activeMedia) return;
   const next = event.relatedTarget instanceof Node ? event.relatedTarget : undefined;
   if (next && activeMedia.contains(next)) return;
-  if (next && mediaButton?.contains(next)) return;
+  if (next && (mediaButton?.contains(next) || mediaCloseButton?.contains(next))) return;
   const nextMedia = next instanceof Element ? getClosestCaptureTarget(next) : undefined;
   if (nextMedia === activeMedia) return;
   scheduleMediaButtonFade();
@@ -176,8 +179,10 @@ function handlePointerMove(event: PointerEvent): void {
   const mediaRect = activeMedia.getBoundingClientRect();
   const buttonRect = mediaButton.getBoundingClientRect();
   const inMedia = isPointInRect(event.clientX, event.clientY, mediaRect);
+  const closeRect = mediaCloseButton?.getBoundingClientRect();
   const inButton = isPointInRect(event.clientX, event.clientY, buttonRect);
-  if (!inMedia && !inButton) return;
+  const inCloseButton = closeRect ? isPointInRect(event.clientX, event.clientY, closeRect) : false;
+  if (!inMedia && !inButton && !inCloseButton) return;
   revealMediaButton();
   scheduleMediaButtonFade();
 }
@@ -192,6 +197,8 @@ function handleMediaSourceReady(event: Event): void {
 }
 
 function activateMedia(media: CaptureTarget): void {
+  if (dismissedMedia === media) return;
+  if (dismissedMedia && dismissedMedia !== media) dismissedMedia = undefined;
   if (pageBlocked || !captureTypes[getMediaCaptureType(media)] || !isSupportedUrl(getMediaDownloadUrl(media))) return;
   activeMedia = media;
   ensureMediaButton();
@@ -254,13 +261,54 @@ function ensureMediaButton(): void {
       removeMediaButton();
     }).catch(() => removeMediaButton());
   });
+  mediaCloseButton = document.createElement('button');
+  mediaCloseButton.id = MEDIA_CLOSE_BUTTON_ID;
+  mediaCloseButton.type = 'button';
+  mediaCloseButton.textContent = '×';
+  mediaCloseButton.setAttribute('aria-label', 'Close Download with Motrix button');
+  Object.assign(mediaCloseButton.style, {
+    position: 'fixed',
+    zIndex: '2147483648',
+    display: 'block',
+    width: '20px',
+    height: '20px',
+    border: '1px solid rgba(255, 255, 255, .72)',
+    borderRadius: '999px',
+    padding: '0',
+    background: '#28233d',
+    color: '#fff',
+    boxShadow: '0 3px 10px rgba(37, 28, 97, .35)',
+    font: '700 15px/17px system-ui, sans-serif',
+    cursor: 'pointer',
+    opacity: '0',
+    pointerEvents: 'none',
+    transition: 'opacity 180ms ease, transform 120ms ease',
+  });
+  mediaCloseButton.addEventListener('pointerdown', (event) => event.stopPropagation());
+  mediaCloseButton.addEventListener('mouseenter', () => {
+    if (mediaCloseButton) mediaCloseButton.style.transform = 'scale(1.08)';
+  });
+  mediaCloseButton.addEventListener('mouseleave', () => {
+    if (mediaCloseButton) mediaCloseButton.style.transform = 'scale(1)';
+  });
+  mediaCloseButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dismissedMedia = activeMedia;
+    removeMediaButton();
+  });
   document.documentElement.appendChild(mediaButton);
+  document.documentElement.appendChild(mediaCloseButton);
 }
 
 function revealMediaButton(): void {
   if (!mediaButton) return;
   mediaButton.style.opacity = '1';
   mediaButton.style.pointerEvents = 'auto';
+  if (mediaCloseButton) {
+    mediaCloseButton.style.opacity = '1';
+    mediaCloseButton.style.pointerEvents = 'auto';
+  }
 }
 
 function scheduleMediaButtonFade(): void {
@@ -269,6 +317,10 @@ function scheduleMediaButtonFade(): void {
     if (!mediaButton) return;
     mediaButton.style.opacity = '0';
     mediaButton.style.pointerEvents = 'none';
+    if (mediaCloseButton) {
+      mediaCloseButton.style.opacity = '0';
+      mediaCloseButton.style.pointerEvents = 'none';
+    }
     mediaButtonFadeTimer = undefined;
   }, MEDIA_BUTTON_IDLE_MS);
 }
@@ -285,13 +337,21 @@ function repositionMediaButton(): void {
   const top = Math.max(8, Math.min(window.innerHeight - 46, rect.top + 8));
   mediaButton.style.left = `${left}px`;
   mediaButton.style.top = `${top}px`;
+  if (mediaCloseButton) {
+    const closeLeft = Math.max(4, Math.min(window.innerWidth - 24, left + width - 10));
+    const closeTop = Math.max(4, top - 7);
+    mediaCloseButton.style.left = `${closeLeft}px`;
+    mediaCloseButton.style.top = `${closeTop}px`;
+  }
 }
 
 function removeMediaButton(): void {
   if (mediaButtonFadeTimer !== undefined) window.clearTimeout(mediaButtonFadeTimer);
   mediaButtonFadeTimer = undefined;
   mediaButton?.remove();
+  mediaCloseButton?.remove();
   mediaButton = undefined;
+  mediaCloseButton = undefined;
   activeMedia = undefined;
   lastPointerPoint = undefined;
 }
