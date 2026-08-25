@@ -3,7 +3,7 @@ import type { StorageSnapshot } from '@/library/storage';
 
 import { Aria2RpcClient, RpcAuthError } from '@/library/rpc';
 import { openMotrixNewTask } from '@/library/protocol/launcher';
-import { appendDiagnostic, saveTaskSourceUrl } from '@/library/storage';
+import { appendDiagnostic, saveTaskCreatedAt, saveTaskSourceUrl } from '@/library/storage';
 
 export async function routeDownloadInput(
   input: AddDownloadInput,
@@ -18,6 +18,7 @@ export async function routeDownloadInput(
   try {
     const result = await client.addDownload(input);
     await saveTaskSourceUrl(result.gid, input.finalUrl || input.url);
+    await saveTaskCreatedAt(result.gid);
     await appendDiagnostic({
       level: 'info',
       code: 'download_routed',

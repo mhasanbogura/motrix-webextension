@@ -15,6 +15,7 @@ type TaskRowTone = 'active' | 'error' | 'stopped';
 interface TaskRowProps {
   task: Aria2Task;
   tone: TaskRowTone;
+  className?: string;
   onPause: (gid: string) => void;
   onResume: (gid: string) => void;
   onRetry: (gid: string, status: Aria2Task['status']) => void;
@@ -29,7 +30,17 @@ const toneClassNames: Record<TaskRowTone, string> = {
   stopped: 'border-task-stopped/30 bg-[color-mix(in_srgb,hsl(var(--task-stopped))_7%,var(--m3-surface))]',
 };
 
-export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename, onRetry, onOpenLink }: TaskRowProps) {
+export function TaskRow({
+  task,
+  tone,
+  onPause,
+  onResume,
+  onRemove,
+  onRename,
+  onRetry,
+  onOpenLink,
+  className,
+}: TaskRowProps) {
   const progress = percent(task.completedLength, task.totalLength);
   const isActive = task.status === 'active';
   const isPaused = task.status === 'paused' || task.status === 'waiting';
@@ -75,6 +86,7 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename, onR
       className={cn(
         'h-[108px] min-h-[108px] snap-start overflow-hidden rounded-lg border py-2 pr-3 pl-3 shadow-(--m3-shadow-card) transition-colors duration-200',
         toneClassNames[tone],
+        className,
       )}
     >
       <div className='flex items-start justify-between gap-2'>

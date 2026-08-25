@@ -74,6 +74,7 @@ function TaskList({
                 <TaskRow
                   key={task.gid}
                   task={task}
+                  className={tone === 'error' ? undefined : 'mx-auto w-[calc(100%-8px)]'}
                   tone={tone}
                   onPause={onPause}
                   onResume={onResume}

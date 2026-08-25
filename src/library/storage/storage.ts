@@ -13,6 +13,7 @@ const STORAGE_KEY = 'motrixExtension';
 const MAX_DIAGNOSTICS = 200;
 const MAX_TASK_NAME_OVERRIDES = 500;
 const MAX_TASK_SOURCE_URLS = 500;
+const MAX_TASK_CREATED_AT = 1000;
 const AUTH_CONNECTION_FIELDS = ['host', 'port', 'path', 'secret'] as const;
 
 export async function loadSnapshot(): Promise<StorageSnapshot> {
@@ -91,6 +92,28 @@ export async function saveTaskSourceUrl(gid: string, url: string): Promise<Stora
       taskSourceUrls: Object.fromEntries([...entries, [gid, url]].slice(-MAX_TASK_SOURCE_URLS)),
     };
   });
+}
+
+export async function saveTaskCreatedAt(gid: string, createdAt = Date.now()): Promise<StorageSnapshot> {
+  return updateSnapshot((current) => {
+    const entries = Object.entries(current.taskCreatedAt).filter(([key]) => key !== gid);
+    return {
+      ...current,
+      taskCreatedAt: Object.fromEntries([...entries, [gid, createdAt]].slice(-MAX_TASK_CREATED_AT)),
+    };
+  });
+}
+
+export async function ensureTaskCreatedAt(gids: string[]): Promise<Record<string, number>> {
+  const current = await loadSnapshot();
+  const missing = gids.filter((gid) => !(gid in current.taskCreatedAt));
+  if (!missing.length) return current.taskCreatedAt;
+  const createdAt = Date.now();
+  const entries = Object.entries(current.taskCreatedAt);
+  const additions = missing.map((gid, index) => [gid, createdAt + index] as const);
+  const next = Object.fromEntries([...entries, ...additions].slice(-MAX_TASK_CREATED_AT));
+  await saveSnapshot({ ...current, taskCreatedAt: next });
+  return next;
 }
 
 export async function appendDiagnostic(event: Omit<DiagnosticEvent, 'id' | 'timestamp'>): Promise<void> {

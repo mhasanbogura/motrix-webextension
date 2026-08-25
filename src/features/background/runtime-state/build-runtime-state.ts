@@ -3,7 +3,7 @@ import type { StorageSnapshot } from '@/library/storage';
 import type { PopupState, RuntimeState } from '@/library/messages';
 
 import { Aria2RpcClient } from '@/library/rpc';
-import { loadSnapshot, updateConnection } from '@/library/storage';
+import { ensureTaskCreatedAt, loadSnapshot, updateConnection } from '@/library/storage';
 
 const POPUP_RPC_TIMEOUT_MS = 1200;
 
@@ -39,8 +39,17 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
   const activeTasks = activeResult.status === 'fulfilled' ? activeResult.value : [];
   const waitingTasks = waitingResult.status === 'fulfilled' ? waitingResult.value : [];
   const stoppedTasks = stoppedResult.status === 'fulfilled' ? stoppedResult.value : [];
-  const preparedActiveTasks = applyTaskNameOverrides([...activeTasks, ...waitingTasks], snapshot.taskNameOverrides);
-  const preparedStoppedTasks = applyTaskNameOverrides(stoppedTasks, snapshot.taskNameOverrides);
+  const taskCreatedAt = await ensureTaskCreatedAt(
+    [...activeTasks, ...waitingTasks, ...stoppedTasks].map((task) => task.gid),
+  );
+  const preparedActiveTasks = sortTasksByCreatedAt(
+    applyTaskNameOverrides([...activeTasks, ...waitingTasks], snapshot.taskNameOverrides),
+    taskCreatedAt,
+  );
+  const preparedStoppedTasks = sortTasksByCreatedAt(
+    applyTaskNameOverrides(stoppedTasks, snapshot.taskNameOverrides),
+    taskCreatedAt,
+  );
 
   return {
     ...base,
@@ -51,6 +60,16 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
       stopped: preparedStoppedTasks.filter((task) => task.status !== 'error'),
     },
   };
+}
+
+function sortTasksByCreatedAt(tasks: Aria2Task[], createdAt: Record<string, number>): Aria2Task[] {
+  return tasks
+    .map((task, index) => ({ task, index }))
+    .sort((left, right) => (
+      (createdAt[right.task.gid] || 0) - (createdAt[left.task.gid] || 0)
+      || left.index - right.index
+    ))
+    .map(({ task }) => task);
 }
 
 function applyTaskNameOverrides(tasks: Aria2Task[], overrides: Record<string, string>): Aria2Task[] {
