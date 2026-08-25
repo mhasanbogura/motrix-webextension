@@ -14,6 +14,7 @@ type TaskRowTone = 'active' | 'error' | 'stopped';
 
 interface TaskRowProps {
   task: Aria2Task;
+  compact?: boolean;
   tone: TaskRowTone;
   className?: string;
   onPause: (gid: string) => void;
@@ -40,6 +41,7 @@ export function TaskRow({
   onRetry,
   onOpenLink,
   className,
+  compact = false,
 }: TaskRowProps) {
   const progress = percent(task.completedLength, task.totalLength);
   const isActive = task.status === 'active';
@@ -84,7 +86,8 @@ export function TaskRow({
     <div
       data-reveal
       className={cn(
-        'h-[108px] min-h-[108px] snap-start overflow-hidden rounded-lg border py-2 pr-3 pl-3 shadow-(--m3-shadow-card) transition-colors duration-200',
+        'snap-start overflow-hidden rounded-lg border py-2 pr-3 pl-3 shadow-(--m3-shadow-card) transition-colors duration-200',
+        compact ? 'h-[88px] min-h-[88px]' : 'h-[108px] min-h-[108px]',
         toneClassNames[tone],
         className,
       )}

@@ -65,16 +65,20 @@ function TaskList({
   onOpenLink: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
   onRemove: (gid: string, status: RuntimeState['tasks']['active'][number]['status']) => void;
 }) {
+  const compactLane = tone !== 'error';
+  const listHeightClass = compactLane ? 'max-h-[88px] min-h-[88px]' : 'max-h-[108px] min-h-[108px]';
+
   return (
-    <div className='min-h-[92px]'>
+    <div className='min-h-[88px]'>
       {tasks.length
         ? (
-            <div className='max-h-[108px] min-h-[108px] snap-y snap-mandatory space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain pr-1'>
+            <div className={`${listHeightClass} snap-y snap-mandatory space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain pr-1`}>
               {tasks.map((task) => (
                 <TaskRow
                   key={task.gid}
                   task={task}
                   className={tone === 'error' ? undefined : 'mx-auto w-[calc(100%-8px)]'}
+                  compact={compactLane}
                   tone={tone}
                   onPause={onPause}
                   onResume={onResume}
@@ -87,7 +91,7 @@ function TaskList({
             </div>
           )
         : (
-            <div className='pointer-events-none flex h-[108px] items-center justify-center rounded-md border border-dashed bg-(--m3-surface) p-5 text-center text-sm text-muted-foreground'>
+            <div className={`pointer-events-none flex ${compactLane ? 'h-[88px]' : 'h-[108px]'} items-center justify-center rounded-md border border-dashed bg-(--m3-surface) p-5 text-center text-sm text-muted-foreground`}>
               {empty}
             </div>
           )}

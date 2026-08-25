@@ -28,7 +28,7 @@ export function PopupActions({
 }: PopupActionsProps) {
   const showPauseAll = activeLane === 'active';
   const hasTasks = taskCount > 0;
-  const bulkButtonClass = 'min-w-0 w-full justify-center gap-1 rounded-lg border-transparent bg-(--m3-surface) px-1 text-[11px] font-semibold';
+  const bulkButtonClass = 'min-w-0 w-full justify-center gap-0.5 rounded-lg border-transparent bg-(--m3-surface) px-0.5 text-[10px] font-semibold';
 
   const clearButton = (
     <Button
@@ -38,18 +38,18 @@ export function PopupActions({
       disabled={busy || !hasTasks}
       onClick={onClearAll}
     >
-      <Trash2 />
+      <Trash2 className='size-3!' />
       {t('popup.clearAll')}
     </Button>
   );
 
   const openMotrixButton = (
     <Button
-      className='min-w-0 w-full justify-center gap-1 rounded-lg px-1 text-[11px] font-semibold shadow-(--m3-shadow-card) whitespace-nowrap'
+      className='min-w-0 w-full justify-center gap-0.5 rounded-lg px-0.5 text-[10px] font-semibold shadow-(--m3-shadow-card) whitespace-nowrap'
       size='sm'
       onClick={onWakeMotrix}
     >
-      <Power />
+      <Power className='size-3!' />
       {t('common.openMotrix')}
     </Button>
   );
@@ -68,7 +68,7 @@ export function PopupActions({
                   disabled={busy || !hasTasks}
                   onClick={onPauseAll}
                 >
-                  <Pause />
+                  <Pause className='size-3!' />
                   {t('popup.pauseAll')}
                 </Button>
                 <Button
@@ -78,7 +78,7 @@ export function PopupActions({
                   disabled={busy || !hasTasks}
                   onClick={onResumeAll}
                 >
-                  <Play />
+                  <Play className='size-3!' />
                   {t('popup.resumeAll')}
                 </Button>
                 {clearButton}
