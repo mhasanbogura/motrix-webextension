@@ -24,9 +24,9 @@ interface TaskRowProps {
 }
 
 const toneClassNames: Record<TaskRowTone, string> = {
-  active: 'border-task-active/30 bg-[color-mix(in_srgb,hsl(var(--task-active))_7%,var(--m3-surface))] before:bg-task-active',
-  error: 'border-destructive/30 bg-[color-mix(in_srgb,hsl(var(--destructive))_7%,var(--m3-surface))] before:bg-destructive',
-  stopped: 'border-task-stopped/30 bg-[color-mix(in_srgb,hsl(var(--task-stopped))_7%,var(--m3-surface))] before:bg-task-stopped',
+  active: 'border-task-active/30 bg-[color-mix(in_srgb,hsl(var(--task-active))_7%,var(--m3-surface))]',
+  error: 'border-destructive/30 bg-[color-mix(in_srgb,hsl(var(--destructive))_7%,var(--m3-surface))]',
+  stopped: 'border-task-stopped/30 bg-[color-mix(in_srgb,hsl(var(--task-stopped))_7%,var(--m3-surface))]',
 };
 
 export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename, onRetry, onOpenLink }: TaskRowProps) {
@@ -73,7 +73,7 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename, onR
     <div
       data-reveal
       className={cn(
-        'relative h-[92px] overflow-hidden rounded-lg border py-2 pr-3 pl-3.5 shadow-(--m3-shadow-card) transition-colors duration-200 before:absolute before:inset-y-2 before:left-1.5 before:w-1 before:rounded-full',
+        'h-[92px] overflow-hidden rounded-lg border py-2 pr-3 pl-3 shadow-(--m3-shadow-card) transition-colors duration-200',
         toneClassNames[tone],
       )}
     >
