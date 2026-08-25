@@ -69,7 +69,7 @@ function TaskList({
     <div className='min-h-[92px]'>
       {tasks.length
         ? (
-            <div className='max-h-[120px] min-h-[120px] snap-y snap-mandatory space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain pr-1'>
+            <div className='max-h-[108px] min-h-[108px] snap-y snap-mandatory space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain pr-1'>
               {tasks.map((task) => (
                 <TaskRow
                   key={task.gid}
@@ -86,7 +86,7 @@ function TaskList({
             </div>
           )
         : (
-            <div className='pointer-events-none flex h-[120px] items-center justify-center rounded-md border border-dashed bg-(--m3-surface) p-5 text-center text-sm text-muted-foreground'>
+            <div className='pointer-events-none flex h-[108px] items-center justify-center rounded-md border border-dashed bg-(--m3-surface) p-5 text-center text-sm text-muted-foreground'>
               {empty}
             </div>
           )}
