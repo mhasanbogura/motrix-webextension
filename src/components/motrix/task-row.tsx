@@ -73,7 +73,7 @@ export function TaskRow({ task, tone, onPause, onResume, onRemove, onRename, onR
     <div
       data-reveal
       className={cn(
-        'h-[136px] min-h-[136px] snap-start overflow-hidden rounded-lg border py-2 pr-3 pl-3 shadow-(--m3-shadow-card) transition-colors duration-200',
+        'h-[120px] min-h-[120px] snap-start overflow-hidden rounded-lg border py-2 pr-3 pl-3 shadow-(--m3-shadow-card) transition-colors duration-200',
         toneClassNames[tone],
       )}
     >
