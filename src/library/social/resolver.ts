@@ -177,6 +177,18 @@ function isGenericFilename(value: string): boolean {
     .replace(/(?:\.\.\.|…)?[ \t]+see more(?:[ \t]+on facebook)?$/i, '')
     .toLowerCase();
   if (/^(?:number of )?(?:unread )?(?:notifications?|messages?|chats?)$/.test(baseName)) return true;
+  const genericSocialTitles = new Set([
+    'has new content',
+    'new content',
+    'content unavailable',
+    'video unavailable',
+    'this video is unavailable',
+    'watch on facebook',
+    'facebook video',
+  ]);
+  if (genericSocialTitles.has(baseName)) {
+    return true;
+  }
   return GENERIC_FILENAMES.has(baseName) || ['facebook', 'watch', 'reels', 'reel'].includes(baseName);
 }
 

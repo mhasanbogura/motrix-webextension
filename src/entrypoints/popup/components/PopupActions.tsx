@@ -28,7 +28,7 @@ export function PopupActions({
 }: PopupActionsProps) {
   const showPauseAll = activeLane === 'active';
   const hasTasks = taskCount > 0;
-  const bulkButtonClass = 'min-w-0 w-full justify-center gap-0.5 rounded-lg border-transparent bg-(--m3-surface) px-0.5 text-[10px] font-semibold';
+  const bulkButtonClass = 'min-w-0 w-full justify-center gap-0 rounded-lg border-transparent bg-(--m3-surface) px-0 text-[9px] leading-none font-semibold whitespace-nowrap';
 
   const clearButton = (
     <Button
@@ -38,18 +38,18 @@ export function PopupActions({
       disabled={busy || !hasTasks}
       onClick={onClearAll}
     >
-      <Trash2 className='size-3!' />
+      <Trash2 className='size-2.5!' />
       {t('popup.clearAll')}
     </Button>
   );
 
   const openMotrixButton = (
     <Button
-      className='min-w-0 w-full justify-center gap-0.5 rounded-lg px-0.5 text-[10px] font-semibold shadow-(--m3-shadow-card) whitespace-nowrap'
+      className='min-w-0 w-full justify-center gap-0 rounded-lg px-0 text-[9px] leading-none font-semibold shadow-(--m3-shadow-card) whitespace-nowrap'
       size='sm'
       onClick={onWakeMotrix}
     >
-      <Power className='size-3!' />
+      <Power className='size-2.5!' />
       {t('common.openMotrix')}
     </Button>
   );
@@ -60,7 +60,7 @@ export function PopupActions({
       <div data-reveal className='space-y-3 rounded-xl border bg-(--m3-surface-container) p-3'>
         {showPauseAll
           ? (
-              <div className='grid grid-cols-4 gap-1.5'>
+              <div className='grid grid-cols-4 gap-1'>
                 <Button
                   variant='outline'
                   size='sm'
@@ -68,7 +68,7 @@ export function PopupActions({
                   disabled={busy || !hasTasks}
                   onClick={onPauseAll}
                 >
-                  <Pause className='size-3!' />
+                  <Pause className='size-2.5!' />
                   {t('popup.pauseAll')}
                 </Button>
                 <Button
@@ -78,7 +78,7 @@ export function PopupActions({
                   disabled={busy || !hasTasks}
                   onClick={onResumeAll}
                 >
-                  <Play className='size-3!' />
+                  <Play className='size-2.5!' />
                   {t('popup.resumeAll')}
                 </Button>
                 {clearButton}

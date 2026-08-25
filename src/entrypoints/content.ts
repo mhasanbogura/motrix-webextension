@@ -10,6 +10,8 @@ const MEDIA_CLOSE_BUTTON_ID = 'motrix-idm-media-capture-close';
 const SUPPORTED_PROTOCOLS = new Set(['http:', 'https:', 'magnet:', 'ed2k:', 'thunder:']);
 const TEXT_URL_PATTERN = /(https?:\/\/[^\s<>"'`]+|magnet:\?[^\s<>"'`]+|ed2k:\/\/[^\s<>"'`]+|thunder:\/\/[A-Z0-9+/=]+)/i;
 const MEDIA_BUTTON_IDLE_MS = 5000;
+const FACEBOOK_TITLE_WAIT_MS = 1200;
+const FACEBOOK_TITLE_POLL_MS = 150;
 const MEDIA_RESOURCE_EXTENSIONS = /\.(?:m3u8|mpd|mp4|m4v|webm|m4s|ts)(?:$|[?#])/i;
 const MEDIA_NON_VIDEO_EXTENSIONS = /\.(?:html?|php|js|css|json|jpg|jpeg|png|gif|svg|avif|webp)(?:$|[?#])/i;
 const MEDIA_THUMBNAIL_PATHS = /\/(?:pics\/gifs|thumbs?|thumbnails?|posters?|previews?|images?)\//i;
@@ -242,24 +244,29 @@ function ensureMediaButton(): void {
 
     mediaButton!.disabled = true;
     mediaButton!.textContent = 'Opening picker…';
-    void browser.runtime.sendMessage({
-      type: 'capture-url',
-      url,
-      urls: urls.length > 1 ? urls : undefined,
-      mediaCandidates: mediaCandidates.length > 1 ? mediaCandidates : undefined,
-      pageUrl: location.href,
-      source: getMediaSource(target),
-      filename: getFilenameHint(target),
-      fileSize: mediaCandidates[0]?.fileSize ?? getMediaFileSize(target, urls),
-      captureType: getMediaCaptureType(target),
-    }).then((response: RuntimeResponse) => {
-      if (!response.ok) {
-        mediaButton!.disabled = false;
-        mediaButton!.textContent = response.message || 'Retry with Motrix';
-        return;
-      }
-      removeMediaButton();
-    }).catch(() => removeMediaButton());
+    void (async () => {
+      const filename = await getFilenameHintWhenReady(target);
+      if (!mediaButton) return;
+      void browser.runtime.sendMessage({
+        type: 'capture-url',
+        url,
+        urls: urls.length > 1 ? urls : undefined,
+        mediaCandidates: mediaCandidates.length > 1 ? mediaCandidates : undefined,
+        pageUrl: location.href,
+        source: getMediaSource(target),
+        filename,
+        fileSize: mediaCandidates[0]?.fileSize ?? getMediaFileSize(target, urls),
+        captureType: getMediaCaptureType(target),
+      }).then((response: RuntimeResponse) => {
+        if (!response.ok) {
+          if (!mediaButton) return;
+          mediaButton.disabled = false;
+          mediaButton.textContent = response.message || 'Retry with Motrix';
+          return;
+        }
+        removeMediaButton();
+      }).catch(() => removeMediaButton());
+    })();
   });
   mediaCloseButton = document.createElement('button');
   mediaCloseButton.id = MEDIA_CLOSE_BUTTON_ID;
@@ -402,6 +409,18 @@ function getClosestLinkUrl(element: Element | undefined): string | undefined {
   return normalizeSupportedUrl(link.href);
 }
 
+async function getFilenameHintWhenReady(element: Element | undefined): Promise<string | undefined> {
+  const initial = getFilenameHint(element);
+  if (!isFacebookUrl(location.href) || initial) return initial;
+  const deadline = Date.now() + FACEBOOK_TITLE_WAIT_MS;
+  while (Date.now() < deadline) {
+    await new Promise<void>((resolve) => window.setTimeout(resolve, FACEBOOK_TITLE_POLL_MS));
+    const title = getFilenameHint(element);
+    if (title) return title;
+  }
+  return getFilenameHint(element);
+}
+
 function getFilenameHint(element: Element | undefined): string | undefined {
   const link = element?.closest('a[href]');
   const metadataElement = element?.closest('[data-filename], [data-file-name], [data-name], [data-title]');
@@ -420,7 +439,11 @@ function getFilenameHint(element: Element | undefined): string | undefined {
     element?.getAttribute('title'),
     element?.getAttribute('aria-label'),
   ];
-  return candidates.map((value) => value?.trim()).find((value): value is string => Boolean(value));
+  return candidates
+    .map((value) => value?.trim())
+    .find((value): value is string =>
+      typeof value === 'string' && value.length > 0
+      && (!isSocialMediaUrl(location.href) || isUsefulSocialTitle(value)));
 }
 
 function getSocialPageTitleHint(): string | undefined {
@@ -429,6 +452,11 @@ function getSocialPageTitleHint(): string | undefined {
     '[data-ad-preview="message"]',
     '[data-testid="post_message"]',
     '[data-testid="reel_video_caption"]',
+    '[data-testid*="caption"]',
+    '[data-ad-comet-preview="message"] [dir="auto"]',
+    '[data-ad-preview="message"] [dir="auto"]',
+    '[data-testid="post_message"] [dir="auto"]',
+    '[data-testid="reel_video_caption"] [dir="auto"]',
   ];
   const captionCandidates = facebookCaptionSelectors.flatMap((selector) =>
     Array.from(document.querySelectorAll(selector)).map((element) => element.textContent),
@@ -484,6 +512,13 @@ function isUsefulSocialTitle(value: string): boolean {
       'password',
       'create new account',
       'see more(?: on facebook)?',
+      'has new content',
+      'new content',
+      'content unavailable',
+      'video unavailable',
+      'this video is unavailable',
+      'watch on facebook',
+      'facebook video',
     ].join('|')})(?:\\s*[-|].*)?$`,
     'i',
   );
