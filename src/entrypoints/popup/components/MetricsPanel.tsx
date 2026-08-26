@@ -92,15 +92,15 @@ function StatCount({
       data-selected={selected}
       onClick={onSelect}
       className={cn(
-        'flex h-11 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-transparent px-2 text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'flex h-11 min-w-0 cursor-pointer items-center justify-center gap-1 rounded-lg border border-transparent px-1.5 text-[11px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         'hover:bg-[color-mix(in_srgb,var(--m3-on-surface)_6%,transparent)]',
         'data-[selected=true]:border-muted-foreground/70 data-[selected=true]:bg-muted/70 data-[selected=true]:text-foreground data-[selected=true]:shadow-(--m3-shadow-card)',
         className,
       )}
     >
-      <Icon className='size-3.5 shrink-0' />
+      <Icon className='size-3 shrink-0' />
       <span className='font-medium'>{label}</span>
-      <span className='metric-font min-w-4 text-center text-sm font-bold'>{value}</span>
+      <span className='metric-font min-w-4 text-center text-[13px] font-bold'>{value}</span>
     </button>
   );
 }
