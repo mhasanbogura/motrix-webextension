@@ -28,7 +28,7 @@ export function PopupActions({
   const showPauseAll = activeLane === 'active';
   const hasTasks = taskCount > 0;
   const footerButtonClass = 'h-8 min-h-8 max-h-8 min-w-0 w-full justify-center gap-1 overflow-hidden rounded-lg px-0 py-0 text-[8px] leading-none font-medium whitespace-nowrap';
-  const bulkButtonClass = `${footerButtonClass} border-transparent bg-(--m3-surface)`;
+  const bulkButtonClass = `${footerButtonClass} border border-transparent bg-(--m3-surface) text-foreground`;
   const activeFooterButtonClass = 'h-7 min-h-7 max-h-7 min-w-0 w-full justify-center gap-0.5 overflow-hidden rounded-lg px-0 py-0 text-[7px] leading-none font-medium whitespace-nowrap';
   const activeButtonClass = `${activeFooterButtonClass} border border-transparent bg-(--m3-surface) text-foreground`;
 
@@ -36,7 +36,7 @@ export function PopupActions({
     <Button
       variant='outline'
       size='sm'
-      className={`${bulkButtonClass} text-destructive`}
+      className={bulkButtonClass}
       disabled={busy || !hasTasks}
       onClick={onClearAll}
     >
@@ -47,7 +47,8 @@ export function PopupActions({
 
   const openMotrixButton = (
     <Button
-      className={`${footerButtonClass} shadow-(--m3-shadow-card)`}
+      variant='outline'
+      className={`${bulkButtonClass} shadow-(--m3-shadow-card)`}
       size='sm'
       onClick={onWakeMotrix}
     >
