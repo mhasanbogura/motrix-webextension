@@ -57,7 +57,7 @@ export function PopupActions({
   return (
     <>
       <Separator className='mt-5' />
-      <div data-reveal className='space-y-3'>
+      <div data-reveal className='space-y-3 rounded-xl border bg-(--m3-surface-container) p-3'>
         {showPauseAll
           ? (
               <div className='grid grid-cols-4 gap-1 overflow-hidden rounded-xl'>
