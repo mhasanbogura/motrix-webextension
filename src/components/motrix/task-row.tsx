@@ -50,7 +50,6 @@ export function TaskRow({
   const completedSize = formatBytes(task.completedLength);
   const totalSize = formatBytes(task.totalLength);
   const downloadSpeed = formatSpeed(task.downloadSpeed);
-  const uploadSpeed = formatSpeed(task.uploadSpeed);
   const remainingTime = isActive
     ? formatRemainingTime(task.completedLength, task.totalLength, task.downloadSpeed)
     : undefined;
@@ -135,20 +134,6 @@ export function TaskRow({
               /
               {totalSize}
             </span>
-            {task.status === 'active' && !task.errorMessage
-              ? (
-                  <span className='metric-font ml-auto grid max-w-39 min-w-0 shrink grid-cols-2 gap-1 overflow-hidden text-right text-[11px]/4'>
-                    <span className='truncate text-speed-download' title={downloadSpeed}>
-                      ↓
-                      {downloadSpeed}
-                    </span>
-                    <span className='truncate text-speed-upload' title={uploadSpeed}>
-                      ↑
-                      {uploadSpeed}
-                    </span>
-                  </span>
-                )
-              : null}
           </div>
         </div>
         <div className='flex shrink-0 gap-1'>
@@ -186,14 +171,25 @@ export function TaskRow({
           %
         </span>
       </div>
-      <div className='mt-1 flex min-h-4 items-center text-[11px]/4 text-muted-foreground'>
+      <div className='mt-1 flex min-h-4 items-center justify-between gap-2 text-[11px]/4 text-muted-foreground'>
         {isActive
           ? (
-              <span className='metric-font truncate' title='Estimated remaining time'>
-                Remaining
-                {' '}
-                {remainingTime}
-              </span>
+              <>
+                {!task.errorMessage
+                  ? (
+                      <span className='metric-font shrink-0 text-speed-download' title={`Download speed ${downloadSpeed}`}>
+                        ↓
+                        {' '}
+                        {downloadSpeed}
+                      </span>
+                    )
+                  : null}
+                <span className='metric-font ml-auto truncate' title='Estimated remaining time'>
+                  Remaining
+                  {' '}
+                  {remainingTime}
+                </span>
+              </>
             )
           : task.errorMessage
             ? (
