@@ -1,7 +1,6 @@
 import { Pause, Play, Power, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 
 import type { PopupTranslator, TaskLane } from '../types';
 
@@ -55,43 +54,40 @@ export function PopupActions({
   );
 
   return (
-    <>
-      <Separator className='mt-5' />
-      <div data-reveal className='space-y-3 rounded-xl border bg-(--m3-surface-container) p-3'>
-        {showPauseAll
-          ? (
-              <div className='grid grid-cols-4 gap-1 overflow-hidden rounded-xl'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className={`${bulkButtonClass} text-(--m3-warning)`}
-                  disabled={busy || !hasTasks}
-                  onClick={onPauseAll}
-                >
-                  <Pause className='size-2.5!' />
-                  {t('popup.pauseAll')}
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className={`${bulkButtonClass} text-(--m3-success)`}
-                  disabled={busy || !hasTasks}
-                  onClick={onResumeAll}
-                >
-                  <Play className='size-2.5!' />
-                  {t('popup.resumeAll')}
-                </Button>
-                {clearButton}
-                {openMotrixButton}
-              </div>
-            )
-          : (
-              <div className='grid grid-cols-2 gap-1.5 overflow-hidden rounded-xl'>
-                {clearButton}
-                {openMotrixButton}
-              </div>
-            )}
-      </div>
-    </>
+    <div data-reveal className='space-y-3 rounded-xl border bg-(--m3-surface-container) p-3'>
+      {showPauseAll
+        ? (
+            <div className='grid grid-cols-4 gap-1 overflow-hidden rounded-xl'>
+              <Button
+                variant='outline'
+                size='sm'
+                className={`${bulkButtonClass} text-(--m3-warning)`}
+                disabled={busy || !hasTasks}
+                onClick={onPauseAll}
+              >
+                <Pause className='size-2.5!' />
+                {t('popup.pauseAll')}
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className={`${bulkButtonClass} text-(--m3-success)`}
+                disabled={busy || !hasTasks}
+                onClick={onResumeAll}
+              >
+                <Play className='size-2.5!' />
+                {t('popup.resumeAll')}
+              </Button>
+              {clearButton}
+              {openMotrixButton}
+            </div>
+          )
+        : (
+            <div className='grid grid-cols-2 gap-1.5 overflow-hidden rounded-xl'>
+              {clearButton}
+              {openMotrixButton}
+            </div>
+          )}
+    </div>
   );
 }
