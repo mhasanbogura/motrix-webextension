@@ -44,7 +44,7 @@ export function PopupActions({
 
   const openMotrixButton = (
     <Button
-      className='min-w-0 w-full justify-center gap-0 rounded-lg px-0 text-[9px] leading-none font-medium shadow-(--m3-shadow-card) whitespace-nowrap'
+      className='min-w-0 h-8 w-full justify-center gap-0 overflow-hidden rounded-lg px-0 py-0 text-[9px] leading-none font-medium shadow-(--m3-shadow-card) whitespace-nowrap'
       size='sm'
       onClick={onWakeMotrix}
     >
@@ -54,7 +54,7 @@ export function PopupActions({
   );
 
   return (
-    <div data-reveal className='mx-3 mt-3 space-y-3 rounded-xl border bg-(--m3-surface-container) p-3'>
+    <div data-reveal className='mx-3 mt-3 mb-3 space-y-3 rounded-xl border bg-(--m3-surface-container) p-3'>
       {showPauseAll
         ? (
             <div className='grid grid-cols-4 gap-1 overflow-hidden rounded-xl'>
