@@ -27,7 +27,8 @@ export function PopupActions({
 }: PopupActionsProps) {
   const showPauseAll = activeLane === 'active';
   const hasTasks = taskCount > 0;
-  const bulkButtonClass = 'min-w-0 w-full justify-center gap-0 rounded-lg border-transparent bg-(--m3-surface) px-0 text-[9px] leading-none font-medium whitespace-nowrap';
+  const footerButtonClass = 'min-w-0 h-8 w-full justify-center gap-1 overflow-hidden rounded-lg px-0 py-0 text-[8px] leading-none font-medium whitespace-nowrap';
+  const bulkButtonClass = `${footerButtonClass} border-transparent bg-(--m3-surface)`;
 
   const clearButton = (
     <Button
@@ -44,7 +45,7 @@ export function PopupActions({
 
   const openMotrixButton = (
     <Button
-      className='min-w-0 h-8 w-full justify-center gap-0 overflow-hidden rounded-lg px-0 py-0 text-[9px] leading-none font-medium shadow-(--m3-shadow-card) whitespace-nowrap'
+      className={`${footerButtonClass} shadow-(--m3-shadow-card)`}
       size='sm'
       onClick={onWakeMotrix}
     >
