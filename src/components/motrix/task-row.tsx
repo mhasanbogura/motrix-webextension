@@ -135,15 +135,6 @@ export function TaskRow({
               /
               {totalSize}
             </span>
-            {isActive
-              ? (
-                  <span className='metric-font max-w-16 min-w-0 shrink truncate text-[10px]/4' title='Estimated remaining time'>
-                    ETA
-                    {' '}
-                    {remainingTime}
-                  </span>
-                )
-              : null}
             {task.status === 'active' && !task.errorMessage
               ? (
                   <span className='metric-font ml-auto grid max-w-39 min-w-0 shrink grid-cols-2 gap-1 overflow-hidden text-right text-[11px]/4'>
@@ -195,12 +186,20 @@ export function TaskRow({
           %
         </span>
       </div>
-      <div className='mt-1 flex min-h-4 items-start text-[11px]/4 text-muted-foreground'>
-        {task.errorMessage
+      <div className='mt-1 flex min-h-4 items-center text-[11px]/4 text-muted-foreground'>
+        {isActive
           ? (
-              <span className='break-words whitespace-normal text-destructive' title={task.errorMessage}>{task.errorMessage}</span>
+              <span className='metric-font truncate' title='Estimated remaining time'>
+                Remaining
+                {' '}
+                {remainingTime}
+              </span>
             )
-          : null}
+          : task.errorMessage
+            ? (
+                <span className='break-words whitespace-normal text-destructive' title={task.errorMessage}>{task.errorMessage}</span>
+              )
+            : null}
       </div>
     </div>
   );
