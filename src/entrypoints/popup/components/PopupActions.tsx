@@ -27,7 +27,7 @@ export function PopupActions({
 }: PopupActionsProps) {
   const showPauseAll = activeLane === 'active';
   const hasTasks = taskCount > 0;
-  const footerButtonClass = 'min-w-0 h-8 w-full justify-center gap-1 overflow-hidden rounded-lg px-0 py-0 text-[8px] leading-none font-medium whitespace-nowrap';
+  const footerButtonClass = 'h-8 min-h-8 max-h-8 min-w-0 w-full justify-center gap-1 overflow-hidden rounded-lg px-0 py-0 text-[8px] leading-none font-medium whitespace-nowrap';
   const bulkButtonClass = `${footerButtonClass} border-transparent bg-(--m3-surface)`;
 
   const clearButton = (
@@ -58,7 +58,7 @@ export function PopupActions({
     <div data-reveal className='mx-3 mt-3 mb-3 space-y-3 overflow-hidden rounded-xl border bg-(--m3-surface-container) p-3'>
       {showPauseAll
         ? (
-            <div className='grid grid-cols-4 gap-1 overflow-hidden rounded-xl'>
+            <div className='grid grid-cols-[repeat(4,minmax(0,1fr))] gap-1 overflow-hidden rounded-xl'>
               <Button
                 variant='outline'
                 size='sm'
@@ -84,7 +84,7 @@ export function PopupActions({
             </div>
           )
         : (
-            <div className='grid grid-cols-2 gap-1.5 overflow-hidden rounded-xl'>
+            <div className='grid grid-cols-[repeat(2,minmax(0,1fr))] gap-1.5 overflow-hidden rounded-xl'>
               {clearButton}
               {openMotrixButton}
             </div>
