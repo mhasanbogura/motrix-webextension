@@ -54,7 +54,7 @@ export function PopupActions({
   );
 
   return (
-    <div data-reveal className='mx-3 mt-3 mb-3 space-y-3 rounded-xl border bg-(--m3-surface-container) p-3'>
+    <div data-reveal className='mx-3 mt-3 mb-3 space-y-3 overflow-hidden rounded-xl border bg-(--m3-surface-container) p-3'>
       {showPauseAll
         ? (
             <div className='grid grid-cols-4 gap-1 overflow-hidden rounded-xl'>
