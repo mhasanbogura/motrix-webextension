@@ -65,7 +65,7 @@ export function PopupActions({
       disabled={busy || !hasTasks}
       onClick={onClearAll}
     >
-      <Trash2 className='size-2!' />
+      <Trash2 className='size-2.5!' />
       {t('popup.clearAll')}
     </Button>
   );
@@ -93,7 +93,7 @@ export function PopupActions({
                 disabled={busy || !hasTasks}
                 onClick={onPauseAll}
               >
-                <Pause className='size-2!' />
+                <Pause className='size-2.5!' />
                 {t('popup.pauseAll')}
               </Button>
               <Button
@@ -103,7 +103,7 @@ export function PopupActions({
                 disabled={busy || !hasTasks}
                 onClick={onResumeAll}
               >
-                <Play className='size-2!' />
+                <Play className='size-2.5!' />
                 {t('popup.resumeAll')}
               </Button>
               {activeClearButton}
