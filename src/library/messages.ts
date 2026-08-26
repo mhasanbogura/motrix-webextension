@@ -16,6 +16,7 @@ export interface PopupState {
 
 export interface RuntimeState {
   stat?: Aria2GlobalStat;
+  taskFinishedAt: Record<string, number>;
   tasks: {
     active: Aria2Task[];
     error: Aria2Task[];

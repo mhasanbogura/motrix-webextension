@@ -84,6 +84,7 @@ export const StorageSnapshotSchema = z.object({
   taskNameOverrides: z.record(z.string(), z.string()).default({}),
   taskSourceUrls: z.record(z.string(), z.string()).default({}),
   taskCreatedAt: z.record(z.string(), z.number()).default({}),
+  taskFinishedAt: z.record(z.string(), z.number()).default({}),
 });
 
 export type ConnectionConfig = z.infer<typeof ConnectionConfigSchema>;

@@ -32,6 +32,7 @@ export function TaskPanel({
       <TaskList
         tone={activeLane}
         tasks={runtime.tasks[activeLane]}
+        taskFinishedAt={runtime.taskFinishedAt}
         empty={t('popup.noTasks')}
         onPause={onPause}
         onResume={onResume}
@@ -47,6 +48,7 @@ export function TaskPanel({
 function TaskList({
   tone,
   tasks,
+  taskFinishedAt,
   empty,
   onPause,
   onResume,
@@ -57,6 +59,7 @@ function TaskList({
 }: {
   tone: TaskLane;
   tasks: RuntimeState['tasks']['active'];
+  taskFinishedAt: Record<string, number>;
   empty: string;
   onPause: (gid: string) => void;
   onResume: (gid: string) => void;
@@ -76,6 +79,7 @@ function TaskList({
                 <TaskRow
                   key={task.gid}
                   task={task}
+                  finishedAt={tone === 'stopped' ? taskFinishedAt[task.gid] : undefined}
                   className={tone === 'error' ? undefined : 'mx-auto w-[calc(100%-8px)]'}
                   compact={false}
                   tone={tone}

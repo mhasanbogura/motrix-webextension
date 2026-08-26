@@ -6,7 +6,7 @@ import type { Aria2Task } from '@/library/rpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { cn, formatBytes, formatRemainingTime, formatSpeed, percent } from '@/library/utils';
+import { cn, formatBytes, formatFinishedAt, formatRemainingTime, formatSpeed, percent } from '@/library/utils';
 
 import { getTaskName } from './task-name';
 
@@ -17,6 +17,7 @@ interface TaskRowProps {
   compact?: boolean;
   tone: TaskRowTone;
   className?: string;
+  finishedAt?: number;
   onPause: (gid: string) => void;
   onResume: (gid: string) => void;
   onRetry: (gid: string, status: Aria2Task['status']) => void;
@@ -42,6 +43,7 @@ export function TaskRow({
   onOpenLink,
   className,
   compact = false,
+  finishedAt,
 }: TaskRowProps) {
   const progress = percent(task.completedLength, task.totalLength);
   const isActive = task.status === 'active';
@@ -53,6 +55,7 @@ export function TaskRow({
   const remainingTime = isActive
     ? formatRemainingTime(task.completedLength, task.totalLength, task.downloadSpeed)
     : undefined;
+  const finishedTime = tone === 'stopped' ? formatFinishedAt(finishedAt) : undefined;
   const [isRenaming, setIsRenaming] = useState(false);
   const [draftName, setDraftName] = useState(taskName);
 
@@ -191,11 +194,19 @@ export function TaskRow({
                 </span>
               </>
             )
-          : task.errorMessage
+          : tone === 'stopped'
             ? (
-                <span className='break-words whitespace-normal text-destructive' title={task.errorMessage}>{task.errorMessage}</span>
+                <span className='metric-font truncate' title={`Finished ${finishedTime}`}>
+                  Finished
+                  {' '}
+                  {finishedTime}
+                </span>
               )
-            : null}
+            : task.errorMessage
+              ? (
+                  <span className='break-words whitespace-normal text-destructive' title={task.errorMessage}>{task.errorMessage}</span>
+                )
+              : null}
       </div>
     </div>
   );

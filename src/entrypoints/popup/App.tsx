@@ -323,7 +323,7 @@ function buildFallbackRuntime(status: 'connecting' | 'connected' | 'offline', me
       message,
       checkedAt: Date.now(),
     },
+    taskFinishedAt: {},
     tasks: { active: [], error: [], stopped: [] },
-
   };
 }

@@ -3,7 +3,7 @@ import type { StorageSnapshot } from '@/library/storage';
 import type { PopupState, RuntimeState } from '@/library/messages';
 
 import { Aria2RpcClient } from '@/library/rpc';
-import { ensureTaskCreatedAt, loadSnapshot, updateConnection } from '@/library/storage';
+import { ensureTaskCreatedAt, ensureTaskFinishedAt, loadSnapshot, updateConnection } from '@/library/storage';
 
 const POPUP_RPC_TIMEOUT_MS = 1200;
 
@@ -24,6 +24,7 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
   const connection = await client.checkConnection();
   const base = {
     connection: { ...connection, checkedAt: Date.now() },
+    taskFinishedAt: {},
     tasks: { active: [], error: [], stopped: [] },
   };
   if (!connection.ok) return base;
@@ -42,6 +43,9 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
   const taskCreatedAt = await ensureTaskCreatedAt(
     [...activeTasks, ...waitingTasks, ...stoppedTasks].map((task) => task.gid),
   );
+  const taskFinishedAt = await ensureTaskFinishedAt(
+    stoppedTasks.filter((task) => task.status !== 'error').map((task) => task.gid),
+  );
   const preparedActiveTasks = sortTasksByCreatedAt(
     applyTaskNameOverrides([...activeTasks, ...waitingTasks], snapshot.taskNameOverrides),
     taskCreatedAt,
@@ -54,6 +58,7 @@ export async function buildRuntimeState(snapshot: StorageSnapshot): Promise<Runt
   return {
     ...base,
     stat: statResult.status === 'fulfilled' ? statResult.value : undefined,
+    taskFinishedAt,
     tasks: {
       active: preparedActiveTasks,
       error: preparedStoppedTasks.filter((task) => task.status === 'error'),

@@ -116,6 +116,18 @@ export async function ensureTaskCreatedAt(gids: string[]): Promise<Record<string
   return next;
 }
 
+export async function ensureTaskFinishedAt(gids: string[]): Promise<Record<string, number>> {
+  const current = await loadSnapshot();
+  const missing = gids.filter((gid) => !(gid in current.taskFinishedAt));
+  if (!missing.length) return current.taskFinishedAt;
+  const finishedAt = Date.now();
+  const entries = Object.entries(current.taskFinishedAt);
+  const additions = missing.map((gid, index) => [gid, finishedAt + index] as const);
+  const next = Object.fromEntries([...entries, ...additions].slice(-MAX_TASK_CREATED_AT));
+  await saveSnapshot({ ...current, taskFinishedAt: next });
+  return next;
+}
+
 export async function appendDiagnostic(event: Omit<DiagnosticEvent, 'id' | 'timestamp'>): Promise<void> {
   await updateSnapshot((current) => ({
     ...current,
