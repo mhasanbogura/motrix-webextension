@@ -345,8 +345,8 @@ function repositionMediaButton(): void {
   mediaButton.style.left = `${left}px`;
   mediaButton.style.top = `${top}px`;
   if (mediaCloseButton) {
-    const closeLeft = Math.max(4, Math.min(window.innerWidth - 24, left + width - 24));
-    const closeTop = Math.max(4, top + 4);
+    const closeLeft = Math.max(4, Math.min(window.innerWidth - 24, left + width - 22));
+    const closeTop = Math.max(4, top + 2);
     mediaCloseButton.style.left = `${closeLeft}px`;
     mediaCloseButton.style.top = `${closeTop}px`;
   }
