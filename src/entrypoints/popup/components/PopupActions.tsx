@@ -30,7 +30,7 @@ export function PopupActions({
   const footerButtonClass = 'h-8 min-h-8 max-h-8 min-w-0 w-full justify-center gap-1 overflow-hidden rounded-lg px-0 py-0 text-[8px] leading-none font-medium whitespace-nowrap';
   const bulkButtonClass = `${footerButtonClass} border-transparent bg-(--m3-surface)`;
   const activeFooterButtonClass = 'h-7 min-h-7 max-h-7 min-w-0 w-full justify-center gap-0.5 overflow-hidden rounded-lg px-0 py-0 text-[7px] leading-none font-medium whitespace-nowrap';
-  const activeBulkButtonClass = `${activeFooterButtonClass} border-transparent bg-(--m3-surface)`;
+  const activeButtonClass = `${activeFooterButtonClass} border border-transparent bg-(--m3-surface) text-foreground`;
 
   const clearButton = (
     <Button
@@ -60,7 +60,7 @@ export function PopupActions({
     <Button
       variant='outline'
       size='sm'
-      className={`${activeBulkButtonClass} text-destructive`}
+      className={activeButtonClass}
       disabled={busy || !hasTasks}
       onClick={onClearAll}
     >
@@ -71,7 +71,8 @@ export function PopupActions({
 
   const activeOpenMotrixButton = (
     <Button
-      className={`${activeFooterButtonClass} shadow-(--m3-shadow-card)`}
+      variant='outline'
+      className={activeButtonClass}
       size='sm'
       onClick={onWakeMotrix}
     >
@@ -88,7 +89,7 @@ export function PopupActions({
               <Button
                 variant='outline'
                 size='sm'
-                className={`${activeBulkButtonClass} text-(--m3-warning)`}
+                className={activeButtonClass}
                 disabled={busy || !hasTasks}
                 onClick={onPauseAll}
               >
@@ -98,7 +99,7 @@ export function PopupActions({
               <Button
                 variant='outline'
                 size='sm'
-                className={`${activeBulkButtonClass} text-(--m3-success)`}
+                className={activeButtonClass}
                 disabled={busy || !hasTasks}
                 onClick={onResumeAll}
               >
