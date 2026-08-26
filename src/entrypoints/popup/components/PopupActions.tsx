@@ -29,7 +29,7 @@ export function PopupActions({
   const hasTasks = taskCount > 0;
   const footerButtonClass = 'h-8 min-h-8 max-h-8 min-w-0 w-full justify-center gap-1 overflow-hidden rounded-lg px-0 py-0 text-[8px] leading-none font-medium whitespace-nowrap';
   const bulkButtonClass = `${footerButtonClass} border border-transparent bg-(--m3-surface) text-foreground`;
-  const activeFooterButtonClass = 'h-7 min-h-7 max-h-7 min-w-0 w-full justify-center gap-0 overflow-hidden rounded-lg px-0 py-0 text-[6px] leading-none font-medium whitespace-nowrap';
+  const activeFooterButtonClass = 'h-7 min-h-7 max-h-7 min-w-0 w-full justify-center gap-0.5 overflow-hidden rounded-lg px-0 py-0 text-[7px] leading-none font-medium whitespace-nowrap';
   const activeButtonClass = `${activeFooterButtonClass} border border-transparent bg-(--m3-surface) text-foreground`;
 
   const clearButton = (
@@ -65,7 +65,7 @@ export function PopupActions({
       disabled={busy || !hasTasks}
       onClick={onClearAll}
     >
-      <Trash2 className='size-1.5!' />
+      <Trash2 className='size-2!' />
       {t('popup.clearAll')}
     </Button>
   );
@@ -77,7 +77,6 @@ export function PopupActions({
       size='sm'
       onClick={onWakeMotrix}
     >
-      <Power className='size-1.5!' />
       {t('common.openMotrix')}
     </Button>
   );
@@ -94,7 +93,7 @@ export function PopupActions({
                 disabled={busy || !hasTasks}
                 onClick={onPauseAll}
               >
-                <Pause className='size-1.5!' />
+                <Pause className='size-2!' />
                 {t('popup.pauseAll')}
               </Button>
               <Button
@@ -104,7 +103,7 @@ export function PopupActions({
                 disabled={busy || !hasTasks}
                 onClick={onResumeAll}
               >
-                <Play className='size-1.5!' />
+                <Play className='size-2!' />
                 {t('popup.resumeAll')}
               </Button>
               {activeClearButton}
