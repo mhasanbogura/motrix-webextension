@@ -11,11 +11,36 @@ export function formatBytes(value: number | string | undefined, suffix = 'B'): s
   const units = [suffix, `Ki${suffix}`, `Mi${suffix}`, `Gi${suffix}`, `Ti${suffix}`];
   const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
   const amount = bytes / 1024 ** exponent;
-  return `${amount >= 10 || exponent === 0 ? amount.toFixed(0) : amount.toFixed(1)} ${units[exponent]}`;
+  const formattedAmount = exponent === 0
+    ? amount.toFixed(0)
+    : amount >= 100
+      ? amount.toFixed(0)
+      : amount.toFixed(1);
+  return `${formattedAmount} ${units[exponent]}`;
 }
 
 export function formatSpeed(value: number | string | undefined): string {
   return `${formatBytes(value)}/s`;
+}
+
+export function formatRemainingTime(
+  completed: string | number | undefined,
+  total: string | number | undefined,
+  speed: string | number | undefined,
+): string {
+  const completedBytes = Number(completed);
+  const totalBytes = Number(total);
+  const bytesPerSecond = Number(speed);
+  if (!Number.isFinite(completedBytes) || !Number.isFinite(totalBytes) || !Number.isFinite(bytesPerSecond)) return '--';
+  if (totalBytes <= 0 || bytesPerSecond <= 0 || completedBytes >= totalBytes) return '--';
+
+  const totalSeconds = Math.ceil((totalBytes - completedBytes) / bytesPerSecond);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const totalMinutes = Math.ceil(totalSeconds / 60);
+  if (totalMinutes < 60) return `${totalMinutes}m`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
 }
 
 export function percent(completed: string | number, total: string | number): number {

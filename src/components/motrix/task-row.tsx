@@ -6,7 +6,7 @@ import type { Aria2Task } from '@/library/rpc';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { cn, formatBytes, formatSpeed, percent } from '@/library/utils';
+import { cn, formatBytes, formatRemainingTime, formatSpeed, percent } from '@/library/utils';
 
 import { getTaskName } from './task-name';
 
@@ -51,6 +51,9 @@ export function TaskRow({
   const totalSize = formatBytes(task.totalLength);
   const downloadSpeed = formatSpeed(task.downloadSpeed);
   const uploadSpeed = formatSpeed(task.uploadSpeed);
+  const remainingTime = isActive
+    ? formatRemainingTime(task.completedLength, task.totalLength, task.downloadSpeed)
+    : undefined;
   const [isRenaming, setIsRenaming] = useState(false);
   const [draftName, setDraftName] = useState(taskName);
 
@@ -132,6 +135,15 @@ export function TaskRow({
               /
               {totalSize}
             </span>
+            {isActive
+              ? (
+                  <span className='metric-font max-w-16 min-w-0 shrink truncate text-[10px]/4' title='Estimated remaining time'>
+                    ETA
+                    {' '}
+                    {remainingTime}
+                  </span>
+                )
+              : null}
             {task.status === 'active' && !task.errorMessage
               ? (
                   <span className='metric-font ml-auto grid max-w-39 min-w-0 shrink grid-cols-2 gap-1 overflow-hidden text-right text-[11px]/4'>
