@@ -60,7 +60,7 @@ export function PopupActions({
       <div data-reveal className='space-y-3'>
         {showPauseAll
           ? (
-              <div className='grid grid-cols-4 gap-1'>
+              <div className='grid grid-cols-4 gap-1 overflow-hidden rounded-xl'>
                 <Button
                   variant='outline'
                   size='sm'
@@ -86,7 +86,7 @@ export function PopupActions({
               </div>
             )
           : (
-              <div className='grid grid-cols-2 gap-1.5'>
+              <div className='grid grid-cols-2 gap-1.5 overflow-hidden rounded-xl'>
                 {clearButton}
                 {openMotrixButton}
               </div>
