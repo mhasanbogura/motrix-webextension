@@ -10,7 +10,7 @@ const MEDIA_CLOSE_BUTTON_ID = 'motrix-idm-media-capture-close';
 const SUPPORTED_PROTOCOLS = new Set(['http:', 'https:', 'magnet:', 'ed2k:', 'thunder:']);
 const TEXT_URL_PATTERN = /(https?:\/\/[^\s<>"'`]+|magnet:\?[^\s<>"'`]+|ed2k:\/\/[^\s<>"'`]+|thunder:\/\/[A-Z0-9+/=]+)/i;
 const MEDIA_BUTTON_IDLE_MS = 5000;
-const FACEBOOK_TITLE_WAIT_MS = 1200;
+const FACEBOOK_TITLE_WAIT_MS = 2500;
 const FACEBOOK_TITLE_POLL_MS = 150;
 const MEDIA_RESOURCE_EXTENSIONS = /\.(?:m3u8|mpd|mp4|m4v|webm|m4s|ts)(?:$|[?#])/i;
 const MEDIA_NON_VIDEO_EXTENSIONS = /\.(?:html?|php|js|css|json|jpg|jpeg|png|gif|svg|avif|webp)(?:$|[?#])/i;
@@ -457,6 +457,9 @@ function getSocialPageTitleHint(): string | undefined {
     '[data-ad-preview="message"] [dir="auto"]',
     '[data-testid="post_message"] [dir="auto"]',
     '[data-testid="reel_video_caption"] [dir="auto"]',
+    '[data-testid*="reel"][dir="auto"]',
+    '[data-testid*="reel"] [dir="auto"]',
+    '[role="article"] [data-ad-comet-preview="message"]',
   ];
   const captionCandidates = facebookCaptionSelectors.flatMap((selector) =>
     Array.from(document.querySelectorAll(selector)).map((element) => element.textContent),
@@ -464,6 +467,10 @@ function getSocialPageTitleHint(): string | undefined {
   const visibleTextCandidates = isFacebookUrl(location.href)
     ? Array.from(document.querySelectorAll('div,span,p'))
         .filter((element) => element.children.length === 0)
+        .map((element) => element.textContent)
+    : [];
+  const directionalTextCandidates = isFacebookUrl(location.href)
+    ? Array.from(document.querySelectorAll('[dir="auto"]'))
         .map((element) => element.textContent)
     : [];
   const metadataCandidates = [
@@ -475,6 +482,7 @@ function getSocialPageTitleHint(): string | undefined {
   const candidates = [
     getFacebookReelTitleOverride(location.href),
     ...captionCandidates,
+    ...directionalTextCandidates,
     ...visibleTextCandidates,
     ...metadataCandidates,
   ]
@@ -519,6 +527,8 @@ function isUsefulSocialTitle(value: string): boolean {
       'this video is unavailable',
       'watch on facebook',
       'facebook video',
+      'unread',
+      'unread content',
     ].join('|')})(?:\\s*[-|].*)?$`,
     'i',
   );

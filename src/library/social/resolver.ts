@@ -140,7 +140,11 @@ function parseResolverResponse(value: unknown): SocialResolverResponse {
 }
 
 function buildSocialFilename(filename?: string, title?: string, ext?: string): string {
-  const preferred = title && !isGenericFilename(title) ? title : filename || title || 'social-media';
+  const preferred = title && !isGenericFilename(title)
+    ? title
+    : filename && !isGenericFilename(filename)
+      ? filename
+      : 'social-media';
   const normalizedExt = (ext || extractExtension(filename) || 'mp4').replace(/^\./, '').toLowerCase();
   const base = sanitizeFilename(preferred)
     .replace(new RegExp(`\\.${escapeRegExp(normalizedExt)}$`, 'i'), '')
@@ -185,6 +189,8 @@ function isGenericFilename(value: string): boolean {
     'this video is unavailable',
     'watch on facebook',
     'facebook video',
+    'unread',
+    'unread content',
   ]);
   if (genericSocialTitles.has(baseName)) {
     return true;
