@@ -43,6 +43,24 @@ export function formatRemainingTime(
   return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
 }
 
+export function formatFinishedAt(timestamp: number | undefined, now = Date.now()): string {
+  if (!timestamp || !Number.isFinite(timestamp)) return '--';
+  const elapsedMinutes = Math.max(0, Math.floor((now - timestamp) / 60000));
+  if (elapsedMinutes < 1) return 'just now';
+  if (elapsedMinutes < 60) return `${elapsedMinutes} minute${elapsedMinutes === 1 ? '' : 's'} ago`;
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  const remainingMinutes = elapsedMinutes % 60;
+  if (elapsedHours < 24) {
+    const hours = `${elapsedHours} hour${elapsedHours === 1 ? '' : 's'}`;
+    if (!remainingMinutes) return `${hours} ago`;
+    const minutes = `${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}`;
+    return `${hours} ${minutes} ago`;
+  }
+
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(timestamp));
+}
+
 export function percent(completed: string | number, total: string | number): number {
   const done = Number(completed);
   const all = Number(total);
