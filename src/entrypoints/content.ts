@@ -222,7 +222,7 @@ function ensureMediaButton(): void {
     display: 'block',
     border: '0',
     borderRadius: '8px',
-    padding: '9px 12px',
+    padding: '9px 32px 9px 12px',
     background: '#7561d9',
     color: '#fff',
     boxShadow: '0 6px 18px rgba(37, 28, 97, .32)',
@@ -345,8 +345,8 @@ function repositionMediaButton(): void {
   mediaButton.style.left = `${left}px`;
   mediaButton.style.top = `${top}px`;
   if (mediaCloseButton) {
-    const closeLeft = Math.max(4, Math.min(window.innerWidth - 24, left + width - 10));
-    const closeTop = Math.max(4, top - 7);
+    const closeLeft = Math.max(4, Math.min(window.innerWidth - 24, left + width - 24));
+    const closeTop = Math.max(4, top + 4);
     mediaCloseButton.style.left = `${closeLeft}px`;
     mediaCloseButton.style.top = `${closeTop}px`;
   }
