@@ -78,6 +78,10 @@ export function isSocialMediaUrl(value: string): boolean {
   }
 }
 
+export function isGenericSocialTitle(value: string): boolean {
+  return isGenericFilename(value);
+}
+
 export function formatSocialResolverError(error: unknown, pageUrl?: string): string {
   const message = error instanceof Error ? error.message : String(error);
   if (pageUrl && isPornhubUrl(pageUrl) && /youtube|po token|account access/i.test(message)) {
@@ -208,6 +212,23 @@ const GENERIC_FILENAMES = new Set([
   'manifest',
   'master',
   'playlist',
+  'groups',
+  'marketplace',
+  'friends',
+  'memories',
+  'events',
+  'pages',
+  'profile',
+  'notifications',
+  'messages',
+  'messenger',
+  'gaming',
+  'live',
+  'videos',
+  'photos',
+  'settings',
+  'search facebook',
+  'what\'s on your mind',
 ]);
 
 function isGenericFilename(value: string): boolean {

@@ -4,7 +4,12 @@ import type { RuntimeResponse } from '@/library/messages';
 
 import { loadSnapshot } from '@/library/storage';
 import { filenameFromUrl, isWeakFilename, sanitizeFilename } from '@/library/download/filename-metadata';
-import { formatSocialResolverError, isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver';
+import {
+  formatSocialResolverError,
+  isGenericSocialTitle,
+  isSocialMediaUrl,
+  resolveSocialMedia,
+} from '@/library/social/resolver';
 
 import { routeDownloadInput } from './route-download-input';
 
@@ -88,16 +93,16 @@ export async function submitPendingPicker(
       throw new Error(formatSocialResolverError(error, pageUrl));
     }
   }
+  const pickerFilename = isGenericSocialTitle(filename)
+    ? resolvedInput?.filename || selectedCandidate?.filename || resolvePickerFilename(pending.input)
+    : filename;
   const input: AddDownloadInput = {
     ...pending.input,
     ...resolvedInput,
     url: resolvedInput?.url || selectedInputUrl,
     fileSize: resolvedInput?.fileSize ?? selectedCandidate?.fileSize ?? pending.input.fileSize,
     finalUrl: pageUrl,
-    filename: safeOutputName(
-      filename,
-      selectedCandidate?.filename || resolvedInput?.filename || resolvePickerFilename(pending.input),
-    ),
+    filename: safeOutputName(pickerFilename, resolvePickerFilename(pending.input)),
     dir: snapshot.settings.defaultDir || undefined,
   };
   await routeDownloadInput(input, snapshot, `${pending.source}_picker`);

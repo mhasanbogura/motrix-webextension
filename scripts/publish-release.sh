@@ -3,8 +3,8 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 REPO='mhasanbogura/motrix-webextension'
-EXPECTED_VERSION='1.7.3'
-NOTES='/home/ubuntu/motrix-1.7.3-release-notes.md'
+EXPECTED_VERSION='1.7.4'
+NOTES='/home/ubuntu/motrix-1.7.4-release-notes.md'
 
 VERSION=$(jq -r '.version' .output/chrome-mv3/manifest.json)
 if [[ "$VERSION" != "$EXPECTED_VERSION" ]]; then
