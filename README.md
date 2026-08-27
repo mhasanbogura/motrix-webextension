@@ -160,7 +160,7 @@ The Settings page controls interception, prompt-before-download behavior, automa
 
 To prevent capture on a site, add its URL pattern under **Extension filters → Blocked sites**. Changes apply to future capture events; reload the page if a content script was already active before the rule changed.
 
-When a normal website is open, the popup also shows a compact **Site File Picker** switch. Turn it off to skip the IDM-style picker for the current host; captured downloads continue directly to Motrix. Motrix stores this picker-only choice as a cross-scheme base-domain wildcard such as `*://*.example.com/*`, so it covers HTTP and HTTPS pages on the base domain’s subdomains. Turn the switch on again in the popup to show the picker again. To block capture completely, add a separate URL pattern under **Extension filters → Blocked sites**. Browser-internal pages and extension pages do not show this control.
+When a normal website is open, the popup also shows a compact **Site File Picker** switch. Turn it off to hide and disable the in-page purple **Download with Motrix** button for the current host. Turning it on shows the button again. This site-button preference is stored as a cross-scheme base-domain wildcard such as `*://*.example.com/*`, so it covers HTTP and HTTPS pages on the base domain’s subdomains; it does not change the global picker setting for other capture paths. To block capture completely, add a separate URL pattern under **Extension filters → Blocked sites**. Browser-internal pages and extension pages do not show this control.
 
 ## Troubleshooting
 
@@ -173,7 +173,7 @@ When a normal website is open, the popup also shows a compact **Site File Picker
 | Social resolver reports no direct format | Try the latest resolver installer, keep the site signed in if required, and use your own local cookies.txt only when authorized. Some videos remain unavailable. |
 | A download fails after the picker | Open the **Error** lane and use **Retry**. Retry resolves the original page again instead of reusing an expired direct stream. |
 | Rename appears unchanged | Install the latest extension package, ensure Motrix/aria2 still reports the task, and enter a filename without folders. The original extension is preserved automatically. |
-| The site picker switch appears ineffective | Install the latest extension, toggle **Site File Picker** off, and refresh the page. Downloads should still be captured but should bypass the picker and go directly to Motrix. |
+| The Site File Picker switch appears ineffective | Install the latest extension, toggle **Site File Picker** off, and refresh the page. The in-page purple **Download with Motrix** button should disappear for that host. |
 
 ## Privacy and security
 

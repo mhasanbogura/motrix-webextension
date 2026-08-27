@@ -109,9 +109,13 @@ async function refreshCaptureStatus(): Promise<void> {
       pageUrl: location.href,
     } satisfies RuntimeMessage) as RuntimeResponse;
     const result = response.ok && typeof response.result === 'object' && response.result !== null
-      ? response.result as { blocked?: unknown; captureTypes?: Partial<Record<DownloadCaptureType, unknown>> }
+      ? response.result as {
+        blocked?: unknown;
+        buttonEnabled?: unknown;
+        captureTypes?: Partial<Record<DownloadCaptureType, unknown>>;
+      }
       : undefined;
-    pageBlocked = result?.blocked === true;
+    pageBlocked = result?.blocked === true || result?.buttonEnabled !== true;
     captureTypes = {
       audio: result?.captureTypes?.audio === true,
       video: result?.captureTypes?.video === true,

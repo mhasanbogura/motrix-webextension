@@ -1,7 +1,7 @@
 import type { AddDownloadInput } from '@/library/rpc';
 
 import { appendDiagnostic, loadSnapshot } from '@/library/storage';
-import { isPickerEnabled, shouldInterceptDownload } from '@/library/download/filter';
+import { shouldInterceptDownload } from '@/library/download/filter';
 
 import type { DownloadItem } from './types';
 
@@ -84,8 +84,7 @@ export async function handleDownloadCreated(item: DownloadItem): Promise<void> {
     dir: snapshot.settings.defaultDir || undefined,
     fileSize: item.totalBytes && item.totalBytes > 0 ? item.totalBytes : item.fileSize,
   };
-  const pickerEnabled = isPickerEnabled(context?.referer || item.referrer, snapshot.pickerRules);
-  if (pickerEnabled && snapshot.settings.promptBeforeDownload) {
+  if (snapshot.settings.promptBeforeDownload) {
     await openDownloadPicker(input, 'download_capture');
     return;
   }

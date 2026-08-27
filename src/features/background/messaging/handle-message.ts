@@ -1,9 +1,9 @@
 import type { RuntimeMessage, RuntimeResponse } from '@/library/messages';
 
 import { Aria2RpcClient } from '@/library/rpc';
-import { isUrlBlocked } from '@/library/download/filter';
 import { wakeMotrix } from '@/library/protocol/launcher';
 import { routeUrl } from '@/features/background/protocol/route-url';
+import { isPickerEnabled, isUrlBlocked } from '@/library/download/filter';
 import { syncContextMenuVisibility } from '@/features/background/context-menu';
 import { buildPopupState, buildRuntimeState } from '@/features/background/runtime-state/build-runtime-state';
 import {
@@ -106,6 +106,7 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
           ok: true,
           result: {
             blocked: isUrlBlocked(message.url, message.pageUrl, snapshot.settings, snapshot.siteRules),
+            buttonEnabled: isPickerEnabled(message.pageUrl, snapshot.pickerRules),
             captureTypes: snapshot.settings.captureTypes,
           },
         };
