@@ -69,6 +69,7 @@ export type RuntimeMessage
     | { type: 'content-protocol-click'; url: string; pageUrl: string; filename?: string }
     | { type: 'capture-url'; url: string; urls?: string[]; mediaCandidates?: MediaCandidate[]; pageUrl: string; source: ContextMenuTargetSource; filename?: string; fileSize?: number; captureType?: DownloadCaptureType }
     | { type: 'capture-site-status'; url: string; pageUrl: string }
+    | { type: 'refresh-capture-status' }
     | { type: 'resolve-context-menu-target' }
     | { type: 'picker:get'; id: string }
     | { type: 'picker:submit'; id: string; filename: string; selectedUrl?: string }

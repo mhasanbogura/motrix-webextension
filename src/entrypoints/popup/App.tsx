@@ -8,8 +8,8 @@ import { useI18n } from '@/hooks/use-i18n';
 import { useTheme } from '@/hooks/use-theme';
 import { sendRuntimeMessage } from '@/library/runtime';
 import { useAnimeReveal } from '@/hooks/use-anime-reveal';
-import { isPickerEnabled } from '@/library/download/filter';
 import { triggerMotrixProtocol } from '@/library/protocol/launcher';
+import { globMatch, isPickerEnabled } from '@/library/download/filter';
 
 import type { TaskLane } from './types';
 
@@ -39,7 +39,7 @@ export default function App() {
   const hasSessionVerifiedConnectionRef = useRef(false);
   const [busy, setBusy] = useState(false);
   const [activeLane, setActiveLane] = useState<TaskLane>('active');
-  const [currentSite, setCurrentSite] = useState<{ pattern: string; url: string }>();
+  const [currentSite, setCurrentSite] = useState<{ pattern: string; url: string; tabId?: number }>();
   const { t } = useI18n(snapshot.ui.locale);
   useTheme(snapshot.ui);
 
@@ -96,7 +96,7 @@ export default function App() {
         return;
       }
       const pattern = sitePatternFromUrl(tabUrl);
-      setCurrentSite(pattern ? { pattern, url: tabUrl } : undefined);
+      setCurrentSite(pattern ? { pattern, url: tabUrl, tabId: tabs[0]?.id } : undefined);
     }).catch(() => {
       if (active) setCurrentSite(undefined);
     });
@@ -115,12 +115,20 @@ export default function App() {
   const updateCurrentSite = useCallback(async (enabled: boolean) => {
     if (!currentSite) return;
     const siteRules = snapshot.siteRules.filter((rule) => rule.id !== `current-site:${currentSite.pattern}`);
-    const pickerRules = { ...snapshot.pickerRules };
-    if (enabled) delete pickerRules[currentSite.pattern];
-    else pickerRules[currentSite.pattern] = false;
+    const pickerRules = Object.fromEntries(
+      Object.entries(snapshot.pickerRules).filter(
+        ([pattern, value]) => enabled || value !== false || !globMatch(pattern, currentSite.url),
+      ),
+    );
+    if (!enabled) pickerRules[currentSite.pattern] = false;
     const nextSnapshot = { ...snapshot, siteRules, pickerRules };
     const response = await sendRuntimeMessage({ type: 'replace-snapshot', snapshot: nextSnapshot });
-    if (response.ok && response.snapshot) setSnapshot(response.snapshot);
+    if (response.ok && response.snapshot) {
+      setSnapshot(response.snapshot);
+      if (currentSite.tabId !== undefined) {
+        void browser.tabs.sendMessage(currentSite.tabId, { type: 'refresh-capture-status' }).catch(() => undefined);
+      }
+    }
   }, [currentSite, setSnapshot, snapshot]);
 
   const recordPopupDiagnostic = useCallback(async (
@@ -300,6 +308,9 @@ function sitePatternFromUrl(value: string): string | undefined {
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) return undefined;
     const hostname = parsed.hostname.toLowerCase();
     const baseHostname = hostname.startsWith('www.') ? hostname.slice(4) : hostname;
+    if (baseHostname === '127.0.0.1' && parsed.port === '2580') {
+      return `${parsed.protocol}//127.0.0.1:2580/*`;
+    }
     return `*://*.${baseHostname}/*`;
   } catch {
     return undefined;

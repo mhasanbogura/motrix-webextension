@@ -85,6 +85,10 @@ export default defineContentScript({
     window.addEventListener('resize', repositionMediaButton, { passive: true });
 
     browser.runtime.onMessage.addListener((message: RuntimeMessage) => {
+      if (message.type === 'refresh-capture-status') {
+        void refreshCaptureStatus();
+        return undefined;
+      }
       if (message.type !== 'resolve-context-menu-target') return undefined;
       return Promise.resolve<RuntimeResponse>({
         ok: true,
