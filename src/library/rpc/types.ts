@@ -75,6 +75,8 @@ export interface AddDownloadInput {
   /** Browser-resolved URL after redirects. Used for metadata and diagnostics only. */
   finalUrl?: string;
   userAgent?: string;
+  /** Social-media thumbnail to embed as cover artwork after completion when supported. */
+  thumbnailUrl?: string;
   candidateUrls?: string[];
   mediaCandidates?: MediaCandidate[];
   requestHeaders?: Array<{ name: string; value: string }>;

@@ -28,6 +28,10 @@ if ($PythonLauncher) {
 $VenvPython = Join-Path $InstallDir '.venv\Scripts\python.exe'
 & $VenvPython -m pip install --upgrade pip 'yt-dlp[default,deno]'
 
+if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+  Write-Warning 'ffmpeg was not found on PATH. Social thumbnails will not be embedded until ffmpeg is installed.'
+}
+
 $Launcher = Join-Path $InstallDir 'run-native.bat'
 "@echo off`r`n`"$VenvPython`" `"$(Join-Path $InstallDir 'social_resolver.py')`"" | Set-Content -Path $Launcher -Encoding ascii
 

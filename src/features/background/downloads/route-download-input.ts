@@ -3,6 +3,7 @@ import type { StorageSnapshot } from '@/library/storage';
 
 import { Aria2RpcClient, RpcAuthError } from '@/library/rpc';
 import { openMotrixNewTask } from '@/library/protocol/launcher';
+import { scheduleThumbnailEmbedding } from '@/library/social/resolver';
 import { appendDiagnostic, saveTaskCreatedAt, saveTaskSourceUrl } from '@/library/storage';
 
 export async function routeDownloadInput(
@@ -19,6 +20,16 @@ export async function routeDownloadInput(
     const result = await client.addDownload(input);
     await saveTaskSourceUrl(result.gid, input.finalUrl || input.url);
     await saveTaskCreatedAt(result.gid);
+    if (input.thumbnailUrl) {
+      void scheduleThumbnailEmbedding(result.gid, input, snapshot.connection).catch(
+        (error: unknown) => appendDiagnostic({
+          level: 'warn',
+          code: 'thumbnail_embedding_unavailable',
+          message: error instanceof Error ? error.message : String(error),
+          context: { gid: result.gid, filename: input.filename },
+        }),
+      );
+    }
     await appendDiagnostic({
       level: 'info',
       code: 'download_routed',

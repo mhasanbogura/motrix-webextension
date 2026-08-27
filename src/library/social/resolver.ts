@@ -1,4 +1,5 @@
 import type { AddDownloadInput } from '@/library/rpc';
+import type { ConnectionConfig } from '@/library/storage';
 
 export interface SocialResolverRequest {
   url: string;
@@ -13,6 +14,15 @@ interface NativeRenameRequest {
   filename: string;
 }
 
+interface NativeThumbnailRequest {
+  gid: string;
+  secret?: string;
+  endpoint: string;
+  thumbnail: string;
+  action: 'embed-thumbnail';
+  headers?: Array<{ name: string; value: string }>;
+}
+
 export interface SocialResolverResponse {
   ok: boolean;
   ext?: string;
@@ -22,11 +32,14 @@ export interface SocialResolverResponse {
   title?: string;
   filename?: string;
   fileSize?: number;
+  thumbnail?: string;
   headers?: Record<string, string>;
 }
 
+type NativeMessage = SocialResolverRequest | NativeRenameRequest | NativeThumbnailRequest;
+
 interface NativeMessagingRuntime {
-  sendNativeMessage: (hostName: string, message: SocialResolverRequest | NativeRenameRequest) => Promise<unknown>;
+  sendNativeMessage: (hostName: string, message: NativeMessage) => Promise<unknown>;
 }
 
 const NATIVE_HOST_NAME = 'com.motrix.social_resolver';
@@ -97,9 +110,28 @@ export async function resolveSocialMedia(request: SocialResolverRequest): Promis
     url: result.url,
     filename: buildSocialFilename(result.filename, resolvedTitle, result.ext),
     fileSize: typeof result.fileSize === 'number' && result.fileSize > 0 ? result.fileSize : undefined,
+    thumbnailUrl: isHttpUrl(result.thumbnail) ? result.thumbnail : undefined,
     requestHeaders: requestHeaders.length ? requestHeaders : undefined,
     userAgent: request.userAgent,
   };
+}
+
+export async function scheduleThumbnailEmbedding(
+  gid: string,
+  input: AddDownloadInput,
+  connection: ConnectionConfig,
+): Promise<void> {
+  if (!input.thumbnailUrl) return;
+  const runtime = browser.runtime as unknown as NativeMessagingRuntime;
+  const path = connection.path.startsWith('/') ? connection.path : `/${connection.path}`;
+  await runtime.sendNativeMessage(NATIVE_HOST_NAME, {
+    action: 'embed-thumbnail',
+    gid,
+    thumbnail: input.thumbnailUrl,
+    endpoint: `http://${connection.host}:${connection.port}${path}`,
+    secret: connection.secret || undefined,
+    headers: input.requestHeaders,
+  });
 }
 
 export async function renameLocalFile(path: string, filename: string): Promise<void> {
@@ -121,6 +153,10 @@ export async function renameLocalFile(path: string, filename: string): Promise<v
   if (!result.ok) throw new Error(result.error || 'Could not rename the downloaded file');
 }
 
+function isHttpUrl(value: string | undefined): value is string {
+  return typeof value === 'string' && /^https?:\/\//i.test(value);
+}
+
 function parseResolverResponse(value: unknown): SocialResolverResponse {
   if (!value || typeof value !== 'object') throw new Error('Invalid social resolver response');
   const result = value as Record<string, unknown>;
@@ -135,6 +171,7 @@ function parseResolverResponse(value: unknown): SocialResolverResponse {
     mime: typeof result.mime === 'string' ? result.mime : undefined,
     ok: result.ok === true,
     title: typeof result.title === 'string' ? result.title : undefined,
+    thumbnail: typeof result.thumbnail === 'string' ? result.thumbnail : undefined,
     url: typeof result.url === 'string' ? result.url : undefined,
   };
 }

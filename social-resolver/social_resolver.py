@@ -10,13 +10,23 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import struct
 import subprocess
 import sys
+import tempfile
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from urllib.parse import urlparse
 
 MAX_MESSAGE_BYTES = 64 * 1024 * 1024
+THUMBNAIL_MAX_BYTES = 15 * 1024 * 1024
+THUMBNAIL_REQUEST_TIMEOUT_SECONDS = 20
+EMBED_WAIT_TIMEOUT_SECONDS = 24 * 60 * 60
+EMBED_POLL_SECONDS = 3
+EMBEDDABLE_EXTENSIONS = {'.mp4', '.m4v', '.mov', '.m4a', '.3gp'}
 ALLOWED_HOSTS = {
     "facebook.com",
     "fb.watch",
@@ -37,6 +47,27 @@ def is_allowed_page_url(value: str) -> bool:
         return False
     hostname = (parsed.hostname or "").lower().removeprefix("www.")
     return any(hostname == host or hostname.endswith("." + host) for host in ALLOWED_HOSTS)
+
+
+def is_http_url(value: object) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        return urlparse(value).scheme in {'http', 'https'}
+    except ValueError:
+        return False
+
+
+def choose_thumbnail(info: dict[str, object]) -> str | None:
+    thumbnail = info.get('thumbnail')
+    if is_http_url(thumbnail):
+        return str(thumbnail)
+    thumbnails = info.get('thumbnails')
+    if isinstance(thumbnails, list):
+        for candidate in reversed(thumbnails):
+            if isinstance(candidate, dict) and is_http_url(candidate.get('url')):
+                return str(candidate['url'])
+    return None
 
 
 def resolve_page(payload: dict[str, object]) -> dict[str, object]:
@@ -116,6 +147,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
         file_size = info.get("filesize") or info.get("filesize_approx")
         title = str(info.get("title") or "social-media")
         filename = build_social_filename(str(info.get("_filename") or ""), title, ext)
+        thumbnail = choose_thumbnail(info)
         headers = info.get("http_headers")
         safe_headers: dict[str, str] = {}
         if isinstance(headers, dict):
@@ -132,6 +164,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
             "ext": ext,
             "fileSize": file_size if isinstance(file_size, int) and file_size > 0 else None,
             "mime": info.get("mime_type") if isinstance(info.get("mime_type"), str) else None,
+            "thumbnail": thumbnail,
             "headers": safe_headers,
         }
 
@@ -210,6 +243,178 @@ def rename_local_file(payload: dict[str, object]) -> dict[str, object]:
     return {"ok": True, "filename": clean_filename}
 
 
+def rpc_call(endpoint: str, secret: str, method: str, params: list[object]) -> object:
+    rpc_params = ([f'token:{secret}'] if secret else []) + params
+    body = json.dumps({
+        'jsonrpc': '2.0',
+        'id': f'motrix-thumbnail-{time.time_ns()}',
+        'method': method,
+        'params': rpc_params,
+    }).encode('utf-8')
+    request = urllib.request.Request(endpoint, data=body, headers={'Content-Type': 'application/json'}, method='POST')
+    with urllib.request.urlopen(request, timeout=10) as response:
+        result = json.loads(response.read().decode('utf-8'))
+    if not isinstance(result, dict):
+        raise RuntimeError('aria2 returned an invalid response while embedding the thumbnail')
+    error = result.get('error')
+    if isinstance(error, dict):
+        raise RuntimeError(str(error.get('message') or 'aria2 rejected the thumbnail worker request'))
+    return result.get('result')
+
+
+def get_completed_file_path(endpoint: str, secret: str, gid: str) -> tuple[str | None, str | None]:
+    result = rpc_call(endpoint, secret, 'aria2.tellStatus', [gid, ['status', 'dir', 'files']])
+    if not isinstance(result, dict):
+        return None, 'aria2 returned no task status'
+    status = str(result.get('status') or '')
+    if status != 'complete':
+        if status in {'error', 'removed'}:
+            return None, f'Download finished with status {status}'
+        return None, None
+    files = result.get('files')
+    if not isinstance(files, list):
+        return None, 'The completed download has no file list'
+    selected = next((item for item in files if isinstance(item, dict) and item.get('selected') == 'true'), None)
+    candidate = selected if isinstance(selected, dict) else next((item for item in files if isinstance(item, dict)), None)
+    path = candidate.get('path') if isinstance(candidate, dict) else None
+    if not isinstance(path, str) or not path:
+        return None, 'The completed download has no local file path'
+    if not os.path.isabs(path):
+        directory = result.get('dir')
+        if isinstance(directory, str) and directory:
+            path = os.path.join(directory, path)
+    return os.path.abspath(path), None
+
+
+def wait_for_completed_file(endpoint: str, secret: str, gid: str) -> tuple[str | None, str | None]:
+    deadline = time.monotonic() + EMBED_WAIT_TIMEOUT_SECONDS
+    while time.monotonic() < deadline:
+        try:
+            path, reason = get_completed_file_path(endpoint, secret, gid)
+        except (OSError, ValueError, RuntimeError, urllib.error.URLError) as error:
+            if time.monotonic() + EMBED_POLL_SECONDS >= deadline:
+                return None, str(error)
+            time.sleep(EMBED_POLL_SECONDS)
+            continue
+        if path or reason:
+            return path, reason
+        time.sleep(EMBED_POLL_SECONDS)
+    return None, 'Timed out waiting for the social-media download to complete'
+
+
+def download_thumbnail(url: str, headers: list[dict[str, object]]) -> str:
+    request_headers = {
+        str(item.get('name')): str(item.get('value'))
+        for item in headers
+        if isinstance(item, dict) and isinstance(item.get('name'), str) and isinstance(item.get('value'), str)
+    }
+    request = urllib.request.Request(url, headers=request_headers)
+    with urllib.request.urlopen(request, timeout=THUMBNAIL_REQUEST_TIMEOUT_SECONDS) as response:
+        length = response.headers.get('Content-Length')
+        if length and int(length) > THUMBNAIL_MAX_BYTES:
+            raise RuntimeError('The social thumbnail is too large to embed safely')
+        suffix = Path(urlparse(url).path).suffix.lower()
+        suffix = suffix if suffix in {'.jpg', '.jpeg', '.png', '.webp'} else '.jpg'
+        file_handle = tempfile.NamedTemporaryFile(prefix='motrix-thumbnail-', suffix=suffix, delete=False)
+        path = file_handle.name
+        total = 0
+        try:
+            with file_handle:
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    total += len(chunk)
+                    if total > THUMBNAIL_MAX_BYTES:
+                        raise RuntimeError('The social thumbnail is too large to embed safely')
+                    file_handle.write(chunk)
+        except Exception:
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+            raise
+    return path
+
+
+def embed_thumbnail_into_file(media_path: str, thumbnail_path: str) -> dict[str, object]:
+    extension = Path(media_path).suffix.lower()
+    if extension not in EMBEDDABLE_EXTENSIONS:
+        return {'ok': True, 'embedded': False, 'reason': f'File type {extension or "unknown"} does not support embedded cover artwork'}
+    ffmpeg = shutil.which('ffmpeg')
+    if not ffmpeg:
+        return {'ok': True, 'embedded': False, 'reason': 'ffmpeg is not installed'}
+    temporary_path = f'{media_path}.motrix-cover{extension}'
+    command = [
+        ffmpeg,
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-nostdin',
+        '-y',
+        '-i',
+        media_path,
+        '-i',
+        thumbnail_path,
+        '-map',
+        '0',
+        '-map',
+        '1:v:0',
+        '-map_metadata',
+        '0',
+        '-c',
+        'copy',
+        '-c:v:1',
+        'mjpeg',
+        '-disposition:v:1',
+        'attached_pic',
+        '-metadata:s:v:1',
+        'title=Cover',
+        temporary_path,
+    ]
+    try:
+        completed = subprocess.run(command, capture_output=True, text=True, timeout=180, check=False)
+        if completed.returncode != 0 or not os.path.isfile(temporary_path) or os.path.getsize(temporary_path) <= 0:
+            detail = (completed.stderr or 'ffmpeg could not embed the social thumbnail').strip()
+            return {'ok': True, 'embedded': False, 'reason': detail[-500:]}
+        os.replace(temporary_path, media_path)
+        return {'ok': True, 'embedded': True}
+    finally:
+        if os.path.exists(temporary_path):
+            try:
+                os.unlink(temporary_path)
+            except OSError:
+                pass
+
+
+def embed_thumbnail(payload: dict[str, object]) -> dict[str, object]:
+    gid = payload.get('gid')
+    thumbnail = payload.get('thumbnail')
+    endpoint = payload.get('endpoint')
+    secret = payload.get('secret')
+    raw_headers = payload.get('headers')
+    if not isinstance(gid, str) or not gid:
+        return {'ok': False, 'error': 'A download task ID is required for thumbnail embedding.'}
+    if not is_http_url(thumbnail) or not isinstance(endpoint, str) or not is_http_url(endpoint):
+        return {'ok': False, 'error': 'A valid thumbnail URL and aria2 endpoint are required.'}
+    path, reason = wait_for_completed_file(endpoint, secret if isinstance(secret, str) else '', gid)
+    if not path:
+        return {'ok': True, 'embedded': False, 'reason': reason or 'The download did not complete.'}
+    headers = raw_headers if isinstance(raw_headers, list) else []
+    thumbnail_path: str | None = None
+    try:
+        thumbnail_path = download_thumbnail(str(thumbnail), headers)
+        return embed_thumbnail_into_file(path, thumbnail_path)
+    except (OSError, ValueError, RuntimeError, urllib.error.URLError) as error:
+        return {'ok': True, 'embedded': False, 'reason': str(error)[:500]}
+    finally:
+        if thumbnail_path:
+            try:
+                os.unlink(thumbnail_path)
+            except OSError:
+                pass
+
+
 def clean_error(value: str, hostname: str = "") -> str:
     lines = [line.strip() for line in value.splitlines() if line.strip()]
     detail = lines[-1] if lines else "The social-media resolver could not resolve this page."
@@ -261,8 +466,11 @@ def run_native() -> None:
         payload = read_message()
         if payload is None:
             return
-        if payload.get("action") == "rename":
+        action = payload.get("action")
+        if action == "rename":
             write_message(rename_local_file(payload))
+        elif action == "embed-thumbnail":
+            write_message(embed_thumbnail(payload))
         else:
             write_message(resolve_page(payload))
     except Exception as error:  # Keep stdout protocol valid with a structured error.

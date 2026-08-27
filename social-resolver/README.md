@@ -1,6 +1,6 @@
 # Motrix social-media resolver
 
-This helper provides the Snaptube-like download path used by the Motrix WebExtension for public or user-authorized Facebook, YouTube, and Dailymotion page URLs. It uses `yt-dlp` to discover an available direct media format and returns the URL, filename, and required request headers to the extension. Motrix then opens the normal IDM-style picker and sends the task to aria2.
+This helper provides the Snaptube-like download path used by the Motrix WebExtension for public or user-authorized Facebook, YouTube, Dailymotion, and Pornhub page URLs. It uses `yt-dlp` to discover an available direct media format and returns the URL, filename, thumbnail, and required request headers to the extension. Motrix then opens the normal IDM-style picker and sends the task to aria2.
 
 ## One-time installation
 
@@ -17,7 +17,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\install-windows.ps1
 ```
 
-The installer creates a private Python environment, installs `yt-dlp` with its default EJS components and Deno JavaScript runtime, registers the native-messaging host for Chrome/Chromium and Firefox, and installs an on-demand launcher. If the resolver was installed before this release, run the installer again once so the new files and dependencies are installed. Restart the browser once after installation. You do not need to start a server or run a command for each download.
+The installer creates a private Python environment, installs `yt-dlp` with its default EJS components and Deno JavaScript runtime, registers the native-messaging host for Chrome/Chromium and Firefox, and installs an on-demand launcher. Install `ffmpeg` separately and keep it available on your system PATH to embed social thumbnails as cover artwork inside completed MP4, M4V, MOV, M4A, or 3GP files. If ffmpeg is unavailable or the media format does not support embedded artwork, the download remains untouched. If the resolver was installed before this release, run the installer again once so the new files and dependencies are installed. Restart the browser once after installation. You do not need to start a server or run a command for each download.
 
 ## Optional cookies.txt file
 
@@ -39,6 +39,6 @@ The resolver automatically uses this file when it contains valid Netscape cookie
 
 The extension’s stable native-helper registration uses host name `com.motrix.social_resolver`. No resolver URL needs to be entered in settings.
 
-The helper accepts only HTTP(S) page URLs on Facebook, fb.watch, YouTube, youtu.be, Dailymotion, or dai.ly. Use it only for media you are authorized to download and in accordance with the platform’s terms.
+The helper accepts only HTTP(S) page URLs on Facebook, fb.watch, YouTube, youtu.be, Dailymotion, dai.ly, or Pornhub. After a social download completes, the helper uses the page thumbnail as embedded cover artwork when the downloaded container and local ffmpeg support it. Use it only for media you are authorized to download and in accordance with the platform’s terms.
 
 DRM-protected, encrypted, login-only, private, or segment-only streams may not produce a direct downloadable format. The helper does not bypass DRM, authentication, paywalls, or other access controls. YouTube may still require a signed-in account or a PO Token for particular videos.

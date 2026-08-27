@@ -18,6 +18,10 @@ chmod 600 "$INSTALL_DIR/cookies.txt"
 "$PYTHON_BIN" -m venv "$INSTALL_DIR/.venv"
 "$INSTALL_DIR/.venv/bin/python" -m pip install --upgrade pip 'yt-dlp[default,deno]'
 
+if ! command -v ffmpeg >/dev/null 2>&1; then
+  printf '%s\n' 'Warning: ffmpeg was not found on PATH. Social thumbnails will not be embedded until ffmpeg is installed.' >&2
+fi
+
 cat > "$INSTALL_DIR/run-native.sh" <<EOF
 #!/usr/bin/env bash
 exec "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/social_resolver.py"
