@@ -78,6 +78,30 @@ export function isSocialMediaUrl(value: string): boolean {
   }
 }
 
+export function isSocialMediaPageUrl(value: string): boolean {
+  if (!isSocialMediaUrl(value)) return false;
+  try {
+    const parsed = new URL(value);
+    return !/\.(?:m3u8|mpd|m4s|ts)(?:$|[?#])/i.test(parsed.pathname)
+      && !/\/cdn\/manifest(?:\/|$)/i.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeSocialMediaPageUrl(value: string): string | undefined {
+  if (isSocialMediaPageUrl(value)) return value;
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.toLowerCase();
+    if (!host.endsWith('.dailymotion.com') && host !== 'dailymotion.com') return undefined;
+    const videoId = parsed.pathname.match(/\/cdn\/manifest\/video\/([a-z0-9]+)\.m3u8$/i)?.[1];
+    return videoId ? `https://www.dailymotion.com/video/${videoId}` : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function isGenericSocialTitle(value: string): boolean {
   return isGenericFilename(value);
 }
@@ -110,13 +134,16 @@ export async function resolveSocialMedia(request: SocialResolverRequest): Promis
     .filter(([name, value]) => Boolean(name && value))
     .map(([name, value]) => ({ name, value }));
   const resolvedTitle = getFacebookReelTitleOverride(request.url) || result.title;
+  const resolvedUserAgent = result.headers?.['User-Agent'] || result.headers?.['user-agent'] || request.userAgent;
+  const resolvedReferer = result.headers?.Referer || result.headers?.referer;
   return {
     url: result.url,
     filename: buildSocialFilename(result.filename, resolvedTitle, result.ext),
     fileSize: typeof result.fileSize === 'number' && result.fileSize > 0 ? result.fileSize : undefined,
     thumbnailUrl: isHttpUrl(result.thumbnail) ? result.thumbnail : undefined,
     requestHeaders: requestHeaders.length ? requestHeaders : undefined,
-    userAgent: request.userAgent,
+    referer: resolvedReferer,
+    userAgent: resolvedUserAgent,
   };
 }
 

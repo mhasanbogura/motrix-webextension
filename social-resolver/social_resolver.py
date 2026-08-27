@@ -80,7 +80,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
     cookie_file = find_cookie_file()
     hostname = (urlparse(page_url).hostname or "").lower().removeprefix("www.")
     clients: tuple[str | None, ...] = (
-        ("android_vr", "mweb", "web_safari", "web")
+        ("web", "web_safari", "mweb", "android_vr")
         if hostname in {"youtube.com", "youtu.be"} or hostname.endswith(".youtube.com")
         else (None,)
     )
@@ -151,7 +151,7 @@ def resolve_page(payload: dict[str, object]) -> dict[str, object]:
         headers = info.get("http_headers")
         safe_headers: dict[str, str] = {}
         if isinstance(headers, dict):
-            for name in ("Cookie", "Referer", "User-Agent"):
+            for name in ("Cookie", "Referer", "User-Agent", "Accept", "Accept-Language", "Origin"):
                 value = headers.get(name)
                 if isinstance(value, str) and value:
                     safe_headers[name] = value

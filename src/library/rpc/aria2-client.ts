@@ -273,10 +273,10 @@ function parseRpcResult(value: unknown): unknown {
 
 export function buildAddUriOptions(input: AddDownloadInput): AddUriOptions {
   const headers = new Map<string, string>();
+  if (input.cookie) headers.set('cookie', `Cookie: ${input.cookie}`);
   for (const header of input.requestHeaders ?? []) {
     if (header.name && header.value) headers.set(header.name.toLowerCase(), `${header.name}: ${header.value}`);
   }
-  if (input.cookie) headers.set('cookie', `Cookie: ${input.cookie}`);
   const options: AddUriOptions = {};
   const headerList = [...headers.values()];
   if (headerList.length) options.header = headerList;

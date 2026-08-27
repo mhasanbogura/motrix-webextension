@@ -8,6 +8,7 @@ import {
   formatSocialResolverError,
   isGenericSocialTitle,
   isSocialMediaUrl,
+  normalizeSocialMediaPageUrl,
   resolveSocialMedia,
 } from '@/library/social/resolver';
 
@@ -81,16 +82,17 @@ export async function submitPendingPicker(
   const selectedCandidate = pending.input.mediaCandidates?.find((candidate) => candidate.url === selectedUrl);
   const selectedInputUrl = selectedCandidate?.url || pending.input.url;
   const pageUrl = pending.input.finalUrl;
+  const socialPageUrl = pageUrl ? normalizeSocialMediaPageUrl(pageUrl) : undefined;
   let resolvedInput: AddDownloadInput | undefined;
-  if (pageUrl && isSocialMediaUrl(pageUrl)) {
+  if (socialPageUrl && isSocialMediaUrl(socialPageUrl)) {
     try {
       resolvedInput = await resolveSocialMedia({
-        url: pageUrl,
+        url: socialPageUrl,
         cookie: pending.input.cookie,
         userAgent: pending.input.userAgent,
       });
     } catch (error) {
-      throw new Error(formatSocialResolverError(error, pageUrl));
+      throw new Error(formatSocialResolverError(error, socialPageUrl));
     }
   }
   const pickerFilename = isGenericSocialTitle(filename)
@@ -101,7 +103,7 @@ export async function submitPendingPicker(
     ...resolvedInput,
     url: resolvedInput?.url || selectedInputUrl,
     fileSize: resolvedInput?.fileSize ?? selectedCandidate?.fileSize ?? pending.input.fileSize,
-    finalUrl: pageUrl,
+    finalUrl: socialPageUrl || pageUrl,
     filename: safeOutputName(pickerFilename, resolvePickerFilename(pending.input)),
     dir: snapshot.settings.defaultDir || undefined,
   };

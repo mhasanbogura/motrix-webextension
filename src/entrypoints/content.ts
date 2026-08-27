@@ -1,7 +1,12 @@
 import type { DownloadCaptureType } from '@/library/storage';
 import type { ContextMenuTarget, ContextMenuTargetSource, RuntimeMessage, RuntimeResponse } from '@/library/messages';
 
-import { getFacebookReelTitleOverride, isPornhubUrl, isSocialMediaUrl } from '@/library/social/resolver';
+import {
+  getFacebookReelTitleOverride,
+  isPornhubUrl,
+  isSocialMediaPageUrl,
+  isSocialMediaUrl,
+} from '@/library/social/resolver';
 
 const PROTOCOL_PATTERN = /^(?:magnet|ed2k|thunder):/i;
 const CONTEXT_MENU_TARGET_TTL_MS = 60000;
@@ -276,7 +281,7 @@ function ensureMediaButton(): void {
         url,
         urls: urls.length > 1 ? urls : undefined,
         mediaCandidates: mediaCandidates.length > 1 ? mediaCandidates : undefined,
-        pageUrl: location.href,
+        pageUrl: getCapturePageUrl(),
         source: getMediaSource(target),
         filename,
         fileSize: mediaCandidates[0]?.fileSize ?? getMediaFileSize(target, urls),
@@ -880,6 +885,18 @@ function normalizeSupportedUrl(value: string | undefined): string | undefined {
 function isSupportedUrl(value: string | undefined): value is string {
   if (!value) return false;
   return SUPPORTED_PROTOCOLS.has(getProtocol(value));
+}
+
+function getCapturePageUrl(): string {
+  const candidates = [document.referrer];
+  try {
+    const topWindow = window.top;
+    if (topWindow && topWindow !== window) candidates.unshift(topWindow.location.href);
+  } catch {
+    // A cross-origin top frame may be inaccessible; document.referrer remains useful.
+  }
+  candidates.push(location.href);
+  return candidates.find(isSocialMediaPageUrl) || candidates.find(isSocialMediaUrl) || location.href;
 }
 
 function getProtocol(value: string): string {

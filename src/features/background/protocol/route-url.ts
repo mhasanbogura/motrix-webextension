@@ -5,7 +5,12 @@ import type { AddDownloadInput, MediaCandidate } from '@/library/rpc';
 import { loadSnapshot } from '@/library/storage';
 import { filenameFromUrl } from '@/library/download/filename-metadata';
 import { getDownloadCaptureType, isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
-import { formatSocialResolverError, isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver';
+import {
+  formatSocialResolverError,
+  isSocialMediaUrl,
+  normalizeSocialMediaPageUrl,
+  resolveSocialMedia,
+} from '@/library/social/resolver';
 
 import { getCookieHeader } from '../cookies';
 import { openDownloadPicker } from '../downloads/picker';
@@ -109,13 +114,9 @@ export async function routeUrl(
     return { ok: true, result: 'duplicate-blocked' };
   }
   const requestContext = requestContexts.resolve([routedUrl, ...mediaCandidateUrls]);
-  const resolverPageUrl = isSocialMediaUrl(pageUrl)
-    ? pageUrl
-    : isSocialMediaUrl(routedUrl)
-      ? routedUrl
-      : isYouTubeUrl(pageUrl)
-        ? pageUrl
-        : undefined;
+  const resolverPageUrl = normalizeSocialMediaPageUrl(pageUrl)
+    || normalizeSocialMediaPageUrl(routedUrl)
+    || (isYouTubeUrl(pageUrl) ? pageUrl : undefined);
   const cookie = snapshot.settings.forwardCookies
     ? requestContext?.cookie || await getCookieHeader(resolverPageUrl || routedUrl)
     : undefined;
@@ -136,7 +137,7 @@ export async function routeUrl(
     }
     input = {
       ...input,
-      referer: requestContext?.referer || pageUrl,
+      referer: input.referer || requestContext?.referer || pageUrl,
       cookie,
       finalUrl: resolverPageUrl,
       requestHeaders: input.requestHeaders || requestContext?.requestHeaders,
