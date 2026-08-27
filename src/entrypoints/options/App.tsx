@@ -18,7 +18,6 @@ export default function App() {
     exportSettings,
     importSettings,
     persistConnection,
-    persistRules,
     persistPickerRules,
     persistSettings,
     persistUi,
@@ -63,7 +62,6 @@ export default function App() {
         ? (
             <RulesSection
               compact={compact}
-              persistRules={persistRules}
               persistPickerRules={persistPickerRules}
               persistSettings={persistSettings}
               snapshot={snapshot}
