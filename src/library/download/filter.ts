@@ -124,6 +124,11 @@ export function isUrlBlocked(
   return Boolean(matchBlockedSite(url, pageUrl, siteRules, settings.blockedExtensions));
 }
 
+export function isPickerEnabled(pageUrl: string | undefined, pickerRules: Record<string, boolean>): boolean {
+  if (!pageUrl) return true;
+  return !Object.entries(pickerRules).some(([pattern, enabled]) => enabled === false && globMatch(pattern, pageUrl));
+}
+
 export function isProtocolEnabled(url: string, settings: DownloadSettings): boolean {
   const protocol = getProtocol(url);
   if (!['http:', 'https:', 'magnet:', 'ed2k:', 'thunder:'].includes(protocol)) return false;
@@ -177,9 +182,10 @@ function isUrlPattern(value: string): boolean {
 export function globMatch(pattern: string, value: string): boolean {
   if (!pattern || !value) return false;
   const escaped = pattern
+    .replaceAll('*.', '\u0000')
     .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-    .replaceAll('*\\.', '(?:.*\\.)?')
     .replaceAll('*', '.*')
-    .replaceAll('?', '.');
+    .replaceAll('?', '.')
+    .replaceAll('\u0000', '(?:.*\\.)?');
   return new RegExp(`^${escaped}$`, 'i').test(value);
 }

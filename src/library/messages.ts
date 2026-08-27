@@ -56,6 +56,7 @@ export type RuntimeMessage
     | { type: 'update-connection'; patch: Partial<ConnectionConfig> }
     | { type: 'update-ui'; patch: Partial<UiPrefs> }
     | { type: 'save-site-rules'; siteRules: SiteRule[] }
+    | { type: 'save-picker-rules'; pickerRules: Record<string, boolean> }
     | { type: 'add-url'; url: string; pageUrl?: string; filename?: string }
     | { type: 'task-action'; action: 'pause' | 'resume' | 'remove'; gid: string; status?: Aria2TaskStatus }
     | { type: 'rename-task'; gid: string; filename: string; status?: Aria2TaskStatus }

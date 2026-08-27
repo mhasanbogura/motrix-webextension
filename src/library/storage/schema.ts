@@ -79,6 +79,7 @@ export const StorageSnapshotSchema = z.object({
   connection: ConnectionConfigSchema.default(DEFAULT_CONNECTION),
   settings: DownloadSettingsSchema.default(DEFAULT_DOWNLOAD_SETTINGS),
   siteRules: z.array(SiteRuleSchema).default([]),
+  pickerRules: z.record(z.string(), z.boolean()).default({}),
   ui: UiPrefsSchema.default(DEFAULT_UI_PREFS),
   diagnostics: z.array(DiagnosticEventSchema).default([]),
   taskNameOverrides: z.record(z.string(), z.string()).default({}),

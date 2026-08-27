@@ -11,6 +11,7 @@ import {
   clearDiagnostics,
   DEFAULT_STORAGE,
   loadSnapshot,
+  savePickerRules,
   saveSiteRules,
   saveSnapshot,
   updateConnection,
@@ -54,6 +55,8 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
       }
       case 'save-site-rules':
         return { ok: true, snapshot: await saveSiteRules(message.siteRules) };
+      case 'save-picker-rules':
+        return { ok: true, snapshot: await savePickerRules(message.pickerRules) };
       case 'add-url':
         return await routeUrl(message.url, message.pageUrl || '', 'manual_popup');
       case 'task-action':

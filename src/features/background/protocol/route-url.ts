@@ -4,8 +4,8 @@ import type { AddDownloadInput, MediaCandidate } from '@/library/rpc';
 
 import { loadSnapshot } from '@/library/storage';
 import { filenameFromUrl } from '@/library/download/filename-metadata';
-import { getDownloadCaptureType, isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
 import { formatSocialResolverError, isSocialMediaUrl, resolveSocialMedia } from '@/library/social/resolver';
+import { getDownloadCaptureType, isPickerEnabled, isProtocolEnabled, isUrlBlocked } from '@/library/download/filter';
 
 import { getCookieHeader } from '../cookies';
 import { openDownloadPicker } from '../downloads/picker';
@@ -165,7 +165,8 @@ export async function routeUrl(
   if (!snapshot.settings.captureTypes[resolvedCaptureType]) {
     return { ok: false, code: 'capture_type_disabled', message: `${resolvedCaptureType} capture is disabled` };
   }
-  if (snapshot.settings.promptBeforeDownload || (input.mediaCandidates?.length || 0) > 1) {
+  const pickerEnabled = isPickerEnabled(pageUrl, snapshot.pickerRules);
+  if (pickerEnabled && (snapshot.settings.promptBeforeDownload || (input.mediaCandidates?.length || 0) > 1)) {
     await openDownloadPicker(input, source);
     return { ok: true, result: 'picker-opened' };
   }

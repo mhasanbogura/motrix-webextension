@@ -6,9 +6,9 @@ import type { DiagnosticEvent } from '@/library/storage';
 
 import { useI18n } from '@/hooks/use-i18n';
 import { useTheme } from '@/hooks/use-theme';
-import { globMatch } from '@/library/download/filter';
 import { sendRuntimeMessage } from '@/library/runtime';
 import { useAnimeReveal } from '@/hooks/use-anime-reveal';
+import { isPickerEnabled } from '@/library/download/filter';
 import { triggerMotrixProtocol } from '@/library/protocol/launcher';
 
 import type { TaskLane } from './types';
@@ -105,22 +105,23 @@ export default function App() {
     };
   }, []);
 
+  const currentSiteLegacyRule = currentSite
+    ? snapshot.siteRules.find(
+        (rule) => rule.id === `current-site:${currentSite.pattern}` && rule.action === 'block',
+      )
+    : undefined;
   const currentSiteEnabled = !currentSite
-    || !snapshot.siteRules.some(
-      (rule) => rule.enabled && rule.action === 'block' && globMatch(rule.pattern, currentSite.url),
-    );
+    || (isPickerEnabled(currentSite.url, snapshot.pickerRules) && currentSiteLegacyRule?.enabled !== true);
   const updateCurrentSite = useCallback(async (enabled: boolean) => {
     if (!currentSite) return;
-    const matchingRule = snapshot.siteRules.find(
-      (rule) => rule.pattern === currentSite.pattern && rule.action === 'block',
-    );
-    if (enabled && !matchingRule && !currentSiteEnabled) return;
-    const siteRules = matchingRule
-      ? snapshot.siteRules.map((rule) => rule.id === matchingRule.id ? { ...rule, enabled: !enabled } : rule)
-      : [...snapshot.siteRules, { id: `current-site:${currentSite.pattern}`, pattern: currentSite.pattern, action: 'block' as const, enabled: !enabled }];
-    const response = await sendRuntimeMessage({ type: 'save-site-rules', siteRules });
+    const siteRules = snapshot.siteRules.filter((rule) => rule.id !== `current-site:${currentSite.pattern}`);
+    const pickerRules = { ...snapshot.pickerRules };
+    if (enabled) delete pickerRules[currentSite.pattern];
+    else pickerRules[currentSite.pattern] = false;
+    const nextSnapshot = { ...snapshot, siteRules, pickerRules };
+    const response = await sendRuntimeMessage({ type: 'replace-snapshot', snapshot: nextSnapshot });
     if (response.ok && response.snapshot) setSnapshot(response.snapshot);
-  }, [currentSite, currentSiteEnabled, setSnapshot, snapshot.siteRules]);
+  }, [currentSite, setSnapshot, snapshot]);
 
   const recordPopupDiagnostic = useCallback(async (
     level: DiagnosticEvent['level'],

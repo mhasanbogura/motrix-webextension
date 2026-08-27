@@ -74,6 +74,10 @@ export async function saveSiteRules(siteRules: SiteRule[]): Promise<StorageSnaps
   return updateSnapshot((current) => ({ ...current, siteRules }));
 }
 
+export async function savePickerRules(pickerRules: Record<string, boolean>): Promise<StorageSnapshot> {
+  return updateSnapshot((current) => ({ ...current, pickerRules }));
+}
+
 export async function saveTaskNameOverride(gid: string, filename: string): Promise<StorageSnapshot> {
   return updateSnapshot((current) => {
     const entries = Object.entries(current.taskNameOverrides).filter(([key]) => key !== gid);
