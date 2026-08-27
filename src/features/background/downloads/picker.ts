@@ -91,10 +91,13 @@ export async function submitPendingPicker(
   const input: AddDownloadInput = {
     ...pending.input,
     ...resolvedInput,
-    url: selectedInputUrl,
-    fileSize: selectedCandidate?.fileSize ?? pending.input.fileSize,
+    url: resolvedInput?.url || selectedInputUrl,
+    fileSize: resolvedInput?.fileSize ?? selectedCandidate?.fileSize ?? pending.input.fileSize,
     finalUrl: pageUrl,
-    filename: safeOutputName(filename, selectedCandidate?.filename || resolvePickerFilename(pending.input)),
+    filename: safeOutputName(
+      filename,
+      selectedCandidate?.filename || resolvedInput?.filename || resolvePickerFilename(pending.input),
+    ),
     dir: snapshot.settings.defaultDir || undefined,
   };
   await routeDownloadInput(input, snapshot, `${pending.source}_picker`);

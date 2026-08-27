@@ -109,11 +109,11 @@ export async function routeUrl(
     return { ok: true, result: 'duplicate-blocked' };
   }
   const requestContext = requestContexts.resolve([routedUrl, ...mediaCandidateUrls]);
-  const resolverPageUrl = isSocialMediaUrl(routedUrl)
-    ? routedUrl
-    : isYouTubeUrl(pageUrl)
-      ? pageUrl
-      : isSocialMediaUrl(pageUrl) && !isDirectMediaCandidate(routedUrl)
+  const resolverPageUrl = isSocialMediaUrl(pageUrl)
+    ? pageUrl
+    : isSocialMediaUrl(routedUrl)
+      ? routedUrl
+      : isYouTubeUrl(pageUrl)
         ? pageUrl
         : undefined;
   const cookie = snapshot.settings.forwardCookies
@@ -139,7 +139,7 @@ export async function routeUrl(
       referer: requestContext?.referer || pageUrl,
       cookie,
       finalUrl: resolverPageUrl,
-      requestHeaders: requestContext?.requestHeaders,
+      requestHeaders: input.requestHeaders || requestContext?.requestHeaders,
       filename: input.filename,
       dir: snapshot.settings.defaultDir || undefined,
       candidateUrls: undefined,
