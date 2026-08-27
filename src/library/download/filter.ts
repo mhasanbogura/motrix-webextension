@@ -178,6 +178,7 @@ export function globMatch(pattern: string, value: string): boolean {
   if (!pattern || !value) return false;
   const escaped = pattern
     .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replaceAll('*\\.', '(?:.*\\.)?')
     .replaceAll('*', '.*')
     .replaceAll('?', '.');
   return new RegExp(`^${escaped}$`, 'i').test(value);
