@@ -181,11 +181,19 @@ function isUrlPattern(value: string): boolean {
 
 export function globMatch(pattern: string, value: string): boolean {
   if (!pattern || !value) return false;
-  const escaped = pattern
+  const normalizedPattern = normalizeGlobPattern(pattern);
+  const escaped = normalizedPattern
     .replaceAll('*.', '\u0000')
     .replace(/[.+^${}()|[\]\\]/g, '\\$&')
     .replaceAll('*', '.*')
     .replaceAll('?', '.')
     .replaceAll('\u0000', '(?:.*\\.)?');
   return new RegExp(`^${escaped}$`, 'i').test(value);
+}
+
+function normalizeGlobPattern(pattern: string): string {
+  const trimmed = pattern.trim();
+  if (trimmed.startsWith('://.')) return `*://*${trimmed.slice(3)}`;
+  if (trimmed.startsWith('*://.')) return `*://*${trimmed.slice(4)}`;
+  return trimmed;
 }
