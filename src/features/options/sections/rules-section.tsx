@@ -23,11 +23,13 @@ interface RulesSectionProps {
   persistSettings: () => Promise<void>;
   persistRules: (siteRules?: SiteRule[]) => Promise<void>;
   updateSettings: (patch: Partial<StorageSnapshot['settings']>) => void;
+  persistPickerRules: (pickerRules?: Record<string, boolean>) => Promise<void>;
 }
 
 export function RulesSection({
   compact,
   persistRules,
+  persistPickerRules,
   persistSettings,
   snapshot,
   t,
@@ -115,6 +117,48 @@ export function RulesSection({
             </div>
           )
         : null}
+      <div className='rounded-2xl border bg-(--m3-surface) p-(--options-field-pad)'>
+        <div className='mb-3'>
+          <div className='text-sm font-semibold'>{t('options.siteFilePicker')}</div>
+          <div className='text-xs text-muted-foreground'>{t('options.siteFilePickerHint')}</div>
+        </div>
+        <div className='space-y-2'>
+          {Object.entries(snapshot.pickerRules).map(([pattern, enabled]) => (
+            <div key={pattern} className='flex items-center gap-3 rounded-xl border bg-background p-3'>
+              <Switch
+                checked={enabled}
+                onCheckedChange={(nextEnabled) => {
+                  void persistPickerRules({ ...snapshot.pickerRules, [pattern]: nextEnabled });
+                }}
+                aria-label={`${t('options.siteFilePicker')}: ${pattern}`}
+              />
+              <Badge variant={enabled ? 'good' : 'destructive'}>
+                {enabled ? t('common.enabled') : t('common.disabled')}
+              </Badge>
+              <span className='min-w-0 flex-1 truncate text-sm' title={pattern}>{pattern}</span>
+              <Button
+                variant='quiet'
+                size='icon'
+                title={t('common.remove')}
+                onClick={() => {
+                  const nextRules = { ...snapshot.pickerRules };
+                  delete nextRules[pattern];
+                  void persistPickerRules(nextRules);
+                }}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          ))}
+        </div>
+        {!Object.keys(snapshot.pickerRules).length
+          ? (
+              <div className='rounded-xl border border-dashed bg-background p-4 text-sm text-muted-foreground'>
+                {t('options.noPickerRules')}
+              </div>
+            )
+          : null}
+      </div>
       <Separator />
       <div className='rounded-2xl border bg-(--m3-surface) p-(--options-field-pad)'>
         <div className='mb-3 flex items-center justify-between gap-3 max-[640px]:flex-col max-[640px]:items-stretch'>

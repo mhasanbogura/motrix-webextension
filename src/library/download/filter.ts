@@ -201,7 +201,20 @@ export function globMatch(pattern: string, value: string): boolean {
     .replaceAll('*', '.*')
     .replaceAll('?', '.')
     .replaceAll('\u0000', '(?:.*\\.)?');
-  return new RegExp(`^${escaped}$`, 'i').test(value);
+  const regex = new RegExp(`^${escaped}$`, 'i');
+  if (regex.test(value)) return true;
+  return regex.test(removeUrlPort(value));
+}
+
+function removeUrlPort(value: string): string {
+  try {
+    const parsed = new URL(value);
+    if (!parsed.port || !['http:', 'https:'].includes(parsed.protocol)) return value;
+    parsed.port = '';
+    return parsed.href;
+  } catch {
+    return value;
+  }
 }
 
 function normalizeGlobPattern(pattern: string): string {

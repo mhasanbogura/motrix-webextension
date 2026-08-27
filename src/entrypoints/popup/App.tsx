@@ -116,10 +116,10 @@ export default function App() {
     );
     const pickerRules = Object.fromEntries(
       Object.entries(snapshot.pickerRules).filter(
-        ([pattern, value]) => enabled || value !== false || !globMatch(pattern, currentSite.url),
+        ([pattern]) => !globMatch(pattern, currentSite.url),
       ),
     );
-    if (!enabled) pickerRules[currentSite.pattern] = false;
+    pickerRules[currentSite.pattern] = enabled;
     const nextSnapshot = { ...snapshot, siteRules, pickerRules };
     const response = await sendRuntimeMessage({ type: 'replace-snapshot', snapshot: nextSnapshot });
     if (response.ok && response.snapshot) {

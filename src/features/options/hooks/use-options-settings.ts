@@ -53,6 +53,11 @@ export function useOptionsSettings() {
     if (response.ok && response.snapshot) setSnapshot(response.snapshot);
   }, [snapshot.siteRules]);
 
+  const persistPickerRules = useCallback(async (pickerRules = snapshot.pickerRules) => {
+    const response = await sendRuntimeMessage({ type: 'save-picker-rules', pickerRules });
+    if (response.ok && response.snapshot) setSnapshot(response.snapshot);
+  }, [snapshot.pickerRules]);
+
   const testConnection = useCallback(async () => {
     setConnectionResult({ ok: false, message: t('common.checking') });
     const response = await sendRuntimeMessage({ type: 'test-connection', connection: snapshot.connection });
@@ -102,6 +107,7 @@ export function useOptionsSettings() {
     persistSettings,
     persistUi,
     persistRules,
+    persistPickerRules,
     testConnection,
     connectionResult,
     exportSettings,

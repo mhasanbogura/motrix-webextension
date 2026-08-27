@@ -57,6 +57,7 @@ let mediaCloseButton: HTMLButtonElement | undefined;
 let mediaButtonFadeTimer: number | undefined;
 let lastPointerPoint: { x: number; y: number } | undefined;
 let pageBlocked = true;
+let floatingButtonEnabled = false;
 let captureTypes: Record<DownloadCaptureType, boolean> = {
   audio: false,
   video: false,
@@ -105,7 +106,9 @@ function handleStorageChanged(changes: Record<string, Browser.storage.StorageCha
 
 async function refreshCaptureStatus(): Promise<void> {
   pageBlocked = true;
+  floatingButtonEnabled = false;
   removeMediaButton();
+
   try {
     const response = await browser.runtime.sendMessage({
       type: 'capture-site-status',
@@ -119,7 +122,8 @@ async function refreshCaptureStatus(): Promise<void> {
         captureTypes?: Partial<Record<DownloadCaptureType, unknown>>;
       }
       : undefined;
-    pageBlocked = result?.blocked === true || result?.buttonEnabled !== true;
+    pageBlocked = result?.blocked === true;
+    floatingButtonEnabled = result?.buttonEnabled === true;
     captureTypes = {
       audio: result?.captureTypes?.audio === true,
       video: result?.captureTypes?.video === true,
@@ -130,6 +134,7 @@ async function refreshCaptureStatus(): Promise<void> {
     };
   } catch {
     pageBlocked = true;
+    floatingButtonEnabled = false;
   }
 }
 
@@ -161,7 +166,7 @@ function handleProtocolClick(event: MouseEvent): void {
 }
 
 function handleMediaPointerOver(event: PointerEvent): void {
-  if (pageBlocked) return;
+  if (pageBlocked || !floatingButtonEnabled) return;
   lastPointerPoint = { x: event.clientX, y: event.clientY };
   const media = getMediaFromPointer(event);
   if (!media) return;
@@ -179,7 +184,7 @@ function handleMediaPointerOut(event: PointerEvent): void {
 }
 
 function handlePointerMove(event: PointerEvent): void {
-  if (pageBlocked) return;
+  if (pageBlocked || !floatingButtonEnabled) return;
   lastPointerPoint = { x: event.clientX, y: event.clientY };
   if (!activeMedia) {
     const media = getMediaFromPointer(event);
@@ -198,7 +203,7 @@ function handlePointerMove(event: PointerEvent): void {
 }
 
 function handleMediaSourceReady(event: Event): void {
-  if (pageBlocked) return;
+  if (pageBlocked || !floatingButtonEnabled) return;
   const media = event.target instanceof HTMLMediaElement ? event.target : undefined;
   if (!media || !isSupportedUrl(getMediaDownloadUrl(media))) return;
   const pointer = lastPointerPoint;
@@ -209,7 +214,14 @@ function handleMediaSourceReady(event: Event): void {
 function activateMedia(media: CaptureTarget): void {
   if (dismissedMedia === media) return;
   if (dismissedMedia && dismissedMedia !== media) dismissedMedia = undefined;
-  if (pageBlocked || !captureTypes[getMediaCaptureType(media)] || !isSupportedUrl(getMediaDownloadUrl(media))) return;
+  if (
+    pageBlocked
+    || !floatingButtonEnabled
+    || !captureTypes[getMediaCaptureType(media)]
+    || !isSupportedUrl(getMediaDownloadUrl(media))
+  ) {
+    return;
+  }
   activeMedia = media;
   ensureMediaButton();
   repositionMediaButton();
@@ -243,6 +255,10 @@ function ensureMediaButton(): void {
   mediaButton.addEventListener('pointerdown', (event) => event.stopPropagation());
   mediaButton.addEventListener('click', (event) => {
     event.preventDefault();
+    if (!floatingButtonEnabled) {
+      removeMediaButton();
+      return;
+    }
     event.stopPropagation();
     const target = activeMedia;
     const urls = target ? getMediaDownloadUrls(target) : [];
@@ -317,7 +333,7 @@ function ensureMediaButton(): void {
 }
 
 function revealMediaButton(): void {
-  if (!mediaButton) return;
+  if (!mediaButton || !floatingButtonEnabled) return;
   mediaButton.style.opacity = '1';
   mediaButton.style.pointerEvents = 'auto';
   if (mediaCloseButton) {
