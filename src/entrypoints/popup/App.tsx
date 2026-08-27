@@ -307,9 +307,6 @@ function sitePatternFromUrl(value: string): string | undefined {
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) return undefined;
     const hostname = parsed.hostname.toLowerCase();
     const baseHostname = hostname.startsWith('www.') ? hostname.slice(4) : hostname;
-    if (baseHostname === '127.0.0.1' && parsed.port === '2580') {
-      return `${parsed.protocol}//127.0.0.1:2580/*`;
-    }
     return `*://*.${baseHostname}/*`;
   } catch {
     return undefined;
