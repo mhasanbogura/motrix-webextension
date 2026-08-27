@@ -486,6 +486,7 @@ body,
 .picker-shell {
   width: min(calc(100% - 12px), calc(100vw - 24px), 640px);
   height: calc(100% - 12px);
+  align-items: stretch;
   min-height: 0;
   margin: 6px auto;
   padding: 8px 10px 8px;
@@ -497,11 +498,13 @@ body,
 }
 
 .picker-header {
+  width: 100%;
   border-radius: 16px;
   padding: 6px 8px;
 }
 
 .picker-card {
+  width: 100%;
   border-radius: 15px;
   padding: 8px;
 }
@@ -513,10 +516,31 @@ body,
 }
 
 .picker-source {
+  width: 100%;
+  min-width: 0;
+  margin-inline: 0;
   border-radius: 10px;
-  padding: 6px 7px;
+  padding: 6px 8px;
 }
 
 .picker-actions {
+  width: 100%;
+  min-width: 0;
   margin-top: 5px;
+  padding-inline: 0;
+}
+
+.picker-actions .button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.picker-url,
+.picker-card input {
+  width: 100%;
+  min-width: 0;
+}
+
+.picker-url {
+  scrollbar-gutter: stable both-edges;
 }
