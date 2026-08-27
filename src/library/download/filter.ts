@@ -124,9 +124,21 @@ export function isUrlBlocked(
   return Boolean(matchBlockedSite(url, pageUrl, siteRules, settings.blockedExtensions));
 }
 
-export function isPickerEnabled(pageUrl: string | undefined, pickerRules: Record<string, boolean>): boolean {
+export function isPickerEnabled(
+  pageUrl: string | undefined,
+  pickerRules: Record<string, boolean>,
+  siteRules: SiteRule[] = [],
+): boolean {
   if (!pageUrl) return true;
-  return !Object.entries(pickerRules).some(([pattern, enabled]) => enabled === false && globMatch(pattern, pageUrl));
+  const disabledByPickerRule = Object.entries(pickerRules)
+    .some(([pattern, enabled]) => enabled === false && globMatch(pattern, pageUrl));
+  const disabledByLegacyRule = siteRules.some(
+    (rule) => rule.id.startsWith('current-site:')
+      && rule.enabled
+      && rule.action === 'block'
+      && globMatch(rule.pattern, pageUrl),
+  );
+  return !disabledByPickerRule && !disabledByLegacyRule;
 }
 
 export function isProtocolEnabled(url: string, settings: DownloadSettings): boolean {
@@ -166,6 +178,7 @@ function matchBlockedSite(
 ): boolean {
   const matchedRule = siteRules.find(
     (rule) => rule.enabled && (rule.action === 'block')
+      && !rule.id.startsWith('current-site:')
       && (globMatch(rule.pattern, url) || globMatch(rule.pattern, pageUrl || '')),
   );
   if (matchedRule) return true;

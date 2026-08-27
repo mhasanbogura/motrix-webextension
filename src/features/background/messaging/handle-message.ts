@@ -106,7 +106,7 @@ export async function handleMessage(message: RuntimeMessage): Promise<RuntimeRes
           ok: true,
           result: {
             blocked: isUrlBlocked(message.url, message.pageUrl, snapshot.settings, snapshot.siteRules),
-            buttonEnabled: isPickerEnabled(message.pageUrl, snapshot.pickerRules),
+            buttonEnabled: isPickerEnabled(message.pageUrl, snapshot.pickerRules, snapshot.siteRules),
             captureTypes: snapshot.settings.captureTypes,
           },
         };

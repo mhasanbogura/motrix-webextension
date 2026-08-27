@@ -105,16 +105,15 @@ export default function App() {
     };
   }, []);
 
-  const currentSiteLegacyRule = currentSite
-    ? snapshot.siteRules.find(
-        (rule) => rule.id === `current-site:${currentSite.pattern}` && rule.action === 'block',
-      )
-    : undefined;
   const currentSiteEnabled = !currentSite
-    || (isPickerEnabled(currentSite.url, snapshot.pickerRules) && currentSiteLegacyRule?.enabled !== true);
+    || isPickerEnabled(currentSite.url, snapshot.pickerRules, snapshot.siteRules);
   const updateCurrentSite = useCallback(async (enabled: boolean) => {
     if (!currentSite) return;
-    const siteRules = snapshot.siteRules.filter((rule) => rule.id !== `current-site:${currentSite.pattern}`);
+    const siteRules = snapshot.siteRules.filter(
+      (rule) => !(rule.id.startsWith('current-site:')
+        && rule.action === 'block'
+        && globMatch(rule.pattern, currentSite.url)),
+    );
     const pickerRules = Object.fromEntries(
       Object.entries(snapshot.pickerRules).filter(
         ([pattern, value]) => enabled || value !== false || !globMatch(pattern, currentSite.url),
